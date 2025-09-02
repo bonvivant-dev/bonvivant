@@ -1,14 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import {
-  createClient,
-  SupabaseClient,
-  User,
-  Session,
-} from "@supabase/supabase-js";
+import { SupabaseClient, User, Session } from "@supabase/supabase-js";
 import { Alert } from "react-native";
-
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || "";
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || "";
+import { supabase } from "../lib";
+import * as QueryParams from "expo-auth-session/build/QueryParams";
+import { makeRedirectUri } from "expo-auth-session";
+import * as WebBrowser from "expo-web-browser";
 
 interface AuthContextType {
   user: User | null;
@@ -22,6 +18,10 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const redirectTo = makeRedirectUri({
+  scheme: "com.bonvivant.app",
+});
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -37,8 +37,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   useEffect(() => {
     // Get initial session
@@ -58,14 +56,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+  }, []);
+
+  const createSessionFromUrl = async (url: string) => {
+    const { params, errorCode } = QueryParams.getQueryParams(url);
+
+    if (errorCode) {
+      throw new Error(`Error code: ${errorCode}`);
+    }
+
+    const { access_token, refresh_token } = params;
+
+    if (!access_token || !refresh_token) {
+      throw new Error("Missing required token parameters");
+    }
+
+    const { data: sessionData, error: sessionError } =
+      await supabase.auth.setSession({
+        access_token,
+        refresh_token,
+      });
+
+    if (sessionError) throw sessionError;
+    return sessionData.session;
+  };
 
   const signInWithGoogle = async () => {
-    // Alert.alert("signInWithGoogle");
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-    });
-    if (error) throw error;
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error) throw error;
+
+      const res = await WebBrowser.openAuthSessionAsync(
+        data?.url ?? "",
+        redirectTo
+      );
+
+      if (res.type === "success") {
+        const { url } = res;
+        await createSessionFromUrl(url);
+      } else {
+        console.log("사용자가 로그인을 취소하거나 오류 발생");
+      }
+    } catch (err) {
+      Alert.alert("예외", `예외 발생: ${err}`);
+      throw err;
+    }
   };
 
   const signInWithEmail = async (email: string, password: string) => {
