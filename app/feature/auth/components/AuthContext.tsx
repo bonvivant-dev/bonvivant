@@ -3,7 +3,7 @@ import { makeRedirectUri } from 'expo-auth-session'
 import * as QueryParams from 'expo-auth-session/build/QueryParams'
 import * as WebBrowser from 'expo-web-browser'
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { Alert } from 'react-native'
+import { Alert, Platform } from 'react-native'
 
 import { supabase } from '../lib'
 
@@ -23,6 +23,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const redirectTo = makeRedirectUri({
   scheme: 'com.bonvivant.app',
 })
+
+const isAndroid = Platform.OS === 'android'
 
 export const useAuth = () => {
   const context = useContext(AuthContext)
@@ -84,6 +86,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const signInWithGoogle = async () => {
     try {
+      // WebBrowser warming up for better performance on Android
+      if (isAndroid) {
+        await WebBrowser.warmUpAsync()
+      }
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -107,6 +114,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (err) {
       Alert.alert('예외', `예외 발생: ${err}`)
       throw err
+    } finally {
+      // Clean up WebBrowser on Android
+      if (isAndroid) {
+        WebBrowser.coolDownAsync()
+      }
     }
   }
 
@@ -127,8 +139,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    try {
+      // Clear local state first
+      setUser(null)
+      setSession(null)
+
+      // Clean up WebBrowser session on Android if needed
+      if (Platform.OS === 'android') {
+        try {
+          await WebBrowser.coolDownAsync()
+        } catch (error) {
+          console.warn('WebBrowser cooldown failed:', error)
+        }
+      }
+
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut()
+      if (error) {
+        // Don't throw error if it's just AuthSession missing
+        if (!error.message.includes('Auth session missing')) {
+          throw error
+        }
+      }
+    } catch (error) {
+      setUser(null)
+      setSession(null)
+
+      // Only throw if it's not an AuthSession missing error
+      if (!(error as Error).message?.includes('Auth session missing')) {
+        throw error
+      }
+    }
   }
 
   const value = {
