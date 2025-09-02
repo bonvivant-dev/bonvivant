@@ -5,29 +5,30 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
-} from "react-native";
-import { useAuth } from "../feature/auth/components/AuthContext";
+} from 'react-native'
+
+import { useAuth } from '../feature/auth/components/AuthContext'
 
 export default function Library() {
-  const { user, loading, signInWithGoogle, signOut } = useAuth();
+  const { user, loading, signInWithGoogle, signOut } = useAuth()
 
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithGoogle();
+      await signInWithGoogle()
     } catch (error) {
-      Alert.alert("로그인 실패", error as string);
+      Alert.alert('로그인 실패', error as string)
     }
-  };
+  }
 
   // TODO : 안드로이드에서 안됨
   const handleSignOut = async () => {
     try {
-      await signOut();
+      await signOut()
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      Alert.alert("로그아웃 실패", "로그아웃 중 오류가 발생했습니다.");
+      Alert.alert('로그아웃 실패', '로그아웃 중 오류가 발생했습니다.')
     }
-  };
+  }
 
   if (loading) {
     return (
@@ -35,7 +36,7 @@ export default function Library() {
         <ActivityIndicator size="large" color="#007AFF" />
         <Text style={styles.loadingText}>로딩 중...</Text>
       </View>
-    );
+    )
   }
 
   return (
@@ -80,49 +81,49 @@ export default function Library() {
         </View>
       )}
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F5F5F5",
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
     padding: 20,
   },
   title: {
     fontSize: 24,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginBottom: 30,
-    color: "#333",
+    color: '#333',
   },
   loadingText: {
     marginTop: 10,
-    color: "#666",
+    color: '#666',
   },
   userSection: {
-    alignItems: "center",
-    width: "100%",
+    alignItems: 'center',
+    width: '100%',
   },
   welcomeText: {
     fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
+    fontWeight: '600',
+    color: '#333',
     marginBottom: 5,
   },
   emailText: {
     fontSize: 14,
-    color: "#666",
+    color: '#666',
     marginBottom: 30,
   },
   librarySection: {
-    width: "100%",
-    backgroundColor: "#FFF",
+    width: '100%',
+    backgroundColor: '#FFF',
     borderRadius: 10,
     padding: 20,
     marginBottom: 20,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -133,64 +134,64 @@ const styles = StyleSheet.create({
   },
   libraryTitle: {
     fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
+    fontWeight: '600',
+    color: '#333',
     marginBottom: 10,
   },
   emptyText: {
     fontSize: 14,
-    color: "#999",
-    textAlign: "center",
+    color: '#999',
+    textAlign: 'center',
   },
   signOutButton: {
-    backgroundColor: "#FF3B30",
+    backgroundColor: '#FF3B30',
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 8,
   },
   signOutButtonText: {
-    color: "#FFF",
+    color: '#FFF',
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   loginSection: {
-    alignItems: "center",
-    width: "100%",
+    alignItems: 'center',
+    width: '100%',
   },
   loginMessage: {
     fontSize: 16,
-    color: "#666",
-    textAlign: "center",
+    color: '#666',
+    textAlign: 'center',
     marginBottom: 40,
     lineHeight: 24,
   },
   googleButton: {
-    backgroundColor: "#4285F4",
+    backgroundColor: '#4285F4',
     paddingHorizontal: 40,
     paddingVertical: 15,
     borderRadius: 8,
     marginBottom: 15,
-    width: "80%",
+    width: '80%',
   },
   googleButtonText: {
-    color: "#FFF",
+    color: '#FFF',
     fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
+    fontWeight: '600',
+    textAlign: 'center',
   },
   emailButton: {
-    backgroundColor: "#FFF",
+    backgroundColor: '#FFF',
     paddingHorizontal: 40,
     paddingVertical: 15,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#DDD",
-    width: "80%",
+    borderColor: '#DDD',
+    width: '80%',
   },
   emailButtonText: {
-    color: "#333",
+    color: '#333',
     fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
+    fontWeight: '600',
+    textAlign: 'center',
   },
-});
+})

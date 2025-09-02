@@ -1,6 +1,7 @@
-import { Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import { AuthProvider } from "../feature/auth";
+import { Ionicons } from '@expo/vector-icons'
+import { Tabs } from 'expo-router'
+
+import { AuthProvider } from '../feature/auth'
 
 export default function RootLayout() {
   return (
@@ -9,10 +10,10 @@ export default function RootLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: "홈",
+            title: '홈',
             tabBarIcon: ({ color, focused }) => (
               <Ionicons
-                name={focused ? "home" : "home-outline"}
+                name={focused ? 'home' : 'home-outline'}
                 size={24}
                 color={color}
               />
@@ -22,10 +23,10 @@ export default function RootLayout() {
         <Tabs.Screen
           name="library"
           options={{
-            title: "내 서재",
+            title: '내 서재',
             tabBarIcon: ({ color, focused }) => (
               <Ionicons
-                name={focused ? "library" : "library-outline"}
+                name={focused ? 'library' : 'library-outline'}
                 size={24}
                 color={color}
               />
@@ -34,5 +35,5 @@ export default function RootLayout() {
         />
       </Tabs>
     </AuthProvider>
-  );
+  )
 }
