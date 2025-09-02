@@ -1,4 +1,11 @@
-import { Text, View, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import {
+  Text,
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
 import { useAuth } from "../feature/auth/components/AuthContext";
 
 export default function Library() {
@@ -8,7 +15,7 @@ export default function Library() {
     try {
       await signInWithGoogle();
     } catch (error) {
-      Alert.alert("로그인 실패", "로그인 중 오류가 발생했습니다.");
+      Alert.alert("로그인 실패", error as string);
     }
   };
 
@@ -16,7 +23,7 @@ export default function Library() {
     try {
       await signOut();
     } catch (error) {
-      Alert.alert("로그아웃 실패", "로그아웃 중 오류가 발생했습니다.");
+      Alert.alert("로그아웃 실패", error as string);
     }
   };
 
@@ -31,20 +38,23 @@ export default function Library() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>내서재</Text>
-      
+      <Text style={styles.title}>내 서재</Text>
+
       {user ? (
         // 로그인된 사용자 UI
         <View style={styles.userSection}>
           <Text style={styles.welcomeText}>안녕하세요!</Text>
           <Text style={styles.emailText}>{user.email}</Text>
-          
+
           <View style={styles.librarySection}>
             <Text style={styles.libraryTitle}>내 서재 목록</Text>
             <Text style={styles.emptyText}>아직 구독한 매거진이 없습니다.</Text>
           </View>
-          
-          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+
+          <TouchableOpacity
+            style={styles.signOutButton}
+            onPress={handleSignOut}
+          >
             <Text style={styles.signOutButtonText}>로그아웃</Text>
           </TouchableOpacity>
         </View>
@@ -52,13 +62,16 @@ export default function Library() {
         // 로그인하지 않은 사용자 UI
         <View style={styles.loginSection}>
           <Text style={styles.loginMessage}>
-            내서재를 이용하려면 로그인이 필요합니다
+            내 서재를 이용하려면 로그인이 필요합니다
           </Text>
-          
-          <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn}>
+
+          <TouchableOpacity
+            style={styles.googleButton}
+            onPress={handleGoogleSignIn}
+          >
             <Text style={styles.googleButtonText}>구글로 로그인</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={styles.emailButton}>
             <Text style={styles.emailButtonText}>다른 이메일로 로그인</Text>
           </TouchableOpacity>
