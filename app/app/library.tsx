@@ -41,13 +41,12 @@ export default function Library() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>내 서재</Text>
-
       {user ? (
         // 로그인된 사용자 UI
         <View style={styles.userSection}>
-          <Text style={styles.welcomeText}>안녕하세요!</Text>
-          <Text style={styles.emailText}>{user.email}</Text>
+          <Text style={styles.welcomeText}>
+            {user.user_metadata.full_name} 님, 안녕하세요
+          </Text>
 
           <View style={styles.librarySection}>
             <Text style={styles.libraryTitle}>내 서재 목록</Text>
@@ -110,12 +109,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
-    marginBottom: 5,
-  },
-  emailText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 30,
+    marginBottom: 20,
   },
   librarySection: {
     width: '100%',
