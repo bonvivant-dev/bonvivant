@@ -19,11 +19,13 @@ export default function Library() {
     }
   };
 
+  // TODO : 안드로이드에서 안됨
   const handleSignOut = async () => {
     try {
       await signOut();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      Alert.alert("로그아웃 실패", error as string);
+      Alert.alert("로그아웃 실패", "로그아웃 중 오류가 발생했습니다.");
     }
   };
 
