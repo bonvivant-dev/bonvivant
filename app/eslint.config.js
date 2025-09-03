@@ -20,6 +20,8 @@ module.exports = [
       'react/prop-types': 'off',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
+      // allow any
+      '@typescript-eslint/no-explicit-any': 'off',
 
       // General
       'prefer-const': 'error',
