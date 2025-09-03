@@ -1,2 +1,4 @@
 export * from './AuthContext'
-export { default as EmailLoginScreen } from './EmailLoginScreen'
+export * from './EmailLoginScreen'
+export * from './EmailLoginForm'
+export * from './EmailSignUpForm'
