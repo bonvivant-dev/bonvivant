@@ -24,7 +24,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const redirectTo = makeRedirectUri({
-  scheme: 'com.bonvivant.app',
+  scheme: 'bonvivant',
 })
 
 const isAndroid = Platform.OS === 'android'
@@ -149,7 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         email,
         password,
         options: {
-          emailRedirectTo: `${redirectTo}/auth-callback`,
+          emailRedirectTo: 'bonvivant://auth-callback',
         },
       })
       if (error) throw error
