@@ -17,7 +17,7 @@ interface EmailLoginScreenProps {
 }
 
 export function EmailLoginScreen({ onBack }: EmailLoginScreenProps) {
-  const [isSignUp, setIsSignUp] = useState(false)
+  const [emailForm, setEmailForm] = useState<'login' | 'signup'>('login')
 
   const handleLoginSuccess = () => {
     onBack()
@@ -25,11 +25,11 @@ export function EmailLoginScreen({ onBack }: EmailLoginScreenProps) {
 
   const handleSignUpSuccess = () => {
     // 회원가입 성공 시 로그인 모드로 전환
-    setIsSignUp(false)
+    setEmailForm('login')
   }
 
   const toggleMode = () => {
-    setIsSignUp(!isSignUp)
+    setEmailForm(emailForm === 'login' ? 'signup' : 'login')
   }
 
   return (
@@ -45,7 +45,7 @@ export function EmailLoginScreen({ onBack }: EmailLoginScreenProps) {
         </View>
 
         <View style={styles.content}>
-          {isSignUp ? (
+          {emailForm === 'signup' ? (
             <EmailSignUpForm
               onSuccess={handleSignUpSuccess}
               onToggleMode={toggleMode}

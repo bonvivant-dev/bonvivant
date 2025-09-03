@@ -5,6 +5,7 @@ import * as WebBrowser from 'expo-web-browser'
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { Alert, Platform } from 'react-native'
 
+import { AuthErrorMessage } from '../constants'
 import { supabase } from '../lib'
 
 interface AuthContextType {
@@ -145,14 +146,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const signUpWithEmail = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: 'bonvivant://auth-callback',
         },
       })
+
       if (error) throw error
+
+      if (data.user && data.user.email_confirmed_at !== null) {
+        throw new Error(AuthErrorMessage.USER_ALREADY_REGISTERED)
+      }
 
       return { success: true }
     } catch (error) {

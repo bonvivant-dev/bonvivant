@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
 } from 'react-native'
 
+import { AuthErrorMessage } from '../constants'
+
 import { useAuth } from './AuthContext'
 
 interface EmailSignUpFormProps {
@@ -16,7 +18,10 @@ interface EmailSignUpFormProps {
   onToggleMode: () => void
 }
 
-export function EmailSignUpForm({ onSuccess, onToggleMode }: EmailSignUpFormProps) {
+export function EmailSignUpForm({
+  onSuccess,
+  onToggleMode,
+}: EmailSignUpFormProps) {
   const { signUpWithEmail } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -64,9 +69,28 @@ export function EmailSignUpForm({ onSuccess, onToggleMode }: EmailSignUpFormProp
         )
       }
     } catch (error) {
-      const errorMessage =
-        (error as Error).message || '알 수 없는 오류가 발생했습니다.'
-      Alert.alert('회원가입 실패', errorMessage)
+      console.log(error)
+      const errorMessage = (error as Error).message
+
+      if (errorMessage === AuthErrorMessage.USER_ALREADY_REGISTERED) {
+        Alert.alert(
+          '이미 가입된 이메일',
+          '이미 가입된 이메일입니다. 로그인을 시도해주세요.',
+          [
+            {
+              text: '로그인하기',
+              onPress: () => onToggleMode(),
+            },
+            {
+              text: '취소',
+              style: 'cancel',
+            },
+          ]
+        )
+      } else {
+        const displayMessage = errorMessage || '알 수 없는 오류가 발생했습니다.'
+        Alert.alert('회원가입 실패', displayMessage)
+      }
     } finally {
       setLoading(false)
     }
