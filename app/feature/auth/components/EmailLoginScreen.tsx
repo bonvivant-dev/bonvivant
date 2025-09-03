@@ -1,0 +1,278 @@
+import React, { useState } from 'react'
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native'
+
+import { useAuth } from './AuthContext'
+
+interface EmailLoginScreenProps {
+  onBack: () => void
+}
+
+export default function EmailLoginScreen({ onBack }: EmailLoginScreenProps) {
+  const { signInWithEmail, signUpWithEmail } = useAuth()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [isSignUp, setIsSignUp] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const validateForm = () => {
+    if (!email.trim()) {
+      Alert.alert('오류', '이메일을 입력해주세요.')
+      return false
+    }
+    if (!password.trim()) {
+      Alert.alert('오류', '비밀번호를 입력해주세요.')
+      return false
+    }
+    if (isSignUp && password !== confirmPassword) {
+      Alert.alert('오류', '비밀번호가 일치하지 않습니다.')
+      return false
+    }
+    if (password.length < 6) {
+      Alert.alert('오류', '비밀번호는 6자 이상이어야 합니다.')
+      return false
+    }
+    return true
+  }
+
+  const onClickSignUp = async () => {
+    if (!validateForm()) return
+    setLoading(true)
+    try {
+      const result = await signUpWithEmail(email.trim(), password)
+      if (result.success) {
+        Alert.alert(
+          '회원가입 완료',
+          '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료한 후 로그인해주세요.',
+          [
+            {
+              text: '확인',
+              onPress: () => {
+                // 로그인 모드로 전환
+                setIsSignUp(false)
+                setConfirmPassword('')
+              },
+            },
+          ]
+        )
+      }
+    } catch (error) {
+      const errorMessage =
+        (error as Error).message || '알 수 없는 오류가 발생했습니다.'
+      Alert.alert('회원가입 실패', errorMessage)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const onClickLogin = async () => {
+    if (!validateForm()) return
+    setLoading(true)
+
+    try {
+      await signInWithEmail(email.trim(), password)
+      onBack()
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      Alert.alert('로그인 실패', '아이디와 비밀번호를 확인해주세요.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const toggleMode = () => {
+    setIsSignUp(!isSignUp)
+    setConfirmPassword('')
+  }
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={onBack}>
+            <Text style={styles.backButtonText}>← 뒤로</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>
+            {isSignUp ? '회원가입' : '이메일 로그인'}
+          </Text>
+        </View>
+
+        <View style={styles.form}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>이메일</Text>
+            <TextInput
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="이메일을 입력하세요"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!loading}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>비밀번호</Text>
+            <TextInput
+              style={styles.input}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="비밀번호를 입력하세요 (6자 이상)"
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!loading}
+            />
+          </View>
+
+          {isSignUp && (
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>비밀번호 확인</Text>
+              <TextInput
+                style={styles.input}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="비밀번호를 다시 입력하세요"
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!loading}
+              />
+            </View>
+          )}
+
+          <TouchableOpacity
+            style={[styles.submitButton, loading && styles.disabledButton]}
+            onPress={isSignUp ? onClickSignUp : onClickLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#FFF" />
+            ) : (
+              <Text style={styles.submitButtonText}>
+                {isSignUp ? '회원가입' : '로그인'}
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.toggleButton}
+            onPress={toggleMode}
+            disabled={loading}
+          >
+            <Text style={styles.toggleButtonText}>
+              {isSignUp
+                ? '이미 계정이 있으신가요? 로그인'
+                : '계정이 없으신가요? 회원가입'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    padding: 20,
+  },
+  header: {
+    marginBottom: 40,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    marginBottom: 20,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+  },
+  form: {
+    flex: 1,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  submitButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 10,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  disabledButton: {
+    backgroundColor: '#A0A0A0',
+  },
+  submitButtonText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  toggleButton: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  toggleButtonText: {
+    fontSize: 14,
+    color: '#007AFF',
+    textDecorationLine: 'underline',
+  },
+})

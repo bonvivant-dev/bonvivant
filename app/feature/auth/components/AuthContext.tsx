@@ -13,7 +13,10 @@ interface AuthContextType {
   loading: boolean
   signInWithGoogle: () => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<void>
-  signUpWithEmail: (email: string, password: string) => Promise<void>
+  signUpWithEmail: (
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean }>
   signOut: () => Promise<void>
   supabase: SupabaseClient
 }
@@ -123,29 +126,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }
 
   const signInWithEmail = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    if (error) throw error
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      if (error) throw error
+
+      // 세션과 사용자 정보를 명시적으로 설정
+      if (data.session && data.user) {
+        setSession(data.session)
+        setUser(data.user)
+      }
+    } catch (error) {
+      throw error
+    }
   }
 
   const signUpWithEmail = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
-    if (error) throw error
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${redirectTo}/auth-callback`,
+        },
+      })
+      if (error) throw error
+
+      return { success: true }
+    } catch (error) {
+      throw error
+    }
   }
 
   const signOut = async () => {
     try {
-      // Clear local state first
       setUser(null)
       setSession(null)
 
       // Clean up WebBrowser session on Android if needed
-      if (Platform.OS === 'android') {
+      if (isAndroid) {
         try {
           await WebBrowser.coolDownAsync()
         } catch (error) {

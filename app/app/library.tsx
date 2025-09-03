@@ -1,3 +1,4 @@
+import React, { useState } from 'react'
 import {
   Text,
   View,
@@ -7,16 +8,17 @@ import {
   Alert,
 } from 'react-native'
 
-import { useAuth } from '../feature/auth/components/AuthContext'
+import { useAuth, EmailLoginScreen } from '../feature/auth/components'
 
 export default function Library() {
   const { user, loading, signInWithGoogle, signOut } = useAuth()
+  const [showEmailLogin, setShowEmailLogin] = useState(false)
 
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle()
     } catch (error) {
-      Alert.alert('로그인 실패', error as string)
+      Alert.alert('구글 로그인 실패', error as string)
     }
   }
 
@@ -37,6 +39,10 @@ export default function Library() {
         <Text style={styles.loadingText}>로딩 중...</Text>
       </View>
     )
+  }
+
+  if (showEmailLogin) {
+    return <EmailLoginScreen onBack={() => setShowEmailLogin(false)} />
   }
 
   return (
@@ -71,10 +77,13 @@ export default function Library() {
             style={styles.googleButton}
             onPress={handleGoogleSignIn}
           >
-            <Text style={styles.googleButtonText}>구글로 로그인</Text>
+            <Text style={styles.googleButtonText}>구글 로그인</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.emailButton}>
+          <TouchableOpacity
+            style={styles.emailButton}
+            onPress={() => setShowEmailLogin(true)}
+          >
             <Text style={styles.emailButtonText}>다른 이메일로 로그인</Text>
           </TouchableOpacity>
         </View>
