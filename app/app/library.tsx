@@ -8,11 +8,17 @@ import {
   Alert,
 } from 'react-native'
 
-import { useAuth, EmailLoginScreen } from '../feature/auth/components'
+import {
+  useAuth,
+  EmailLoginScreen,
+  NameInputBottomSheet,
+} from '../feature/auth/components'
 
 export default function Library() {
   const { user, loading, signInWithGoogle, signOut } = useAuth()
   const [showEmailLogin, setShowEmailLogin] = useState(false)
+  const [showNameInputBottomSheet, setShowNameInputBottomSheet] =
+    useState(false)
 
   const handleGoogleSignIn = async () => {
     try {
@@ -22,7 +28,6 @@ export default function Library() {
     }
   }
 
-  // TODO : 안드로이드에서 안됨
   const handleSignOut = async () => {
     try {
       await signOut()
@@ -31,6 +36,9 @@ export default function Library() {
       Alert.alert('로그아웃 실패', '로그아웃 중 오류가 발생했습니다.')
     }
   }
+
+  const userName = user?.user_metadata?.full_name || ''
+  console.log(user)
 
   if (loading) {
     return (
@@ -50,9 +58,15 @@ export default function Library() {
       {user ? (
         // 로그인된 사용자 UI
         <View style={styles.userSection}>
-          <Text style={styles.welcomeText}>
-            {user.user_metadata.full_name} 님, 안녕하세요
-          </Text>
+          <TouchableOpacity onPress={() => setShowNameInputBottomSheet(true)}>
+            {userName ? (
+              <Text style={styles.welcomeText}>
+                <Text style={styles.underline}>{userName}</Text> 님, 안녕하세요
+              </Text>
+            ) : (
+              <Text style={styles.namePromptText}>닉네임을 입력해주세요</Text>
+            )}
+          </TouchableOpacity>
 
           <View style={styles.librarySection}>
             <Text style={styles.libraryTitle}>내 서재 목록</Text>
@@ -88,6 +102,12 @@ export default function Library() {
           </TouchableOpacity>
         </View>
       )}
+
+      <NameInputBottomSheet
+        visible={showNameInputBottomSheet}
+        onClose={() => setShowNameInputBottomSheet(false)}
+        username={userName}
+      />
     </View>
   )
 }
@@ -119,6 +139,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     marginBottom: 20,
+  },
+  underline: {
+    textDecorationLine: 'underline',
+    textDecorationStyle: 'solid',
+    textDecorationColor: '#333',
+  },
+  namePromptText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 20,
+    textDecorationLine: 'underline',
+    textDecorationStyle: 'solid',
+    textDecorationColor: '#333',
   },
   librarySection: {
     width: '100%',

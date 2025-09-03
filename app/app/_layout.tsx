@@ -3,6 +3,7 @@ import * as Linking from 'expo-linking'
 import { Tabs } from 'expo-router'
 import { useEffect } from 'react'
 import { Alert } from 'react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 import { AuthProvider, useAuth } from '../feature/auth'
 
@@ -84,8 +85,10 @@ function TabsLayout() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <TabsLayout />
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <TabsLayout />
+      </AuthProvider>
+    </GestureHandlerRootView>
   )
 }

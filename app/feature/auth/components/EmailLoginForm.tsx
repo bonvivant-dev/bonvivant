@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native'
 
 import { AuthErrorMessage } from '../constants'
@@ -80,6 +81,8 @@ export function EmailLoginForm({
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
+            autoComplete="off"
+            textContentType="none"
             editable={!loading}
           />
         </View>
@@ -94,6 +97,8 @@ export function EmailLoginForm({
             secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
+            autoComplete="off"
+            textContentType="none"
             editable={!loading}
           />
         </View>
@@ -163,6 +168,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 2,
+    // iOS 자동완성 스타일 무효화
+    ...(Platform.OS === 'ios' && {
+      backgroundColor: '#FFF !important',
+    }),
   },
   submitButton: {
     backgroundColor: '#007AFF',
