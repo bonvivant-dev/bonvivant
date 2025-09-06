@@ -38,7 +38,6 @@ export default function Library() {
   }
 
   const userName = user?.user_metadata?.full_name || ''
-  console.log(user)
 
   if (loading) {
     return (
