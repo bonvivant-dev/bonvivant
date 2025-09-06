@@ -1,3 +1,4 @@
+import { router } from 'expo-router'
 import React, { useState } from 'react'
 import {
   View,
@@ -13,15 +14,7 @@ import { AuthErrorMessage } from '../constants'
 
 import { useAuth } from './AuthContext'
 
-interface EmailSignUpFormProps {
-  onSuccess: () => void
-  onToggleMode: () => void
-}
-
-export function EmailSignUpForm({
-  onSuccess,
-  onToggleMode,
-}: EmailSignUpFormProps) {
+export function EmailSignUpForm() {
   const { signUpWithEmail } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -48,6 +41,19 @@ export function EmailSignUpForm({
     return true
   }
 
+  const handleSignUpSuccess = () => {
+    Alert.alert(
+      '회원가입 완료',
+      '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료한 후 로그인해주세요.',
+      [
+        {
+          text: '로그인하기',
+          onPress: () => router.replace('/login'),
+        },
+      ]
+    )
+  }
+
   const handleSignUp = async () => {
     if (!validateForm()) return
     setLoading(true)
@@ -62,14 +68,13 @@ export function EmailSignUpForm({
             {
               text: '확인',
               onPress: () => {
-                onSuccess()
+                handleSignUpSuccess()
               },
             },
           ]
         )
       }
     } catch (error) {
-      console.log(error)
       const errorMessage = (error as Error).message
 
       if (errorMessage === AuthErrorMessage.USER_ALREADY_REGISTERED) {
@@ -79,7 +84,7 @@ export function EmailSignUpForm({
           [
             {
               text: '로그인하기',
-              onPress: () => onToggleMode(),
+              onPress: () => router.back(),
             },
             {
               text: '취소',
@@ -98,16 +103,14 @@ export function EmailSignUpForm({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>회원가입</Text>
-
       <View style={styles.form}>
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>이메일</Text>
           <TextInput
             style={styles.input}
             value={email}
             onChangeText={setEmail}
-            placeholder="이메일을 입력하세요"
+            placeholder="이메일"
+            placeholderTextColor="#999"
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
@@ -116,12 +119,12 @@ export function EmailSignUpForm({
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>비밀번호</Text>
           <TextInput
             style={styles.input}
             value={password}
             onChangeText={setPassword}
-            placeholder="비밀번호를 입력하세요 (6자 이상)"
+            placeholder="비밀번호 (6자 이상)"
+            placeholderTextColor="#999"
             secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
@@ -130,12 +133,12 @@ export function EmailSignUpForm({
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>비밀번호 확인</Text>
           <TextInput
             style={styles.input}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
-            placeholder="비밀번호를 다시 입력하세요"
+            placeholder="비밀번호 확인"
+            placeholderTextColor="#999"
             secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
@@ -157,12 +160,10 @@ export function EmailSignUpForm({
 
         <TouchableOpacity
           style={styles.toggleButton}
-          onPress={onToggleMode}
+          onPress={() => router.back()}
           disabled={loading}
         >
-          <Text style={styles.toggleButtonText}>
-            이미 계정이 있으신가요? 로그인
-          </Text>
+          <Text style={styles.toggleButtonText}>로그인하기</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -173,41 +174,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 40,
-  },
   form: {
     flex: 1,
   },
   inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    marginBottom: 15,
   },
   input: {
     backgroundColor: '#FFF',
-    borderRadius: 10,
+    borderRadius: 8,
     paddingHorizontal: 15,
-    paddingVertical: 12,
+    paddingVertical: 15,
     fontSize: 16,
     borderWidth: 1,
     borderColor: '#E0E0E0',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
   },
   submitButton: {
     backgroundColor: '#007AFF',

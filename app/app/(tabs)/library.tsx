@@ -1,3 +1,4 @@
+import { router } from 'expo-router'
 import React, { useState } from 'react'
 import {
   Text,
@@ -8,25 +9,36 @@ import {
   Alert,
 } from 'react-native'
 
-import {
-  useAuth,
-  EmailLoginScreen,
-  NameInputBottomSheet,
-} from '../feature/auth/components'
+import { useAuth, NameInputBottomSheet } from '../../feature/auth/components'
+
+function LoginRequired() {
+  const handleLoginButtonPress = () => {
+    router.push('/login')
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.loginSection}>
+        <Text style={styles.loginMessage}>
+          내 서재를 이용하려면 로그인이 필요합니다
+        </Text>
+
+        <TouchableOpacity
+          style={styles.loginButton}
+          onPress={handleLoginButtonPress}
+        >
+          <Text style={styles.loginButtonText}>로그인</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  )
+}
 
 export default function Library() {
-  const { user, loading, signInWithGoogle, signOut } = useAuth()
-  const [showEmailLogin, setShowEmailLogin] = useState(false)
+  const { user, loading, signOut } = useAuth()
+  const userName = user?.user_metadata?.full_name || ''
   const [showNameInputBottomSheet, setShowNameInputBottomSheet] =
     useState(false)
-
-  const handleGoogleSignIn = async () => {
-    try {
-      await signInWithGoogle()
-    } catch (error) {
-      Alert.alert('구글 로그인 실패', error as string)
-    }
-  }
 
   const handleSignOut = async () => {
     try {
@@ -37,8 +49,6 @@ export default function Library() {
     }
   }
 
-  const userName = user?.user_metadata?.full_name || ''
-
   if (loading) {
     return (
       <View style={styles.container}>
@@ -48,60 +58,32 @@ export default function Library() {
     )
   }
 
-  if (showEmailLogin) {
-    return <EmailLoginScreen onBack={() => setShowEmailLogin(false)} />
+  if (!user) {
+    return <LoginRequired />
   }
 
   return (
     <View style={styles.container}>
-      {user ? (
-        // 로그인된 사용자 UI
-        <View style={styles.userSection}>
-          <TouchableOpacity onPress={() => setShowNameInputBottomSheet(true)}>
-            {userName ? (
-              <Text style={styles.welcomeText}>
-                <Text style={styles.underline}>{userName}</Text> 님, 안녕하세요
-              </Text>
-            ) : (
-              <Text style={styles.namePromptText}>닉네임을 입력해주세요</Text>
-            )}
-          </TouchableOpacity>
+      <View style={styles.userSection}>
+        <TouchableOpacity onPress={() => setShowNameInputBottomSheet(true)}>
+          {userName ? (
+            <Text style={styles.welcomeText}>
+              <Text style={styles.underline}>{userName}</Text> 님, 안녕하세요
+            </Text>
+          ) : (
+            <Text style={styles.namePromptText}>닉네임을 입력해주세요</Text>
+          )}
+        </TouchableOpacity>
 
-          <View style={styles.librarySection}>
-            <Text style={styles.libraryTitle}>내 서재 목록</Text>
-            <Text style={styles.emptyText}>아직 구독한 매거진이 없습니다.</Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.signOutButton}
-            onPress={handleSignOut}
-          >
-            <Text style={styles.signOutButtonText}>로그아웃</Text>
-          </TouchableOpacity>
+        <View style={styles.librarySection}>
+          <Text style={styles.libraryTitle}>내 서재 목록</Text>
+          <Text style={styles.emptyText}>아직 구독한 매거진이 없습니다.</Text>
         </View>
-      ) : (
-        // 로그인하지 않은 사용자 UI
-        <View style={styles.loginSection}>
-          <Text style={styles.loginMessage}>
-            내 서재를 이용하려면 로그인이 필요합니다
-          </Text>
 
-          <TouchableOpacity
-            style={styles.googleButton}
-            onPress={handleGoogleSignIn}
-          >
-            <Text style={styles.googleButtonText}>구글 로그인</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.emailButton}
-            onPress={() => setShowEmailLogin(true)}
-          >
-            <Text style={styles.emailButtonText}>다른 이메일로 로그인</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
+        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+          <Text style={styles.signOutButtonText}>로그아웃</Text>
+        </TouchableOpacity>
+      </View>
       <NameInputBottomSheet
         visible={showNameInputBottomSheet}
         onClose={() => setShowNameInputBottomSheet(false)}
@@ -200,31 +182,15 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     lineHeight: 24,
   },
-  googleButton: {
-    backgroundColor: '#4285F4',
+  loginButton: {
+    backgroundColor: '#007AFF',
     paddingHorizontal: 40,
     paddingVertical: 15,
     borderRadius: 8,
-    marginBottom: 15,
     width: '80%',
   },
-  googleButtonText: {
+  loginButtonText: {
     color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  emailButton: {
-    backgroundColor: '#FFF',
-    paddingHorizontal: 40,
-    paddingVertical: 15,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#DDD',
-    width: '80%',
-  },
-  emailButtonText: {
-    color: '#333',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',

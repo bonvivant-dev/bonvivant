@@ -1,13 +1,12 @@
-import { Ionicons } from '@expo/vector-icons'
 import * as Linking from 'expo-linking'
-import { Tabs } from 'expo-router'
+import { Stack } from 'expo-router'
 import { useEffect } from 'react'
 import { Alert } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 import { AuthProvider, useAuth } from '../feature/auth'
 
-function TabsLayout() {
+function RootLayoutNav() {
   const { supabase } = useAuth()
 
   useEffect(() => {
@@ -52,34 +51,23 @@ function TabsLayout() {
   }, [supabase])
 
   return (
-    <Tabs>
-      <Tabs.Screen
-        name="index"
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="login"
         options={{
-          title: '홈',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'home' : 'home-outline'}
-              size={24}
-              color={color}
-            />
-          ),
+          presentation: 'card',
+          headerShown: false,
         }}
       />
-      <Tabs.Screen
-        name="library"
+      <Stack.Screen
+        name="signup"
         options={{
-          title: '내 서재',
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? 'library' : 'library-outline'}
-              size={24}
-              color={color}
-            />
-          ),
+          presentation: 'card',
+          headerShown: false,
         }}
       />
-    </Tabs>
+    </Stack>
   )
 }
 
@@ -87,7 +75,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
-        <TabsLayout />
+        <RootLayoutNav />
       </AuthProvider>
     </GestureHandlerRootView>
   )

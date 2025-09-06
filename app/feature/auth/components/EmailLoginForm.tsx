@@ -1,3 +1,4 @@
+import { router, useLocalSearchParams } from 'expo-router'
 import React, { useState } from 'react'
 import {
   View,
@@ -7,23 +8,16 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  Platform,
 } from 'react-native'
 
 import { AuthErrorMessage } from '../constants'
 
 import { useAuth } from './AuthContext'
 
-interface EmailLoginFormProps {
-  onSuccess: () => void
-  onToggleMode: () => void
-}
-
-export function EmailLoginForm({
-  onSuccess,
-  onToggleMode,
-}: EmailLoginFormProps) {
+export function EmailLoginForm() {
   const { signInWithEmail } = useAuth()
+  const { returnUrl } = useLocalSearchParams<{ returnUrl?: string }>()
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -50,12 +44,16 @@ export function EmailLoginForm({
 
     try {
       await signInWithEmail(email.trim(), password)
-      onSuccess()
+      if (returnUrl) {
+        router.replace(returnUrl as any)
+      } else if (router.canGoBack()) {
+        router.back()
+      } else {
+        router.replace('/')
+      }
     } catch (error) {
-      console.log(error)
       // get error message
       const errorMessage = (error as Error).message
-      console.log(errorMessage)
       if (errorMessage === AuthErrorMessage.EMAIL_NOT_CONFIRMED) {
         Alert.alert('로그인 실패', '이메일 인증을 완료해주세요.')
       } else {
@@ -66,18 +64,20 @@ export function EmailLoginForm({
     }
   }
 
+  const handleSignup = () => {
+    router.push('/signup')
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>이메일 로그인</Text>
-
       <View style={styles.form}>
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>이메일</Text>
           <TextInput
             style={styles.input}
             value={email}
             onChangeText={setEmail}
-            placeholder="이메일을 입력하세요"
+            placeholder="이메일"
+            placeholderTextColor="#999"
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
@@ -88,12 +88,12 @@ export function EmailLoginForm({
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>비밀번호</Text>
           <TextInput
             style={styles.input}
             value={password}
             onChangeText={setPassword}
-            placeholder="비밀번호를 입력하세요 (6자 이상)"
+            placeholder="비밀번호"
+            placeholderTextColor="#999"
             secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
@@ -117,12 +117,10 @@ export function EmailLoginForm({
 
         <TouchableOpacity
           style={styles.toggleButton}
-          onPress={onToggleMode}
+          onPress={handleSignup}
           disabled={loading}
         >
-          <Text style={styles.toggleButtonText}>
-            계정이 없으신가요? 회원가입
-          </Text>
+          <Text style={styles.toggleButtonText}>회원가입하기</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -133,45 +131,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 40,
-  },
   form: {
     flex: 1,
   },
   inputGroup: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
+    marginBottom: 15,
   },
   input: {
     backgroundColor: '#FFF',
-    borderRadius: 10,
+    borderRadius: 8,
     paddingHorizontal: 15,
-    paddingVertical: 12,
+    paddingVertical: 15,
     fontSize: 16,
     borderWidth: 1,
     borderColor: '#E0E0E0',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-    // iOS 자동완성 스타일 무효화
-    ...(Platform.OS === 'ios' && {
-      backgroundColor: '#FFF !important',
-    }),
   },
   submitButton: {
     backgroundColor: '#007AFF',
