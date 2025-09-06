@@ -3,12 +3,13 @@ import React, { useState } from 'react'
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert,
   ActivityIndicator,
 } from 'react-native'
+
+import { TextField } from '@/feature/shared'
 
 import { AuthErrorMessage } from '../constants'
 
@@ -72,33 +73,21 @@ export function EmailLoginForm() {
     <View style={styles.container}>
       <View style={styles.form}>
         <View style={styles.inputGroup}>
-          <TextInput
-            style={styles.input}
+          <TextField
             value={email}
             onChangeText={setEmail}
             placeholder="이메일"
-            placeholderTextColor="#999"
             keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="off"
-            textContentType="none"
             editable={!loading}
           />
         </View>
 
         <View style={styles.inputGroup}>
-          <TextInput
-            style={styles.input}
+          <TextField
             value={password}
             onChangeText={setPassword}
             placeholder="비밀번호"
-            placeholderTextColor="#999"
             secureTextEntry
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="off"
-            textContentType="none"
             editable={!loading}
           />
         </View>
@@ -136,15 +125,6 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     marginBottom: 15,
-  },
-  input: {
-    backgroundColor: '#FFF',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
   },
   submitButton: {
     backgroundColor: '#007AFF',
