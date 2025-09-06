@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import {
   Text,
   View,
@@ -19,16 +19,11 @@ export default function LoginPage() {
   const { user, loading, signInWithGoogle } = useAuth()
   const { returnUrl } = useLocalSearchParams<{ returnUrl?: string }>()
 
-  const handleLoginSuccess = () => {
-    // returnUrl이 있으면 해당 경로로, 없으면 이전 화면으로 돌아가거나 홈으로 이동
-    if (returnUrl) {
-      router.replace(returnUrl as any)
-    } else if (router.canGoBack()) {
-      router.back()
-    } else {
-      router.replace('/')
-    }
-  }
+  const handleLoginSuccess = useCallback(() => {
+    if (returnUrl) return router.replace(returnUrl as any)
+    if (router.canGoBack()) return router.back()
+    router.replace('/')
+  }, [returnUrl])
 
   const handleGoogleSignIn = async () => {
     try {
@@ -44,7 +39,7 @@ export default function LoginPage() {
     if (user && !loading) {
       handleLoginSuccess()
     }
-  }, [user, loading])
+  }, [user, loading, handleLoginSuccess])
 
   if (user && !loading) {
     return null
