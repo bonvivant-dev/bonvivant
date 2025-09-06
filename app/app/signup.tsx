@@ -1,16 +1,16 @@
-import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
 import React, { useEffect } from 'react'
 import {
   Text,
   View,
-  TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native'
+
+import { PageHeader } from '@/feature/shared'
 
 import { useAuth, EmailSignUpForm } from '../feature/auth/components'
 
@@ -48,16 +48,7 @@ export default function SignUpPage() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>회원가입</Text>
-        <View style={styles.placeholder} />
-      </View>
+      <PageHeader title="회원가입" />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <EmailSignUpForm />
@@ -76,37 +67,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5F5F5',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 20,
-    backgroundColor: '#FFF',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  placeholder: {
-    width: 40,
   },
   content: {
     flex: 1,

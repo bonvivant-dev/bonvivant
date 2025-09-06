@@ -1,10 +1,8 @@
-import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
 import React, { useCallback, useEffect } from 'react'
 import {
   Text,
   View,
-  TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
   Alert,
@@ -16,6 +14,7 @@ import {
 
 import IconGoogle from '@/assets/icons/ic-google.svg'
 import { useAuth, EmailLoginForm } from '@/feature/auth/components'
+import { PageHeader } from '@/feature/shared'
 
 export default function LoginPage() {
   const { user, loading, signInWithGoogle } = useAuth()
@@ -43,10 +42,6 @@ export default function LoginPage() {
     }
   }, [user, loading, handleLoginSuccess])
 
-  if (user && !loading) {
-    return null
-  }
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -60,16 +55,7 @@ export default function LoginPage() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>로그인</Text>
-        <View style={styles.placeholder} />
-      </View>
+      <PageHeader title="로그인" />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <EmailLoginForm />
@@ -99,30 +85,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5F5F5',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: '#FFF',
-    shadowColor: '#000',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  placeholder: {
-    width: 40,
   },
   content: {
     flex: 1,
