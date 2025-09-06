@@ -53,20 +53,14 @@ export function EmailLoginForm() {
         router.replace('/')
       }
     } catch (error) {
-      // get error message
       const errorMessage = (error as Error).message
       if (errorMessage === AuthErrorMessage.EMAIL_NOT_CONFIRMED) {
-        Alert.alert('로그인 실패', '이메일 인증을 완료해주세요.')
-      } else {
-        Alert.alert('로그인 실패', '아이디와 비밀번호를 확인해주세요.')
+        return Alert.alert('로그인 실패', '이메일 인증을 완료해주세요.')
       }
+      Alert.alert('로그인 실패', '아이디와 비밀번호를 확인해주세요.')
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleSignup = () => {
-    router.push('/signup')
   }
 
   return (
@@ -106,7 +100,7 @@ export function EmailLoginForm() {
 
         <TouchableOpacity
           style={styles.toggleButton}
-          onPress={handleSignup}
+          onPress={() => router.push('/signup')}
           disabled={loading}
         >
           <Text style={styles.toggleButtonText}>회원가입하기</Text>
