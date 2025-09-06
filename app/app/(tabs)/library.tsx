@@ -9,26 +9,21 @@ import {
   Alert,
 } from 'react-native'
 
+import { Button } from '@/feature/shared'
+
 import { useAuth, NameInputBottomSheet } from '../../feature/auth/components'
 
 function LoginRequired() {
-  const handleLoginButtonPress = () => {
-    router.push('/login')
-  }
-
   return (
     <View style={styles.container}>
       <View style={styles.loginSection}>
         <Text style={styles.loginMessage}>
-          내 서재를 이용하려면 로그인이 필요합니다
+          내 서재를 이용하려면 로그인이 필요해요
         </Text>
 
-        <TouchableOpacity
-          style={styles.loginButton}
-          onPress={handleLoginButtonPress}
-        >
-          <Text style={styles.loginButtonText}>로그인</Text>
-        </TouchableOpacity>
+        <Button onPress={() => router.push('/login')}>
+          로그인하고 이용하기
+        </Button>
       </View>
     </View>
   )
@@ -41,12 +36,13 @@ export default function Library() {
     useState(false)
 
   const handleSignOut = async () => {
-    try {
-      await signOut()
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      Alert.alert('로그아웃 실패', '로그아웃 중 오류가 발생했습니다.')
-    }
+    Alert.alert('로그아웃', '로그아웃하시겠습니까?', [
+      {
+        text: '취소',
+        style: 'cancel',
+      },
+      { text: '확인', onPress: async () => await signOut() },
+    ])
   }
 
   if (loading) {
@@ -79,10 +75,12 @@ export default function Library() {
           <Text style={styles.libraryTitle}>내 서재 목록</Text>
           <Text style={styles.emptyText}>아직 구독한 매거진이 없습니다.</Text>
         </View>
-
-        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <Text style={styles.signOutButtonText}>로그아웃</Text>
-        </TouchableOpacity>
+        <Button
+          onPress={handleSignOut}
+          style={{ width: '50%', backgroundColor: '#FF3B30' }}
+        >
+          로그아웃
+        </Button>
       </View>
       <NameInputBottomSheet
         visible={showNameInputBottomSheet}
@@ -100,12 +98,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F5F5F5',
     padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 30,
-    color: '#333',
   },
   loadingText: {
     marginTop: 10,
@@ -160,17 +152,6 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
   },
-  signOutButton: {
-    backgroundColor: '#FF3B30',
-    paddingHorizontal: 30,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  signOutButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   loginSection: {
     alignItems: 'center',
     width: '100%',
@@ -179,20 +160,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 20,
     lineHeight: 24,
-  },
-  loginButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 40,
-    paddingVertical: 15,
-    borderRadius: 8,
-    width: '80%',
-  },
-  loginButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
   },
 })

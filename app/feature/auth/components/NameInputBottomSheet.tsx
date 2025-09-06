@@ -1,19 +1,16 @@
-import BottomSheet, {
-  BottomSheetView,
-  BottomSheetTextInput,
-} from '@gorhom/bottom-sheet'
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet'
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react'
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   Alert,
-  ActivityIndicator,
   Platform,
   KeyboardAvoidingView,
   Keyboard,
 } from 'react-native'
+
+import { Button, TextField } from '@/feature/shared'
 
 import { useAuth } from './AuthContext'
 
@@ -38,7 +35,7 @@ export function NameInputBottomSheet({
 
   // variables
   const snapPoints = useMemo(() => {
-    return keyboardVisible ? ['75%'] : ['50%', '75%']
+    return keyboardVisible ? ['70%'] : ['50%', '70%']
   }, [keyboardVisible])
 
   // callbacks
@@ -147,9 +144,8 @@ export function NameInputBottomSheet({
             <Text style={styles.title}>닉네임을 입력해주세요</Text>
           </View>
 
-          <View style={styles.content}>
-            <BottomSheetTextInput
-              style={styles.input}
+          <View style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
+            <TextField
               value={name}
               onChangeText={setName}
               placeholder="이름 입력"
@@ -159,25 +155,21 @@ export function NameInputBottomSheet({
             />
 
             <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
+              <Button
                 onPress={handleCancel}
                 disabled={loading}
+                style={{ width: '50%', flex: 1, backgroundColor: '#F5F5F5' }}
+                textColor="#000"
               >
-                <Text style={styles.cancelButtonText}>취소</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.button, styles.saveButton]}
+                취소
+              </Button>
+              <Button
                 onPress={handleSave}
                 disabled={loading}
+                style={{ width: '50%', flex: 1 }}
               >
-                {loading ? (
-                  <ActivityIndicator size="small" color="#FFF" />
-                ) : (
-                  <Text style={styles.saveButtonText}>저장</Text>
-                )}
-              </TouchableOpacity>
+                저장
+              </Button>
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -213,7 +205,8 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginTop: 20,
+    marginBottom: 20,
   },
   title: {
     fontSize: 20,
@@ -221,52 +214,9 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 8,
   },
-  subtitle: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  content: {
-    flex: 1,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    fontSize: 16,
-    marginBottom: 30,
-    backgroundColor: '#F9F9F9',
-  },
   buttonContainer: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 15,
     marginBottom: Platform.OS === 'ios' ? 30 : 20,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: '#F5F5F5',
-    borderWidth: 1,
-    borderColor: '#DDD',
-  },
-  cancelButtonText: {
-    color: '#666',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  saveButton: {
-    backgroundColor: '#007AFF',
-  },
-  saveButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
 })

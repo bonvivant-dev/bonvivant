@@ -13,9 +13,10 @@ interface Props {
   disabled?: boolean
   onPress?: () => void
   style?: StyleProp<ViewStyle>
+  textColor?: string
 }
 
-export function Button({ children, loading, disabled, onPress, style }: Props) {
+export function Button({ children, loading, disabled, onPress, style, textColor = 'white' }: Props) {
   return (
     <Pressable
       onPress={onPress}
@@ -38,7 +39,7 @@ export function Button({ children, loading, disabled, onPress, style }: Props) {
       {loading ? (
         <ActivityIndicator color="white" />
       ) : typeof children === 'string' ? (
-        <Text style={styles.buttonText}>{children}</Text>
+        <Text style={[styles.buttonText, { color: textColor }]}>{children}</Text>
       ) : (
         children
       )}

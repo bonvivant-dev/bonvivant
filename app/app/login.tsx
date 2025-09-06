@@ -11,9 +11,11 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
 } from 'react-native'
 
-import { useAuth, EmailLoginForm } from '../feature/auth/components'
+import IconGoogle from '@/assets/icons/ic-google.svg'
+import { useAuth, EmailLoginForm } from '@/feature/auth/components'
 
 export default function LoginPage() {
   const { user, loading, signInWithGoogle } = useAuth()
@@ -49,7 +51,6 @@ export default function LoginPage() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>로딩 중...</Text>
       </View>
     )
   }
@@ -78,13 +79,11 @@ export default function LoginPage() {
           <Text style={styles.dividerText}>또는</Text>
           <View style={styles.dividerLine} />
         </View>
-
-        <TouchableOpacity
-          style={styles.googleButton}
-          onPress={handleGoogleSignIn}
-        >
-          <Text style={styles.googleButtonText}>구글로 로그인</Text>
-        </TouchableOpacity>
+        <View style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Pressable onPress={handleGoogleSignIn}>
+            <IconGoogle width={32} height={32} />
+          </Pressable>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   )
@@ -106,17 +105,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingTop: 60,
     paddingBottom: 20,
     backgroundColor: '#FFF',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   backButton: {
     width: 40,
@@ -150,23 +142,5 @@ const styles = StyleSheet.create({
     marginHorizontal: 15,
     color: '#666',
     fontSize: 14,
-  },
-  loadingText: {
-    marginTop: 10,
-    color: '#666',
-  },
-  googleButton: {
-    backgroundColor: '#4285F4',
-    paddingHorizontal: 40,
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  googleButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
   },
 })

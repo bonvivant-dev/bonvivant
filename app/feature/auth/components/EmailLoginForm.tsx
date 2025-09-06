@@ -1,15 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router'
 import React, { useState } from 'react'
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
-} from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 
-import { TextField } from '@/feature/shared'
+import { Button, TextField } from '@/feature/shared'
 
 import { AuthErrorMessage } from '../constants'
 
@@ -64,91 +57,45 @@ export function EmailLoginForm() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.form}>
-        <View style={styles.inputGroup}>
-          <TextField
-            value={email}
-            onChangeText={setEmail}
-            placeholder="이메일"
-            keyboardType="email-address"
-            editable={!loading}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <TextField
-            value={password}
-            onChangeText={setPassword}
-            placeholder="비밀번호"
-            secureTextEntry
-            editable={!loading}
-          />
-        </View>
-
-        <TouchableOpacity
-          style={[styles.submitButton, loading && styles.disabledButton]}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color="#FFF" />
-          ) : (
-            <Text style={styles.submitButtonText}>로그인</Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.toggleButton}
-          onPress={() => router.push('/signup')}
-          disabled={loading}
-        >
-          <Text style={styles.toggleButtonText}>회원가입하기</Text>
-        </TouchableOpacity>
+    <View>
+      <View style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
+        <TextField
+          value={email}
+          onChangeText={setEmail}
+          placeholder="이메일"
+          keyboardType="email-address"
+          editable={!loading}
+        />
+        <TextField
+          value={password}
+          onChangeText={setPassword}
+          placeholder="비밀번호"
+          secureTextEntry
+          editable={!loading}
+        />
+        <Button loading={loading} onPress={handleLogin}>
+          로그인
+        </Button>
       </View>
+
+      <TouchableOpacity
+        style={styles.toggleButton}
+        onPress={() => router.push('/signup')}
+        disabled={loading}
+      >
+        <Text style={styles.toggleButtonText}>회원가입하기</Text>
+      </TouchableOpacity>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  form: {
-    flex: 1,
-  },
-  inputGroup: {
-    marginBottom: 15,
-  },
-  submitButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 10,
-    paddingVertical: 15,
-    alignItems: 'center',
-    marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  disabledButton: {
-    backgroundColor: '#A0A0A0',
-  },
-  submitButtonText: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: '600',
-  },
   toggleButton: {
     marginTop: 20,
     alignItems: 'center',
   },
   toggleButtonText: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#007AFF',
     textDecorationLine: 'underline',
   },

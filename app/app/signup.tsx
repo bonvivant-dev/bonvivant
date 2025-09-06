@@ -18,7 +18,6 @@ export default function SignUpPage() {
   const { user, loading } = useAuth()
   const { returnUrl } = useLocalSearchParams<{ returnUrl?: string }>()
 
-  // 이미 로그인된 사용자는 홈으로 리다이렉트
   useEffect(() => {
     if (user && !loading) {
       if (returnUrl) {
