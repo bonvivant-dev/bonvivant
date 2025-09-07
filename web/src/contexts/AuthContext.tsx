@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
-import { createClient } from "@/utils/supabase/client";
+import { supabase } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 interface AuthContextType {
   user: User | null;
@@ -29,12 +30,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-
-  // Create client-side supabase instance
-  const supabase = createClient();
+  const router = useRouter();
 
   useEffect(() => {
-    // Get initial session
     const getInitialSession = async () => {
       try {
         const {
@@ -43,7 +41,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } = await supabase.auth.getSession();
 
         if (error) {
-          console.error("Session error:", error);
           setSession(null);
           setUser(null);
           setLoading(false);
@@ -60,7 +57,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false);
         }
       } catch (error) {
-        console.error("Error getting initial session:", error);
         setLoading(false);
       }
     };
@@ -94,8 +90,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle();
 
       if (error) {
-        console.error("Profile query error:", error);
-        // Try to create profile if it doesn't exist
         const { data: newProfile, error: insertError } = await supabase
           .from("profiles")
           .insert([
@@ -135,7 +129,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (error) {
-      console.error("Error in checkAdminStatus:", error);
       setIsAdmin(false);
     } finally {
       setLoading(false);
@@ -152,7 +145,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (error) throw error;
     } catch (error) {
-      console.error("Google sign in error:", error);
       throw error;
     }
   };
@@ -165,7 +157,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (error) throw error;
     } catch (error) {
-      console.error("Email sign in error:", error);
       throw error;
     }
   };
@@ -178,9 +169,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setSession(null);
       setIsAdmin(false);
+      router.replace("/login");
     } catch (error) {
-      console.error("Sign out error:", error);
-      // Clear state even if signOut fails
       setUser(null);
       setSession(null);
       setIsAdmin(false);
