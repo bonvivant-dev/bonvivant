@@ -1,17 +1,19 @@
 {
   "expo": {
-    "name": "app",
+    "name": "bonvivant",
     "slug": "bonvivant",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "app",
+    "scheme": "bonvivant",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "bundleIdentifier": "com.bonvivant.app",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.bonvivant.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
