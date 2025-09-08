@@ -167,19 +167,6 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-
-              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
-                <h4 className="text-sm font-medium text-green-800 mb-2">
-                  로그인 시스템 구현 완료! ✅
-                </h4>
-                <ul className="text-sm text-green-700 space-y-1">
-                  <li>• Google OAuth 로그인 지원</li>
-                  <li>• 이메일/비밀번호 로그인 지원</li>
-                  <li>• 관리자 권한 검증</li>
-                  <li>• Supabase 연동 완료</li>
-                  <li>• 자동 로그아웃 및 리다이렉트</li>
-                </ul>
-              </div>
             </div>
           </div>
         </div>
