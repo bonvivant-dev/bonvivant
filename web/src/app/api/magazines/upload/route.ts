@@ -6,21 +6,16 @@ import pdf2pic from 'pdf2pic'
 import sharp from 'sharp'
 import { v4 as uuidv4 } from 'uuid'
 
-import { createClient } from '@/utils/supabase/server'
+import { supabase } from '@/utils/supabase/client'
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-
     const {
       data: { user },
     } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    // Use service client for storage operations
-    const serviceSupabase = await createClient()
 
     const formData = await request.formData()
     const file = formData.get('file') as File
@@ -81,7 +76,7 @@ export async function POST(request: NextRequest) {
             .toBuffer()
 
           const imageName = `image_${i}.webp`
-          const { error: uploadError } = await serviceSupabase.storage
+          const { error: uploadError } = await supabase.storage
             .from('covers')
             .upload(`${storageKey}/${imageName}`, webpBuffer, {
               contentType: 'image/webp',
@@ -101,7 +96,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      const { error: pdfUploadError } = await serviceSupabase.storage
+      const { error: pdfUploadError } = await supabase.storage
         .from('magazines')
         .upload(`${storageKey}/${safeFileName}`, buffer, {
           contentType: 'application/pdf',

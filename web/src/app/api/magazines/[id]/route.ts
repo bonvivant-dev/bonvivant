@@ -2,14 +2,14 @@ import path from 'path'
 
 import { NextRequest, NextResponse } from 'next/server'
 
-import { createClient } from '@/utils/supabase/server'
+import { supabaseServerClient } from '@/utils/supabase/server'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const supabase = await createClient()
+    const supabase = await supabaseServerClient()
 
     const {
       data: { user },
@@ -47,7 +47,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const supabase = await createClient()
+    const supabase = await supabaseServerClient()
 
     const {
       data: { user },
@@ -148,7 +148,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const supabase = await createClient()
+    const supabase = await supabaseServerClient()
 
     const {
       data: { user },

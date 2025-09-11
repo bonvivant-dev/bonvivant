@@ -1,34 +1,35 @@
-import { createClient } from "@/utils/supabase/server";
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from 'next/server'
+
+import { supabaseServerClient } from '@/utils/supabase/server'
 
 export async function middleware(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const response = NextResponse.next();
+    const supabase = await supabaseServerClient()
+    const response = NextResponse.next()
 
     // Refresh session if expired - required for Server Components
     const {
       data: { session },
-    } = await supabase.auth.getSession();
+    } = await supabase.auth.getSession()
 
-    const isLoginPage = request.nextUrl.pathname === "/login";
-    const isAuthCallback = request.nextUrl.pathname === "/auth/callback";
+    const isLoginPage = request.nextUrl.pathname === '/login'
+    const isAuthCallback = request.nextUrl.pathname === '/auth/callback'
 
     // Allow access to auth callback without session
     if (isAuthCallback) {
-      return response;
+      return response
     }
 
     if (!session && !isLoginPage) {
       // No session and not on login page - redirect to login
-      const loginUrl = new URL("/login", request.url);
-      return NextResponse.redirect(loginUrl);
+      const loginUrl = new URL('/login', request.url)
+      return NextResponse.redirect(loginUrl)
     }
 
     if (session && isLoginPage) {
       // Has session but on login page - redirect to home
-      const homeUrl = new URL("/", request.url);
-      return NextResponse.redirect(homeUrl);
+      const homeUrl = new URL('/', request.url)
+      return NextResponse.redirect(homeUrl)
     }
 
     // if (session && !isLoginPage) {
@@ -47,10 +48,11 @@ export async function middleware(request: NextRequest) {
     //   }
     // }
 
-    return response;
+    return response
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (e) {
-    const loginUrl = new URL("/login", request.url);
-    return NextResponse.redirect(loginUrl);
+    const loginUrl = new URL('/login', request.url)
+    return NextResponse.redirect(loginUrl)
   }
 }
 
@@ -62,6 +64,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
-};
+}
