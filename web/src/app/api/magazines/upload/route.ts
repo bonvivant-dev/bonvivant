@@ -6,10 +6,11 @@ import pdf2pic from 'pdf2pic'
 import sharp from 'sharp'
 import { v4 as uuidv4 } from 'uuid'
 
-import { supabase } from '@/utils/supabase/client'
+import { supabaseServerClient } from '@/utils/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await supabaseServerClient(true)
     const {
       data: { user },
     } = await supabase.auth.getUser()
