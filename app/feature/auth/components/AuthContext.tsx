@@ -5,8 +5,9 @@ import * as WebBrowser from 'expo-web-browser'
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { Alert, Platform } from 'react-native'
 
+import { supabase } from '@/feature/shared'
+
 import { AuthErrorMessage } from '../constants'
-import { supabase } from '../lib'
 
 interface AuthContextType {
   user: User | null
