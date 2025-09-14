@@ -1,5 +1,6 @@
 import * as Linking from 'expo-linking'
 import { Stack } from 'expo-router'
+import { OverlayProvider } from 'overlay-kit'
 import { useEffect } from 'react'
 import { Alert } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -75,7 +76,9 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
-        <RootLayoutNav />
+        <OverlayProvider>
+          <RootLayoutNav />
+        </OverlayProvider>
       </AuthProvider>
     </GestureHandlerRootView>
   )
