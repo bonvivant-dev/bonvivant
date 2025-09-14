@@ -1,3 +1,4 @@
+import { overlay } from 'overlay-kit'
 import {
   Text,
   View,
@@ -7,19 +8,25 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-import { MagazineItem, useMagazines, Magazine } from '@/feature/magazines'
+import {
+  MagazineItem,
+  MagazineDetailModal,
+  useMagazines,
+  Magazine,
+} from '@/feature/magazines'
 
 const ITEM_MARGIN = 12
+const MAGAZINE_GRID_COLUMNS = 3
 
 export default function Index() {
   const { magazines, loading, error } = useMagazines()
 
   // 3의 배수가 되도록 빈 슬롯 추가
   const createGridData = (data: Magazine[]) => {
-    const remainder = data.length % 3
+    const remainder = data.length % MAGAZINE_GRID_COLUMNS
     if (remainder === 0) return data
 
-    const emptySlots = 3 - remainder
+    const emptySlots = MAGAZINE_GRID_COLUMNS - remainder
     const gridData: (Magazine | null)[] = [...data]
 
     for (let i = 0; i < emptySlots; i++) {
@@ -30,8 +37,13 @@ export default function Index() {
   }
 
   const handleMagazinePress = (magazine: Magazine) => {
-    // TODO: 매거진 상세 페이지로 이동
-    console.log('Magazine pressed:', magazine.title)
+    overlay.open(({ isOpen, close }) => (
+      <MagazineDetailModal
+        visible={isOpen}
+        magazine={magazine}
+        onClose={close}
+      />
+    ))
   }
 
   if (loading) {
@@ -69,7 +81,7 @@ export default function Index() {
         renderItem={({ item }) => (
           <MagazineItem magazine={item} onPress={handleMagazinePress} />
         )}
-        numColumns={3}
+        numColumns={MAGAZINE_GRID_COLUMNS}
         keyExtractor={(item, index) => item?.id || `empty-${index}`}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
