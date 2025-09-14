@@ -1,11 +1,11 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 
 import { useAuth } from '@/contexts/AuthContext'
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -49,29 +49,28 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Bonvivant 관리자 로그인
-          </h2>
-          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-            <div className="flex">
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-yellow-800">
-                  관리자 전용 사이트
-                </h3>
-                <div className="mt-2 text-sm text-yellow-700">
-                  <p>
-                    이 사이트는 관리자 권한이 있는 계정만 접근 가능합니다.
-                    <br />
-                    관리자 계정이 없으시면 시스템 관리자에게 문의하세요.
-                  </p>
-                </div>
+    <div className="max-w-md w-full space-y-8">
+      <div>
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          Bonvivant 관리자 로그인
+        </h2>
+        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+          <div className="flex">
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-yellow-800">
+                관리자 전용 사이트
+              </h3>
+              <div className="mt-2 text-sm text-yellow-700">
+                <p>
+                  이 사이트는 관리자 권한이 있는 계정만 접근 가능합니다.
+                  <br />
+                  관리자 계정이 없으시면 시스템 관리자에게 문의하세요.
+                </p>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
         <div className="mt-8 space-y-6">
           {error && (
@@ -169,7 +168,16 @@ export default function LoginPage() {
             </div>
           </form>
         </div>
-      </div>
+    </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <Suspense fallback={<div>로딩 중...</div>}>
+        <LoginForm />
+      </Suspense>
     </div>
   )
 }
