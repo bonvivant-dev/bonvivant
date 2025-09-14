@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 
 import { useAuth } from '@/contexts/AuthContext'
 import { Magazine, MagazineListResponse } from '@/types/magazine'
+import { convertPdfToImages } from '@/utils'
 
 export default function MagazinesPage() {
   const { user, loading, signOut, isAdmin } = useAuth()
@@ -60,8 +61,16 @@ export default function MagazinesPage() {
     setError(null)
 
     try {
+      // 클라이언트 사이드에서 PDF를 이미지로 변환
+      const imageBlobs = await convertPdfToImages(file)
+
       const formData = new FormData()
       formData.append('file', file)
+
+      // 변환된 이미지들도 FormData에 추가
+      imageBlobs.forEach((blob, index) => {
+        formData.append(`image-${index}`, blob, `page-${index + 1}.jpg`)
+      })
 
       const response = await fetch('/api/magazines/upload', {
         method: 'POST',
@@ -281,6 +290,8 @@ export default function MagazinesPage() {
                               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${magazine.cover_image}`}
                               alt={magazine.title || 'Cover'}
                               className="w-16 h-20 object-cover rounded-md shadow-sm"
+                              width={64}
+                              height={80}
                             />
                           )}
                           <div className="flex-1">

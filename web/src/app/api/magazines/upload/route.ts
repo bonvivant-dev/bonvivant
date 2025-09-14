@@ -1,12 +1,34 @@
-import { writeFileSync, unlinkSync, mkdirSync, readFileSync } from 'fs'
 import path from 'path'
 
 import { NextRequest, NextResponse } from 'next/server'
-import pdf2pic from 'pdf2pic'
-import sharp from 'sharp'
 import { v4 as uuidv4 } from 'uuid'
 
 import { supabaseServerClient } from '@/utils/supabase/server'
+
+interface UploadPdfToStorageOptions {
+  supabase: any
+  storageKey: string
+  safeFileName: string
+  pdfBuffer: Buffer
+}
+
+async function uploadPdfToStorage({
+  supabase,
+  storageKey,
+  safeFileName,
+  pdfBuffer,
+}: UploadPdfToStorageOptions): Promise<void> {
+  const { error: pdfUploadError } = await supabase.storage
+    .from('magazines')
+    .upload(`${storageKey}/${safeFileName}`, pdfBuffer, {
+      contentType: 'application/pdf',
+      upsert: true,
+    })
+
+  if (pdfUploadError) {
+    throw new Error(`Failed to upload PDF: ${pdfUploadError.message}`)
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,78 +56,46 @@ export async function POST(request: NextRequest) {
     const fileExtension = path.parse(originalFileName).ext
     const safeFileName = `${storageKey}${fileExtension}`
 
-    const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-
-    const tempDir = `/tmp/${storageKey}`
-    mkdirSync(tempDir, { recursive: true })
-    const tempPdfPath = `${tempDir}/temp.pdf`
-    writeFileSync(tempPdfPath, buffer)
+    const pdfBuffer = Buffer.from(await file.arrayBuffer())
 
     try {
-      const convert = pdf2pic.fromPath(tempPdfPath, {
-        density: 100,
-        saveFilename: 'image',
-        savePath: tempDir,
-        format: 'png',
-        width: 600,
-        height: 800,
+      // Upload PDF to storage
+      await uploadPdfToStorage({
+        supabase,
+        storageKey,
+        safeFileName,
+        pdfBuffer,
       })
 
-      const results = await Promise.all(
-        [convert(1), convert(2), convert(3)].map(promise =>
-          promise.catch(() => null),
-        ),
+      // 클라이언트에서 변환된 이미지들을 Supabase Storage에 업로드
+      const previewImages: string[] = []
+      const imageEntries = Array.from(formData.entries()).filter(([key]) =>
+        key.startsWith('image-'),
       )
 
-      const validResults = results.filter(result => result !== null)
-      const previewImages: string[] = []
+      for (const [key, imageBlob] of imageEntries) {
+        const index = key.split('-')[1]
+        const fileName = `${storageKey}/page-${parseInt(index) + 1}.jpg`
 
-      for (let i = 0; i < validResults.length; i++) {
-        if (validResults[i]) {
-          const result = validResults[i]!
-          const imagePath = result.path
+        const { error: imageUploadError } = await supabase.storage
+          .from('covers')
+          .upload(fileName, imageBlob, {
+            contentType: 'image/jpeg',
+            upsert: true,
+          })
 
-          if (!imagePath) {
-            console.error('Image path is undefined for result:', result)
-            continue
-          }
+        if (imageUploadError) {
+          console.error(`Error uploading image ${index}:`, imageUploadError)
+        } else {
+          // Public URL 생성
+          const {
+            data: { publicUrl },
+          } = supabase.storage.from('covers').getPublicUrl(fileName)
 
-          const pngBuffer = readFileSync(imagePath)
-          const webpBuffer = await sharp(pngBuffer)
-            .webp({ quality: 80 })
-            .toBuffer()
-
-          const imageName = `image_${i}.webp`
-          const { error: uploadError } = await supabase.storage
-            .from('covers')
-            .upload(`${storageKey}/${imageName}`, webpBuffer, {
-              contentType: 'image/webp',
-              upsert: true,
-            })
-
-          if (!uploadError) {
-            previewImages.push(imageName)
-          }
-
-          // Clean up the generated PNG file
-          try {
-            unlinkSync(imagePath)
-          } catch {
-            // do nothing
-          }
+          // get only filename from publicUrl
+          const filename = publicUrl.split('/').pop() || ''
+          previewImages.push(filename)
         }
-      }
-
-      const { error: pdfUploadError } = await supabase.storage
-        .from('magazines')
-        .upload(`${storageKey}/${safeFileName}`, buffer, {
-          contentType: 'application/pdf',
-          upsert: true,
-        })
-
-      if (pdfUploadError) {
-        throw new Error(`Failed to upload PDF: ${pdfUploadError.message}`)
       }
 
       const { data: magazine, error: dbError } = await supabase
@@ -125,31 +115,23 @@ export async function POST(request: NextRequest) {
         throw new Error(`Failed to save magazine: ${dbError.message}`)
       }
 
-      unlinkSync(tempPdfPath)
-
       return NextResponse.json({
         success: true,
         magazine,
         message: 'Magazine uploaded successfully',
       })
-    } catch (conversionError) {
-      console.error('PDF conversion error:', conversionError)
+    } catch (processingError) {
+      console.error('Upload processing error:', processingError)
       return NextResponse.json(
         {
-          error: 'Failed to process PDF file',
+          error: 'Failed to process upload',
           details:
-            conversionError instanceof Error
-              ? conversionError.message
+            processingError instanceof Error
+              ? processingError.message
               : 'Unknown error',
         },
         { status: 500 },
       )
-    } finally {
-      try {
-        unlinkSync(tempPdfPath)
-      } catch {
-        // do nothing
-      }
     }
   } catch (error) {
     console.error('Upload error:', error)
