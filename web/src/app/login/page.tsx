@@ -1,10 +1,9 @@
 'use client'
 
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
 import { useAuth } from '@/contexts/AuthContext'
-
-import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
