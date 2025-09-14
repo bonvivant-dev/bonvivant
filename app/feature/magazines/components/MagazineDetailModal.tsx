@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router'
 import React from 'react'
 import {
   Modal,
@@ -28,6 +29,8 @@ export function MagazineDetailModal({
   magazine,
   onClose,
 }: MagazineDetailModalProps) {
+  const router = useRouter()
+
   if (!magazine) return null
 
   const getCoverImageUrl = (magazine: Magazine) => {
@@ -40,9 +43,9 @@ export function MagazineDetailModal({
 
   const coverImageUrl = getCoverImageUrl(magazine)
 
-  // TODO: 미리보기 기능 구현
   const handlePreview = () => {
-    console.log('Preview magazine:', magazine.title)
+    onClose()
+    router.push(`/magazine/${magazine.id}/preview`)
   }
 
   // TODO: 구매 기능 구현

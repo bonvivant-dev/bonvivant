@@ -55,6 +55,10 @@ function RootLayoutNav() {
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
+        name="magazine/[id]/preview"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="login"
         options={{
           presentation: 'card',
