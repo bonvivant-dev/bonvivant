@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   FlatList,
+  Alert,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -61,6 +62,41 @@ export function MagazinePreviewer({ magazineId }: { magazineId: string }) {
     router.back()
   }
 
+  const showPurchaseDialog = () => {
+    Alert.alert(
+      '매거진 구매',
+      `${magazine?.title}의 전체 내용을 보시려면 구매가 필요합니다.\n구매하시겠습니까?`,
+      [
+        {
+          text: '취소',
+          style: 'cancel',
+        },
+        {
+          text: '구매하기',
+          onPress: () => {
+            // TODO: 구매 기능 구현
+            console.log('Purchase magazine:', magazine?.title)
+            Alert.alert('구매 완료', '매거진 구매가 완료되었습니다!')
+          },
+        },
+      ]
+    )
+  }
+
+  const handlePageChange = (pageIndex: number) => {
+    setCurrentPage(pageIndex)
+
+    // 마지막 페이지에 도달했을 때 구매 다이얼로그 표시
+    if (
+      magazine?.preview_images &&
+      pageIndex === magazine.preview_images.slice(0, 3).length - 1
+    ) {
+      setTimeout(() => {
+        showPurchaseDialog()
+      }, 500) // 0.5초 후에 다이얼로그 표시
+    }
+  }
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -99,7 +135,7 @@ export function MagazinePreviewer({ magazineId }: { magazineId: string }) {
   }
 
   // 첫 3개의 미리보기 이미지만 사용
-  const previewImages = magazine.preview_images.slice(0, 3)
+  const previewImages = magazine.preview_images
 
   return (
     <SafeAreaView style={styles.container}>
@@ -139,7 +175,7 @@ export function MagazinePreviewer({ magazineId }: { magazineId: string }) {
               const pageIndex = Math.round(
                 event.nativeEvent.contentOffset.x / width
               )
-              setCurrentPage(pageIndex)
+              handlePageChange(pageIndex)
             }}
           />
         </View>
