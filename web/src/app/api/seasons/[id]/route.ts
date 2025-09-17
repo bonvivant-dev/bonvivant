@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { supabaseServerClient } from '@/utils/supabase/server'
+import { supabaseServerClient } from '@/shared/lib'
 
 export async function PUT(
   request: NextRequest,

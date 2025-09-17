@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/features/auth'
 
 export default function Home() {
   const { user, loading, signOut, isAdmin } = useAuth()

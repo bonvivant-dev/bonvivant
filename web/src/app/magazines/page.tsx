@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { overlay } from 'overlay-kit'
 import { useState, useEffect } from 'react'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/features/auth'
 import { Magazine, MagazineListResponse } from '@/features/magazine'
 import { convertPdfToImages } from '@/features/magazine'
 import {

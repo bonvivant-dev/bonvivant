@@ -2,7 +2,7 @@ import path from 'path'
 
 import { NextRequest, NextResponse } from 'next/server'
 
-import { supabaseServerClient } from '@/utils/supabase/server'
+import { supabaseServerClient } from '@/shared/lib'
 
 export async function GET(
   request: NextRequest,

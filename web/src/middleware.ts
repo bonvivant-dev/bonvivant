@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-import { supabaseServerClient } from '@/utils/supabase/server'
+import { supabaseServerClient } from '@/shared/lib'
 
 export async function middleware(request: NextRequest) {
   try {

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/features/auth'
 import { Magazine } from '@/features/magazine'
 import { Season, SeasonListResponse } from '@/features/season'
 

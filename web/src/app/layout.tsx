@@ -1,7 +1,7 @@
 import './globals.css'
 import { OverlayProvider } from 'overlay-kit'
 
-import { AuthProvider } from '@/contexts/AuthContext'
+import { AuthProvider } from '@/features/auth'
 
 export const metadata = {
   title: 'Bonvivant Admin',

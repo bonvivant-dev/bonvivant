@@ -4,7 +4,7 @@ import { User, Session } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { createContext, useContext, useEffect, useState } from 'react'
 
-import { supabase } from '@/utils/supabase/client'
+import { supabaseBrowserClient } from '@/shared/lib/supabase/client'
 
 interface AuthContextType {
   user: User | null
@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const {
           data: { session },
           error,
-        } = await supabase.auth.getSession()
+        } = await supabaseBrowserClient.auth.getSession()
 
         if (error) {
           setSession(null)
@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabaseBrowserClient.auth.onAuthStateChange(async (event, session) => {
       setSession(session)
       setUser(session?.user ?? null)
 
@@ -85,24 +85,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAdminStatus = async (user: User) => {
     try {
-      const { data: profile, error } = await supabase
+      const { data: profile, error } = await supabaseBrowserClient
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .maybeSingle()
 
       if (error) {
-        const { data: newProfile, error: insertError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: user.id,
-              email: user.email || '',
-              role: 'user',
-            },
-          ])
-          .select()
-          .single()
+        const { data: newProfile, error: insertError } =
+          await supabaseBrowserClient
+            .from('profiles')
+            .insert([
+              {
+                id: user.id,
+                email: user.email || '',
+                role: 'user',
+              },
+            ])
+            .select()
+            .single()
 
         if (!insertError && newProfile) {
           setIsAdmin(newProfile.role === 'admin')
@@ -112,17 +113,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else if (profile) {
         setIsAdmin(profile.role === 'admin')
       } else {
-        const { data: newProfile, error: insertError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: user.id,
-              email: user.email || '',
-              role: 'user',
-            },
-          ])
-          .select()
-          .single()
+        const { data: newProfile, error: insertError } =
+          await supabaseBrowserClient
+            .from('profiles')
+            .insert([
+              {
+                id: user.id,
+                email: user.email || '',
+                role: 'user',
+              },
+            ])
+            .select()
+            .single()
 
         if (!insertError && newProfile) {
           setIsAdmin(newProfile.role === 'admin')
@@ -139,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { error } = await supabaseBrowserClient.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
@@ -149,7 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signInWithEmail = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabaseBrowserClient.auth.signInWithPassword({
       email,
       password,
     })
@@ -158,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut()
+      const { error } = await supabaseBrowserClient.auth.signOut()
       if (error) throw error
 
       setUser(null)

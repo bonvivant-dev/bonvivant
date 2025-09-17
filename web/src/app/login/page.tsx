@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/features/auth'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
