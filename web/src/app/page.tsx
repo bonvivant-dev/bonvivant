@@ -5,15 +5,15 @@ import Link from 'next/link'
 import { useAuth } from '@/features/auth'
 
 export default function Home() {
-  const { user, signOut, isAdmin } = useAuth()
+  const { user, loading, signOut, isAdmin } = useAuth()
 
-  // if (loading) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center">
-  //       <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-  //     </div>
-  //   )
-  // }
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
 
   if (!user || !isAdmin) {
     return (
