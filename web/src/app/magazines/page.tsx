@@ -2,28 +2,54 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { overlay } from 'overlay-kit'
 import { useState, useEffect } from 'react'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { Magazine, MagazineListResponse } from '@/types/magazine'
+import { Magazine, MagazineListResponse } from '@/features/magazine'
+import {
+  SeasonManagerModal,
+  Season,
+  SeasonListResponse,
+} from '@/features/season'
 import { convertPdfToImages } from '@/utils'
 
 export default function MagazinesPage() {
   const { user, loading, signOut, isAdmin } = useAuth()
   const [magazines, setMagazines] = useState<Magazine[]>([])
+  const [seasons, setSeasons] = useState<Season[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [uploading, setUploading] = useState(false)
 
-  const fetchMagazines = async (page = 1, search = '') => {
+  const openSeasonModal = () => {
+    overlay.open(({ isOpen, close }) => (
+      <SeasonManagerModal
+        isOpen={isOpen}
+        onClose={close}
+        onSeasonChange={fetchSeasons}
+      />
+    ))
+  }
+
+  const fetchMagazines = async (page = 1, search = '', seasonId = '') => {
     try {
       setIsLoading(true)
-      const response = await fetch(
-        `/api/magazines?page=${page}&limit=10&search=${encodeURIComponent(search)}`,
-      )
+      const searchParams = new URLSearchParams({
+        page: page.toString(),
+        limit: '10',
+        search: search,
+      })
+
+      if (seasonId) {
+        searchParams.append('season_id', seasonId)
+      }
+
+      const response = await fetch(`/api/magazines?${searchParams}`)
 
       if (!response.ok) {
         throw new Error('Failed to fetch magazines')
@@ -40,11 +66,24 @@ export default function MagazinesPage() {
     }
   }
 
+  const fetchSeasons = async () => {
+    try {
+      const response = await fetch('/api/seasons')
+      if (response.ok) {
+        const data: SeasonListResponse = await response.json()
+        setSeasons(data.seasons)
+      }
+    } catch (err) {
+      console.error('Failed to fetch seasons:', err)
+    }
+  }
+
   useEffect(() => {
     if (user && isAdmin) {
-      fetchMagazines(currentPage, searchTerm)
+      fetchMagazines(currentPage, searchTerm, selectedSeasonId)
+      fetchSeasons()
     }
-  }, [user, isAdmin, currentPage, searchTerm])
+  }, [user, isAdmin, currentPage, searchTerm, selectedSeasonId])
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -82,7 +121,7 @@ export default function MagazinesPage() {
         throw new Error(errorData.error || 'Upload failed')
       }
 
-      await fetchMagazines(1, searchTerm)
+      await fetchMagazines(1, searchTerm, selectedSeasonId)
       setCurrentPage(1)
 
       event.target.value = ''
@@ -105,7 +144,7 @@ export default function MagazinesPage() {
         throw new Error('Failed to delete magazine')
       }
 
-      await fetchMagazines(currentPage, searchTerm)
+      await fetchMagazines(currentPage, searchTerm, selectedSeasonId)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Delete failed')
     }
@@ -114,7 +153,19 @@ export default function MagazinesPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     setCurrentPage(1)
-    fetchMagazines(1, searchTerm)
+    fetchMagazines(1, searchTerm, selectedSeasonId)
+  }
+
+  const handleSeasonFilter = (seasonId: string) => {
+    setSelectedSeasonId(seasonId)
+    setCurrentPage(1)
+  }
+
+  const getSeasonName = (seasonId: string | null) => {
+    if (!seasonId) return '시즌 없음'
+    const season = seasons.find(s => s.id === seasonId)
+    console.log(season)
+    return season?.name || '알 수 없는 시즌'
   }
 
   if (loading) {
@@ -212,23 +263,25 @@ export default function MagazinesPage() {
           {/* Search and Filter */}
           <div className="bg-white overflow-hidden shadow rounded-lg mb-6">
             <div className="px-4 py-5 sm:p-6">
-              <form onSubmit={handleSearch} className="flex space-x-4">
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    placeholder="매거진 제목으로 검색..."
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                >
-                  검색
-                </button>
-              </form>
+              <div className="space-y-4">
+                <form onSubmit={handleSearch} className="flex space-x-4">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      placeholder="매거진 제목으로 검색..."
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                  >
+                    검색
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
 
@@ -255,14 +308,38 @@ export default function MagazinesPage() {
           )}
 
           {/* Magazines List */}
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <div className="px-4 py-5 sm:px-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
-                매거진 목록
-              </h3>
-              <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                총 {magazines.length}개의 매거진이 있습니다.
-              </p>
+          <div className="bg-white shadow overflow-hidden sm:rounded-md mt-6">
+            {/* flex div */}
+            <div className="flex items-center justify-between px-4 py-5">
+              <div>
+                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  매거진 목록
+                </h3>
+                <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                  총 {magazines.length}개의 매거진이 있습니다.
+                </p>
+              </div>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={openSeasonModal}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  시즌 관리
+                </button>
+                <select
+                  value={selectedSeasonId}
+                  onChange={e => handleSeasonFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">모든 시즌</option>
+                  <option value="null">시즌 없음</option>
+                  {seasons.map(season => (
+                    <option key={season.id} value={season.id}>
+                      {season.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {isLoading ? (
@@ -302,7 +379,7 @@ export default function MagazinesPage() {
                               {magazine.summary || '요약 없음'}
                             </p>
                             <p className="text-xs text-gray-400">
-                              생성일:{' '}
+                              {getSeasonName(magazine.season_id)} | 생성일:{' '}
                               {new Date(magazine.created_at).toLocaleDateString(
                                 'ko-KR',
                               )}

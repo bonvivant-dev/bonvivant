@@ -57,7 +57,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { title, summary, introduction } = body
+    const { title, summary, introduction, season_id } = body
 
     const { id } = await params
     const { data: currentMagazine, error: fetchError } = await supabase
@@ -77,6 +77,9 @@ export async function PUT(
     if (summary !== undefined) updateData.summary = summary
     if (introduction !== undefined) updateData.introduction = introduction
     if (title !== undefined) updateData.title = title
+    if (season_id !== undefined) {
+      updateData.season_id = season_id || null
+    }
 
     if (title && title !== currentMagazine.title) {
       try {

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { Magazine } from '@/types/magazine'
+import { Magazine, Season, SeasonListResponse } from '@/types/magazine'
 
 interface MagazineEditPageProps {
   params: Promise<{ id: string }>
@@ -13,6 +13,7 @@ interface MagazineEditPageProps {
 export default function MagazineEditPage({ params }: MagazineEditPageProps) {
   const { user, loading, signOut, isAdmin } = useAuth()
   const [magazine, setMagazine] = useState<Magazine | null>(null)
+  const [seasons, setSeasons] = useState<Season[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -22,11 +23,13 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
     title: '',
     summary: '',
     introduction: '',
+    season_id: '',
   })
 
   useEffect(() => {
     if (user && isAdmin) {
       fetchMagazine()
+      fetchSeasons()
     }
   }, [user, isAdmin])
 
@@ -46,12 +49,31 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
         title: data.magazine.title || '',
         summary: data.magazine.summary || '',
         introduction: data.magazine.introduction || '',
+        season_id: data.magazine.season_id || '',
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const fetchSeasons = async () => {
+    try {
+      const response = await fetch('/api/seasons')
+      if (response.ok) {
+        const data: SeasonListResponse = await response.json()
+        setSeasons(data.seasons)
+      }
+    } catch (err) {
+      console.error('Failed to fetch seasons:', err)
+    }
+  }
+
+  const getSeasonName = (seasonId: string | null) => {
+    if (!seasonId) return '시즌 없음'
+    const season = seasons.find(s => s.id === seasonId)
+    return season?.name || '알 수 없는 시즌'
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,7 +112,9 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
   }
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
@@ -296,6 +320,34 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
                     </div>
                   </div>
 
+                  <div>
+                    <label
+                      htmlFor="season_id"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      시즌
+                    </label>
+                    <div className="mt-1">
+                      <select
+                        id="season_id"
+                        name="season_id"
+                        value={formData.season_id}
+                        onChange={handleInputChange}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">시즌 없음</option>
+                        {seasons.map(season => (
+                          <option key={season.id} value={season.id}>
+                            {season.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      매거진이 속할 시즌을 선택하세요.
+                    </p>
+                  </div>
+
                   <div className="flex justify-end space-x-3">
                     <Link
                       href="/magazines"
@@ -379,6 +431,13 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
                     </dt>
                     <dd className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">
                       {formData.introduction || '소개글 없음'}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">시즌</dt>
+                    <dd className="mt-1 text-sm text-gray-900">
+                      {getSeasonName(formData.season_id || null)}
                     </dd>
                   </div>
 
