@@ -7,6 +7,7 @@ export interface Magazine {
   cover_image: string | null
   preview_images: string[]
   season_id: string | null
+  category_id: string | null
   created_at: string
   updated_at: string | null
 }

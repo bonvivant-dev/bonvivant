@@ -6,6 +6,11 @@ import { overlay } from 'overlay-kit'
 import { useState, useEffect } from 'react'
 
 import { useAuth } from '@/features/auth'
+import {
+  CategoryChip,
+  Category,
+  CategoryListResponse,
+} from '@/features/category'
 import { Magazine, MagazineListResponse } from '@/features/magazine'
 import { convertPdfToImages } from '@/features/magazine'
 import {
@@ -18,6 +23,7 @@ export default function MagazinesPage() {
   const { user, loading, signOut, isAdmin } = useAuth()
   const [magazines, setMagazines] = useState<Magazine[]>([])
   const [seasons, setSeasons] = useState<Season[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -78,10 +84,25 @@ export default function MagazinesPage() {
     }
   }
 
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/categories')
+      if (response.ok) {
+        const data: CategoryListResponse = await response.json()
+        setCategories(data.categories)
+      }
+    } catch (err) {
+      console.error('Failed to fetch categories:', err)
+    }
+  }
+
   useEffect(() => {
     if (user && isAdmin) {
-      fetchMagazines(currentPage, searchTerm, selectedSeasonId)
-      fetchSeasons()
+      Promise.all([
+        fetchMagazines(currentPage, searchTerm, selectedSeasonId),
+        fetchSeasons(),
+        fetchCategories(),
+      ])
     }
   }, [user, isAdmin, currentPage, searchTerm, selectedSeasonId])
 
@@ -164,8 +185,20 @@ export default function MagazinesPage() {
   const getSeasonName = (seasonId: string | null) => {
     if (!seasonId) return '시즌 없음'
     const season = seasons.find(s => s.id === seasonId)
-    console.log(season)
     return season?.name || '알 수 없는 시즌'
+  }
+
+  const handleCategoryUpdate = (
+    magazineId: string,
+    categoryId: string | null,
+  ) => {
+    setMagazines(prev =>
+      prev.map(magazine =>
+        magazine.id === magazineId
+          ? { ...magazine, category_id: categoryId }
+          : magazine,
+      ),
+    )
   }
 
   if (loading) {
@@ -387,6 +420,13 @@ export default function MagazinesPage() {
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
+                          <CategoryChip
+                            magazineId={magazine.id}
+                            currentCategoryId={magazine.category_id}
+                            onUpdate={categoryId =>
+                              handleCategoryUpdate(magazine.id, categoryId)
+                            }
+                          />
                           <Link
                             href={`/magazines/${magazine.id}`}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium"
