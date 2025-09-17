@@ -411,7 +411,7 @@ export default function MagazinesPage() {
                           )}
                           <div className="flex flex-col justify-between space-x-4">
                             <div className="flex flex-col items-start">
-                              <div className="flex items-center space-x-2 mb-2">
+                              <div className="flex items-center space-x-2 mb-1">
                                 <SeasonChip
                                   magazineId={magazine.id}
                                   currentSeasonId={magazine.season_id}

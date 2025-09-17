@@ -321,34 +321,6 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
                     </div>
                   </div>
 
-                  <div>
-                    <label
-                      htmlFor="season_id"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      시즌
-                    </label>
-                    <div className="mt-1">
-                      <select
-                        id="season_id"
-                        name="season_id"
-                        value={formData.season_id}
-                        onChange={handleInputChange}
-                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="">시즌 없음</option>
-                        {seasons.map(season => (
-                          <option key={season.id} value={season.id}>
-                            {season.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <p className="mt-1 text-xs text-gray-500">
-                      매거진이 속할 시즌을 선택하세요.
-                    </p>
-                  </div>
-
                   <div className="flex justify-end space-x-3">
                     <Link
                       href="/magazines"
