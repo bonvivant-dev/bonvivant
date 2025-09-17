@@ -15,6 +15,7 @@ import { Magazine, MagazineListResponse } from '@/features/magazine'
 import { convertPdfToImages } from '@/features/magazine'
 import {
   SeasonManagerModal,
+  SeasonChip,
   Season,
   SeasonListResponse,
 } from '@/features/season'
@@ -201,6 +202,16 @@ export default function MagazinesPage() {
     )
   }
 
+  const handleSeasonUpdate = (magazineId: string, seasonId: string | null) => {
+    setMagazines(prev =>
+      prev.map(magazine =>
+        magazine.id === magazineId
+          ? { ...magazine, season_id: seasonId }
+          : magazine,
+      ),
+    )
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -353,12 +364,6 @@ export default function MagazinesPage() {
                 </p>
               </div>
               <div className="flex items-center space-x-4">
-                <button
-                  onClick={openSeasonModal}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                >
-                  시즌 관리
-                </button>
                 <select
                   value={selectedSeasonId}
                   onChange={e => handleSeasonFilter(e.target.value)}
@@ -406,13 +411,25 @@ export default function MagazinesPage() {
                           )}
                           <div className="flex flex-col justify-between space-x-4">
                             <div className="flex flex-col items-start">
-                              <CategoryChip
-                                magazineId={magazine.id}
-                                currentCategoryId={magazine.category_id}
-                                onUpdate={categoryId =>
-                                  handleCategoryUpdate(magazine.id, categoryId)
-                                }
-                              />
+                              <div className="flex items-center space-x-2 mb-2">
+                                <SeasonChip
+                                  magazineId={magazine.id}
+                                  currentSeasonId={magazine.season_id}
+                                  onUpdate={seasonId =>
+                                    handleSeasonUpdate(magazine.id, seasonId)
+                                  }
+                                />
+                                <CategoryChip
+                                  magazineId={magazine.id}
+                                  currentCategoryId={magazine.category_id}
+                                  onUpdate={categoryId =>
+                                    handleCategoryUpdate(
+                                      magazine.id,
+                                      categoryId,
+                                    )
+                                  }
+                                />
+                              </div>
                               <p className="text-lg font-medium text-gray-900">
                                 {magazine.title || '제목 없음'}
                               </p>
@@ -422,7 +439,7 @@ export default function MagazinesPage() {
                                 {magazine.summary || '요약 없음'}
                               </p>
                               <p className="text-xs text-gray-400">
-                                {getSeasonName(magazine.season_id)} | 생성일:{' '}
+                                생성일:{' '}
                                 {new Date(
                                   magazine.created_at,
                                 ).toLocaleDateString('ko-KR')}

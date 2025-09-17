@@ -2,151 +2,151 @@
 
 import { useState, useEffect, useRef } from 'react'
 
-import { Category, CategoryListResponse } from '../types'
+import { Season, SeasonListResponse } from '../types'
 
-interface CategoryChipProps {
+interface SeasonChipProps {
   magazineId: string
-  currentCategoryId: string | null
-  onUpdate: (categoryId: string | null) => void
+  currentSeasonId: string | null
+  onUpdate: (seasonId: string | null) => void
 }
 
-export function CategoryChip({
+export function SeasonChip({
   magazineId,
-  currentCategoryId,
+  currentSeasonId,
   onUpdate,
-}: CategoryChipProps) {
+}: SeasonChipProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [categories, setCategories] = useState<Category[]>([])
-  const [currentCategoryName, setCurrentCategoryName] = useState<string | null>(
+  const [seasons, setSeasons] = useState<Season[]>([])
+  const [currentSeasonName, setCurrentSeasonName] = useState<string | null>(
     null,
   )
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [newCategoryName, setNewCategoryName] = useState('')
+  const [newSeasonName, setNewSeasonName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
 
   const dropdownRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const fetchCurrentCategory = async () => {
-    if (!currentCategoryId) {
-      setCurrentCategoryName(null)
+  const fetchCurrentSeason = async () => {
+    if (!currentSeasonId) {
+      setCurrentSeasonName(null)
       return
     }
 
     try {
-      const response = await fetch(`/api/categories/${currentCategoryId}`)
+      const response = await fetch(`/api/seasons/${currentSeasonId}`)
       if (response.ok) {
         const data = await response.json()
-        setCurrentCategoryName(data.category.name)
+        setCurrentSeasonName(data.season.name)
       } else {
-        setCurrentCategoryName(null)
+        setCurrentSeasonName(null)
       }
     } catch (err) {
-      console.error('Failed to fetch current category:', err)
-      setCurrentCategoryName(null)
+      console.error('Failed to fetch current season:', err)
+      setCurrentSeasonName(null)
     }
   }
 
-  const fetchCategories = async () => {
+  const fetchSeasons = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/categories')
+      const response = await fetch('/api/seasons')
       if (response.ok) {
-        const data: CategoryListResponse = await response.json()
-        setCategories(data.categories)
+        const data: SeasonListResponse = await response.json()
+        setSeasons(data.seasons)
       }
     } catch (err) {
-      setError('카테고리를 불러오는데 실패했습니다.')
+      setError('시즌을 불러오는데 실패했습니다.')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const updateMagazineCategory = async (categoryId: string | null) => {
+  const updateMagazineSeason = async (seasonId: string | null) => {
     try {
       const response = await fetch(`/api/magazines/${magazineId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ category_id: categoryId }),
+        body: JSON.stringify({ season_id: seasonId }),
       })
 
       if (response.ok) {
-        onUpdate(categoryId)
+        onUpdate(seasonId)
         setIsOpen(false)
       } else {
-        setError('카테고리 업데이트에 실패했습니다.')
+        setError('시즌 업데이트에 실패했습니다.')
       }
     } catch (err) {
-      setError('카테고리 업데이트에 실패했습니다.')
+      setError('시즌 업데이트에 실패했습니다.')
     }
   }
 
-  const createCategory = async () => {
-    if (!newCategoryName.trim()) return
+  const createSeason = async () => {
+    if (!newSeasonName.trim()) return
 
     try {
       setIsCreating(true)
-      const response = await fetch('/api/categories', {
+      const response = await fetch('/api/seasons', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: newCategoryName.trim() }),
+        body: JSON.stringify({ name: newSeasonName.trim() }),
       })
 
       if (response.ok) {
         const data = await response.json()
-        await fetchCategories()
-        await updateMagazineCategory(data.category.id)
-        setNewCategoryName('')
+        await fetchSeasons()
+        await updateMagazineSeason(data.season.id)
+        setNewSeasonName('')
         setShowCreateForm(false)
       } else {
         const errorData = await response.json()
-        setError(errorData.error || '카테고리 생성에 실패했습니다.')
+        setError(errorData.error || '시즌 생성에 실패했습니다.')
       }
     } catch (err) {
-      setError('카테고리 생성에 실패했습니다.')
+      setError('시즌 생성에 실패했습니다.')
     } finally {
       setIsCreating(false)
     }
   }
 
-  const deleteCategory = async (categoryId: string) => {
-    if (!confirm('이 카테고리를 삭제하시겠습니까?')) return
+  const deleteSeason = async (seasonId: string) => {
+    if (!confirm('이 시즌을 삭제하시겠습니까?')) return
 
     try {
-      const response = await fetch(`/api/categories/${categoryId}`, {
+      const response = await fetch(`/api/seasons/${seasonId}`, {
         method: 'DELETE',
       })
 
       if (response.ok) {
-        await fetchCategories()
-        if (currentCategoryId === categoryId) {
-          await updateMagazineCategory(null)
+        await fetchSeasons()
+        if (currentSeasonId === seasonId) {
+          await updateMagazineSeason(null)
         }
       } else {
         const errorData = await response.json()
-        setError(errorData.error || '카테고리 삭제에 실패했습니다.')
+        setError(errorData.error || '시즌 삭제에 실패했습니다.')
       }
     } catch (err) {
-      setError('카테고리 삭제에 실패했습니다.')
+      setError('시즌 삭제에 실패했습니다.')
     }
   }
 
   useEffect(() => {
-    fetchCurrentCategory()
-  }, [currentCategoryId])
+    fetchCurrentSeason()
+  }, [currentSeasonId])
 
   useEffect(() => {
     if (isOpen) {
-      fetchCategories()
+      fetchSeasons()
       setError(null)
       setShowCreateForm(false)
-      setNewCategoryName('')
+      setNewSeasonName('')
     }
   }, [isOpen])
 
@@ -164,7 +164,7 @@ export function CategoryChip({
       ) {
         setIsOpen(false)
         setShowCreateForm(false)
-        setNewCategoryName('')
+        setNewSeasonName('')
       }
     }
 
@@ -179,10 +179,10 @@ export function CategoryChip({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      createCategory()
+      createSeason()
     } else if (e.key === 'Escape') {
       setShowCreateForm(false)
-      setNewCategoryName('')
+      setNewSeasonName('')
     }
   }
 
@@ -191,12 +191,12 @@ export function CategoryChip({
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium transition-colors ${
-          currentCategoryId
-            ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+          currentSeasonId
+            ? 'bg-green-100 text-green-800 hover:bg-green-200'
             : 'border border-dashed border-gray-400 text-gray-600 hover:border-gray-600 hover:text-gray-800'
         }`}
       >
-        {currentCategoryName || '카테고리'}
+        {currentSeasonName || '시즌'}
         <svg
           className="ml-1 h-3 w-3"
           fill="none"
@@ -219,36 +219,36 @@ export function CategoryChip({
               <div className="px-3 py-2 text-sm text-gray-500">로딩 중...</div>
             ) : (
               <>
-                {/* 카테고리 없음 옵션 */}
+                {/* 시즌 없음 옵션 */}
                 <button
-                  onClick={() => updateMagazineCategory(null)}
+                  onClick={() => updateMagazineSeason(null)}
                   className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
-                    !currentCategoryId ? 'bg-gray-50 font-medium' : ''
+                    !currentSeasonId ? 'bg-gray-50 font-medium' : ''
                   }`}
                 >
                   (없음)
                 </button>
 
-                {/* 기존 카테고리 목록 */}
-                {categories.map(category => (
+                {/* 기존 시즌 목록 */}
+                {seasons.map(season => (
                   <div
-                    key={category.id}
+                    key={season.id}
                     className={`flex items-center justify-between px-3 py-2 text-sm hover:bg-gray-100 ${
-                      currentCategoryId === category.id
-                        ? 'bg-blue-50 font-medium'
+                      currentSeasonId === season.id
+                        ? 'bg-green-50 font-medium'
                         : ''
                     }`}
                   >
                     <button
-                      onClick={() => updateMagazineCategory(category.id)}
+                      onClick={() => updateMagazineSeason(season.id)}
                       className="flex-1 text-left"
                     >
-                      {category.name}
+                      {season.name}
                     </button>
                     <button
-                      onClick={() => deleteCategory(category.id)}
+                      onClick={() => deleteSeason(season.id)}
                       className="text-red-500 hover:text-red-700 p-1"
-                      title="카테고리 삭제"
+                      title="시즌 삭제"
                     >
                       <svg
                         className="h-3 w-3"
@@ -265,24 +265,24 @@ export function CategoryChip({
                   </div>
                 ))}
 
-                {/* 새 카테고리 생성 폼 */}
+                {/* 새 시즌 생성 폼 */}
                 {showCreateForm ? (
                   <div className="px-3 py-2 border-t border-gray-100">
                     <input
                       ref={inputRef}
                       type="text"
-                      value={newCategoryName}
-                      onChange={e => setNewCategoryName(e.target.value)}
+                      value={newSeasonName}
+                      onChange={e => setNewSeasonName(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="새 카테고리 이름"
-                      className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      placeholder="새 시즌 이름"
+                      className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-green-500"
                       disabled={isCreating}
                     />
                     <div className="flex justify-end space-x-1 mt-2">
                       <button
                         onClick={() => {
                           setShowCreateForm(false)
-                          setNewCategoryName('')
+                          setNewSeasonName('')
                         }}
                         className="px-2 py-1 text-xs text-gray-600 hover:text-gray-800"
                         disabled={isCreating}
@@ -290,9 +290,9 @@ export function CategoryChip({
                         취소
                       </button>
                       <button
-                        onClick={createCategory}
-                        disabled={isCreating || !newCategoryName.trim()}
-                        className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                        onClick={createSeason}
+                        disabled={isCreating || !newSeasonName.trim()}
+                        className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
                       >
                         {isCreating ? '생성 중...' : '생성'}
                       </button>
@@ -301,9 +301,9 @@ export function CategoryChip({
                 ) : (
                   <button
                     onClick={() => setShowCreateForm(true)}
-                    className="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-gray-100 border-t border-gray-100"
+                    className="w-full text-left px-3 py-2 text-sm text-green-600 hover:bg-gray-100 border-t border-gray-100"
                   >
-                    + 새 카테고리 생성
+                    + 새 시즌 생성
                   </button>
                 )}
               </>

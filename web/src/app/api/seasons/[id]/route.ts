@@ -2,6 +2,42 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { supabaseServerClient } from '@/shared/lib'
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const supabase = await supabaseServerClient()
+    const { id } = await params
+
+    const { data: season, error } = await supabase
+      .from('seasons')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error) {
+      console.error('Error fetching season:', error)
+      return NextResponse.json(
+        { error: 'Failed to fetch season' },
+        { status: 500 },
+      )
+    }
+
+    if (!season) {
+      return NextResponse.json({ error: 'Season not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ season })
+  } catch (error) {
+    console.error('Unexpected error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 },
+    )
+  }
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } },
