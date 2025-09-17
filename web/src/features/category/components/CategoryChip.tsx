@@ -190,13 +190,13 @@ export function CategoryChip({
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`inline-flex items-center px-2 py-1 rounded text-sm font-medium transition-colors ${
+        className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium transition-colors ${
           currentCategoryId
             ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
             : 'border border-dashed border-gray-400 text-gray-600 hover:border-gray-600 hover:text-gray-800'
         }`}
       >
-        {currentCategoryName || '카테고리 추가'}
+        {currentCategoryName || '카테고리'}
         <svg
           className="ml-1 h-3 w-3"
           fill="none"
@@ -226,7 +226,7 @@ export function CategoryChip({
                     !currentCategoryId ? 'bg-gray-50 font-medium' : ''
                   }`}
                 >
-                  카테고리 없음
+                  (없음)
                 </button>
 
                 {/* 기존 카테고리 목록 */}

@@ -394,39 +394,43 @@ export default function MagazinesPage() {
                   <li key={magazine.id}>
                     <div className="px-4 py-4 sm:px-6 hover:bg-gray-50">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
+                        <div className="flex space-x-4">
                           {magazine.cover_image && (
                             <Image
                               src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${magazine.cover_image}`}
                               alt={magazine.title || 'Cover'}
-                              className="w-16 h-20 object-cover rounded-md shadow-sm"
-                              width={64}
-                              height={80}
+                              className="w-20 h-25 object-cover rounded-md shadow-sm"
+                              width={80}
+                              height={100}
                             />
                           )}
-                          <div className="flex-1">
-                            <p className="text-lg font-medium text-gray-900">
-                              {magazine.title || '제목 없음'}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {magazine.summary || '요약 없음'}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {getSeasonName(magazine.season_id)} | 생성일:{' '}
-                              {new Date(magazine.created_at).toLocaleDateString(
-                                'ko-KR',
-                              )}
-                            </p>
+                          <div className="flex flex-col justify-between space-x-4">
+                            <div className="flex flex-col items-start">
+                              <CategoryChip
+                                magazineId={magazine.id}
+                                currentCategoryId={magazine.category_id}
+                                onUpdate={categoryId =>
+                                  handleCategoryUpdate(magazine.id, categoryId)
+                                }
+                              />
+                              <p className="text-lg font-medium text-gray-900">
+                                {magazine.title || '제목 없음'}
+                              </p>
+                            </div>
+                            <div className="flex flex-col items-start">
+                              <p className="text-sm text-gray-500">
+                                {magazine.summary || '요약 없음'}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {getSeasonName(magazine.season_id)} | 생성일:{' '}
+                                {new Date(
+                                  magazine.created_at,
+                                ).toLocaleDateString('ko-KR')}
+                              </p>
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <CategoryChip
-                            magazineId={magazine.id}
-                            currentCategoryId={magazine.category_id}
-                            onUpdate={categoryId =>
-                              handleCategoryUpdate(magazine.id, categoryId)
-                            }
-                          />
                           <Link
                             href={`/magazines/${magazine.id}`}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium"
