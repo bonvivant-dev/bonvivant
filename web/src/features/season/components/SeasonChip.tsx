@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 
-import { useState, useEffect, useRef, RefObject } from 'react'
+import { useState, useEffect, useRef, RefObject, useCallback } from 'react'
 
 import { Portal } from '@/shared/components'
 import { useOutsideClick } from '@/shared/hooks'
@@ -35,7 +35,7 @@ export function SeasonChip({
   const inputRef = useRef<HTMLInputElement>(null)
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
 
-  const fetchCurrentSeason = async () => {
+  const fetchCurrentSeason = useCallback(async () => {
     if (!currentSeasonId) {
       setCurrentSeasonName(null)
       return
@@ -53,7 +53,7 @@ export function SeasonChip({
       console.error('Failed to fetch current season:', err)
       setCurrentSeasonName(null)
     }
-  }
+  }, [currentSeasonId])
 
   const fetchSeasons = async () => {
     try {
@@ -145,7 +145,7 @@ export function SeasonChip({
 
   useEffect(() => {
     fetchCurrentSeason()
-  }, [currentSeasonId])
+  }, [fetchCurrentSeason])
 
   useEffect(() => {
     if (isOpen) {

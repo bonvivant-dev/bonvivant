@@ -4,7 +4,7 @@ import { supabaseServerClient } from '@/shared/lib'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const supabase = await supabaseServerClient()
@@ -40,12 +40,12 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const supabase = await supabaseServerClient()
     const { name } = await request.json()
-    const { id } = params
+    const { id } = await params
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json(

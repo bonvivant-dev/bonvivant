@@ -1,7 +1,8 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 import { useAuth } from '@/features/auth'
 import { Magazine } from '@/features/magazine'
@@ -27,14 +28,7 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
     season_id: '',
   })
 
-  useEffect(() => {
-    if (user && isAdmin) {
-      fetchMagazine()
-      fetchSeasons()
-    }
-  }, [user, isAdmin])
-
-  const fetchMagazine = async () => {
+  const fetchMagazine = useCallback(async () => {
     try {
       setIsLoading(true)
       const { id } = await params
@@ -57,7 +51,14 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [params])
+
+  useEffect(() => {
+    if (user && isAdmin) {
+      fetchMagazine()
+      fetchSeasons()
+    }
+  }, [user, isAdmin, fetchMagazine])
 
   const fetchSeasons = async () => {
     try {
@@ -354,10 +355,12 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
                 {/* Cover Image */}
                 {magazine.cover_image && (
                   <div className="mb-6">
-                    <img
+                    <Image
                       src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${magazine.cover_image}`}
                       alt="Cover"
                       className="w-full max-w-sm mx-auto rounded-lg shadow-md"
+                      width={800}
+                      height={1000}
                     />
                   </div>
                 )}
@@ -371,11 +374,13 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
                       </h4>
                       <div className="grid grid-cols-3 gap-2">
                         {magazine.preview_images.map((image, index) => (
-                          <img
+                          <Image
                             key={index}
                             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${image}`}
                             alt={`Preview ${index + 1}`}
                             className="w-full h-32 object-cover rounded border"
+                            width={800}
+                            height={1000}
                           />
                         ))}
                       </div>

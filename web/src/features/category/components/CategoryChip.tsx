@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 
-import { useState, useEffect, useRef, RefObject } from 'react'
+import { useState, useEffect, useRef, RefObject, useCallback } from 'react'
 
 import { Portal } from '@/shared/components'
 import { useOutsideClick } from '@/shared/hooks'
@@ -35,7 +35,7 @@ export function CategoryChip({
   const inputRef = useRef<HTMLInputElement>(null)
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
 
-  const fetchCurrentCategory = async () => {
+  const fetchCurrentCategory = useCallback(async () => {
     if (!currentCategoryId) {
       setCurrentCategoryName(null)
       return
@@ -53,7 +53,7 @@ export function CategoryChip({
       console.error('Failed to fetch current category:', err)
       setCurrentCategoryName(null)
     }
-  }
+  }, [currentCategoryId])
 
   const fetchCategories = async () => {
     try {
@@ -145,7 +145,7 @@ export function CategoryChip({
 
   useEffect(() => {
     fetchCurrentCategory()
-  }, [currentCategoryId])
+  }, [fetchCurrentCategory])
 
   useEffect(() => {
     if (isOpen) {
