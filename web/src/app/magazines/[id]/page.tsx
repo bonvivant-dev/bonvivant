@@ -5,7 +5,9 @@ import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 
 import { useAuth } from '@/features/auth'
+import { CategoryChip } from '@/features/category'
 import { Magazine } from '@/features/magazine'
+import { SeasonChip } from '@/features/season'
 import { Season, SeasonListResponse } from '@/features/season'
 
 interface MagazineEditPageProps {
@@ -26,6 +28,7 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
     summary: '',
     introduction: '',
     season_id: '',
+    category_id: '',
   })
 
   const fetchMagazine = useCallback(async () => {
@@ -45,6 +48,7 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
         summary: data.magazine.summary || '',
         introduction: data.magazine.introduction || '',
         season_id: data.magazine.season_id || '',
+        category_id: data.magazine.category_id || '',
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
@@ -120,6 +124,15 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
   ) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleSeasonUpdate = (seasonId: string | null) => {
+    console.log('seasonId', seasonId)
+    setFormData(prev => ({ ...prev, season_id: seasonId || '' }))
+  }
+
+  const handleCategoryUpdate = (categoryId: string | null) => {
+    setFormData(prev => ({ ...prev, category_id: categoryId || '' }))
   }
 
   if (loading) {
@@ -258,7 +271,26 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
                   매거진 정보 편집
                 </h3>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    카테고리 및 시즌
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <SeasonChip
+                      magazineId={magazine?.id || ''}
+                      currentSeasonId={formData.season_id || null}
+                      onUpdate={handleSeasonUpdate}
+                    />
+                    <CategoryChip
+                      magazineId={magazine?.id || ''}
+                      currentCategoryId={formData.category_id || null}
+                      onUpdate={handleCategoryUpdate}
+                    />
+                  </div>
+                </div>
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Category and Season Chips */}
+
                   <div>
                     <label
                       htmlFor="title"

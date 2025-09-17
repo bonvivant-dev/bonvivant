@@ -5,10 +5,9 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
 import { useAuth } from '@/features/auth'
-import { CategoryChip } from '@/features/category'
 import { Magazine, MagazineListResponse } from '@/features/magazine'
 import { convertPdfToImages } from '@/features/magazine'
-import { SeasonChip, Season, SeasonListResponse } from '@/features/season'
+import { Season, SeasonListResponse } from '@/features/season'
 
 export default function MagazinesPage() {
   const { user, loading, signOut, isAdmin } = useAuth()
@@ -149,28 +148,6 @@ export default function MagazinesPage() {
     setCurrentPage(1)
   }
 
-  const handleCategoryUpdate = (
-    magazineId: string,
-    categoryId: string | null,
-  ) => {
-    setMagazines(prev =>
-      prev.map(magazine =>
-        magazine.id === magazineId
-          ? { ...magazine, category_id: categoryId }
-          : magazine,
-      ),
-    )
-  }
-
-  const handleSeasonUpdate = (magazineId: string, seasonId: string | null) => {
-    setMagazines(prev =>
-      prev.map(magazine =>
-        magazine.id === magazineId
-          ? { ...magazine, season_id: seasonId }
-          : magazine,
-      ),
-    )
-  }
 
   if (loading) {
     return (
@@ -371,25 +348,6 @@ export default function MagazinesPage() {
                           )}
                           <div className="flex flex-col justify-between space-x-4">
                             <div className="flex flex-col items-start">
-                              <div className="flex items-center space-x-2 mb-1">
-                                <SeasonChip
-                                  magazineId={magazine.id}
-                                  currentSeasonId={magazine.season_id}
-                                  onUpdate={seasonId =>
-                                    handleSeasonUpdate(magazine.id, seasonId)
-                                  }
-                                />
-                                <CategoryChip
-                                  magazineId={magazine.id}
-                                  currentCategoryId={magazine.category_id}
-                                  onUpdate={categoryId =>
-                                    handleCategoryUpdate(
-                                      magazine.id,
-                                      categoryId,
-                                    )
-                                  }
-                                />
-                              </div>
                               <p className="text-lg font-medium text-gray-900">
                                 {magazine.title || '제목 없음'}
                               </p>
