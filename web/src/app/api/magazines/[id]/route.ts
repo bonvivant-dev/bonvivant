@@ -2,7 +2,7 @@ import path from 'path'
 
 import { NextRequest, NextResponse } from 'next/server'
 
-import { supabaseServerClient } from '@/utils/supabase/server'
+import { supabaseServerClient } from '@/shared/lib'
 
 export async function GET(
   request: NextRequest,
@@ -57,7 +57,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { title, summary, introduction } = body
+    const { title, summary, introduction, season_id, category_id } = body
 
     const { id } = await params
     const { data: currentMagazine, error: fetchError } = await supabase
@@ -77,6 +77,12 @@ export async function PUT(
     if (summary !== undefined) updateData.summary = summary
     if (introduction !== undefined) updateData.introduction = introduction
     if (title !== undefined) updateData.title = title
+    if (season_id !== undefined) {
+      updateData.season_id = season_id || null
+    }
+    if (category_id !== undefined) {
+      updateData.category_id = category_id || null
+    }
 
     if (title && title !== currentMagazine.title) {
       try {

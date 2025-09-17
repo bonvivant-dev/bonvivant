@@ -1,10 +1,14 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
-import { useAuth } from '@/contexts/AuthContext'
-import { Magazine } from '@/types/magazine'
+import { useAuth } from '@/features/auth'
+import { CategoryChip } from '@/features/category'
+import { Magazine } from '@/features/magazine'
+import { SeasonChip } from '@/features/season'
+import { Season, SeasonListResponse } from '@/features/season'
 
 interface MagazineEditPageProps {
   params: Promise<{ id: string }>
@@ -13,6 +17,7 @@ interface MagazineEditPageProps {
 export default function MagazineEditPage({ params }: MagazineEditPageProps) {
   const { user, loading, signOut, isAdmin } = useAuth()
   const [magazine, setMagazine] = useState<Magazine | null>(null)
+  const [seasons, setSeasons] = useState<Season[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -22,15 +27,11 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
     title: '',
     summary: '',
     introduction: '',
+    season_id: '',
+    category_id: '',
   })
 
-  useEffect(() => {
-    if (user && isAdmin) {
-      fetchMagazine()
-    }
-  }, [user, isAdmin])
-
-  const fetchMagazine = async () => {
+  const fetchMagazine = useCallback(async () => {
     try {
       setIsLoading(true)
       const { id } = await params
@@ -46,12 +47,39 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
         title: data.magazine.title || '',
         summary: data.magazine.summary || '',
         introduction: data.magazine.introduction || '',
+        season_id: data.magazine.season_id || '',
+        category_id: data.magazine.category_id || '',
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
       setIsLoading(false)
     }
+  }, [params])
+
+  useEffect(() => {
+    if (user && isAdmin) {
+      fetchMagazine()
+      fetchSeasons()
+    }
+  }, [user, isAdmin, fetchMagazine])
+
+  const fetchSeasons = async () => {
+    try {
+      const response = await fetch('/api/seasons')
+      if (response.ok) {
+        const data: SeasonListResponse = await response.json()
+        setSeasons(data.seasons)
+      }
+    } catch (err) {
+      console.error('Failed to fetch seasons:', err)
+    }
+  }
+
+  const getSeasonName = (seasonId: string | null) => {
+    if (!seasonId) return '시즌 없음'
+    const season = seasons.find(s => s.id === seasonId)
+    return season?.name || '알 수 없는 시즌'
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -90,10 +118,21 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
   }
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleSeasonUpdate = (seasonId: string | null) => {
+    console.log('seasonId', seasonId)
+    setFormData(prev => ({ ...prev, season_id: seasonId || '' }))
+  }
+
+  const handleCategoryUpdate = (categoryId: string | null) => {
+    setFormData(prev => ({ ...prev, category_id: categoryId || '' }))
   }
 
   if (loading) {
@@ -232,7 +271,26 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
                   매거진 정보 편집
                 </h3>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    카테고리 및 시즌
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <SeasonChip
+                      magazineId={magazine?.id || ''}
+                      currentSeasonId={formData.season_id || null}
+                      onUpdate={handleSeasonUpdate}
+                    />
+                    <CategoryChip
+                      magazineId={magazine?.id || ''}
+                      currentCategoryId={formData.category_id || null}
+                      onUpdate={handleCategoryUpdate}
+                    />
+                  </div>
+                </div>
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Category and Season Chips */}
+
                   <div>
                     <label
                       htmlFor="title"
@@ -329,10 +387,12 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
                 {/* Cover Image */}
                 {magazine.cover_image && (
                   <div className="mb-6">
-                    <img
+                    <Image
                       src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${magazine.cover_image}`}
                       alt="Cover"
                       className="w-full max-w-sm mx-auto rounded-lg shadow-md"
+                      width={800}
+                      height={1000}
                     />
                   </div>
                 )}
@@ -346,11 +406,13 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
                       </h4>
                       <div className="grid grid-cols-3 gap-2">
                         {magazine.preview_images.map((image, index) => (
-                          <img
+                          <Image
                             key={index}
                             src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${image}`}
                             alt={`Preview ${index + 1}`}
                             className="w-full h-32 object-cover rounded border"
+                            width={800}
+                            height={1000}
                           />
                         ))}
                       </div>
@@ -379,6 +441,13 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
                     </dt>
                     <dd className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">
                       {formData.introduction || '소개글 없음'}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">시즌</dt>
+                    <dd className="mt-1 text-sm text-gray-900">
+                      {getSeasonName(formData.season_id || null)}
                     </dd>
                   </div>
 
