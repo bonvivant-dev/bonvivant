@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
 import { useAuth } from '@/contexts/AuthContext'
-import { Magazine, Season, SeasonListResponse } from '@/types/magazine'
+import { Magazine } from '@/features/magazine'
+import { Season, SeasonListResponse } from '@/features/season'
 
 interface MagazineEditPageProps {
   params: Promise<{ id: string }>

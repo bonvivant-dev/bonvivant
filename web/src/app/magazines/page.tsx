@@ -7,12 +7,12 @@ import { useState, useEffect } from 'react'
 
 import { useAuth } from '@/contexts/AuthContext'
 import { Magazine, MagazineListResponse } from '@/features/magazine'
+import { convertPdfToImages } from '@/features/magazine'
 import {
   SeasonManagerModal,
   Season,
   SeasonListResponse,
 } from '@/features/season'
-import { convertPdfToImages } from '@/utils'
 
 export default function MagazinesPage() {
   const { user, loading, signOut, isAdmin } = useAuth()

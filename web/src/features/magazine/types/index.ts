@@ -17,8 +17,6 @@ export interface MagazineUploadResponse {
   message: string
 }
 
-
-
 export interface MagazineListResponse {
   magazines: Magazine[]
   total: number
@@ -26,4 +24,3 @@ export interface MagazineListResponse {
   limit: number
   totalPages: number
 }
-
