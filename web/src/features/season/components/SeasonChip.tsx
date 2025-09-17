@@ -1,8 +1,11 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, RefObject } from 'react'
 
 import { Season, SeasonListResponse } from '../types'
+import { Portal } from '@/shared/components'
+
+import { useOutsideClick } from '@/shared/hooks'
 
 interface SeasonChipProps {
   magazineId: string
@@ -27,7 +30,9 @@ export function SeasonChip({
   const [showCreateForm, setShowCreateForm] = useState(false)
 
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
 
   const fetchCurrentSeason = async () => {
     if (!currentSeasonId) {
@@ -147,6 +152,15 @@ export function SeasonChip({
       setError(null)
       setShowCreateForm(false)
       setNewSeasonName('')
+
+      // Calculate dropdown position
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect()
+        setDropdownPosition({
+          top: rect.bottom + window.scrollY + 4,
+          left: rect.left + window.scrollX,
+        })
+      }
     }
   }, [isOpen])
 
@@ -156,26 +170,11 @@ export function SeasonChip({
     }
   }, [showCreateForm])
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false)
-        setShowCreateForm(false)
-        setNewSeasonName('')
-      }
-    }
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [isOpen])
+  useOutsideClick(dropdownRef as RefObject<HTMLElement>, () => {
+    setIsOpen(false)
+    setShowCreateForm(false)
+    setNewSeasonName('')
+  })
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -187,8 +186,9 @@ export function SeasonChip({
   }
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <>
       <button
+        ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium transition-colors ${
           currentSeasonId
@@ -212,8 +212,15 @@ export function SeasonChip({
         </svg>
       </button>
 
-      {isOpen && (
-        <div className="absolute left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+      <Portal isOpen={isOpen}>
+        <div
+          ref={dropdownRef}
+          className="fixed w-56 bg-white rounded-md shadow-lg border border-gray-200 z-50"
+          style={{
+            top: `${dropdownPosition.top}px`,
+            left: `${dropdownPosition.left}px`,
+          }}
+        >
           <div className="py-1 max-h-64 overflow-y-auto">
             {isLoading ? (
               <div className="px-3 py-2 text-sm text-gray-500">로딩 중...</div>
@@ -316,7 +323,7 @@ export function SeasonChip({
             )}
           </div>
         </div>
-      )}
-    </div>
+      </Portal>
+    </>
   )
 }
