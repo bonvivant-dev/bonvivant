@@ -59,6 +59,10 @@ function RootLayoutNav() {
         options={{ headerShown: false }}
       />
       <Stack.Screen
+        name="magazine/[id]/view"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="login"
         options={{
           presentation: 'card',

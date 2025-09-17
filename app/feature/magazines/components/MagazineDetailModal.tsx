@@ -50,7 +50,9 @@ export function MagazineDetailModal({
 
   // TODO: 구매 기능 구현
   const handlePurchase = () => {
-    console.log('Purchase magazine:', magazine.title)
+    // 구매 후 이동
+    onClose()
+    router.push(`/magazine/${magazine.id}/view`)
   }
 
   return (
