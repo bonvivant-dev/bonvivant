@@ -1,11 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 
 import { useState, useEffect, useRef, RefObject } from 'react'
 
-import { Category, CategoryListResponse } from '../types'
 import { Portal } from '@/shared/components'
-
 import { useOutsideClick } from '@/shared/hooks'
+
+import { Category, CategoryListResponse } from '../types'
 
 interface CategoryChipProps {
   magazineId: string

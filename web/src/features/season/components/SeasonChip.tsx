@@ -1,11 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 
 import { useState, useEffect, useRef, RefObject } from 'react'
 
-import { Season, SeasonListResponse } from '../types'
 import { Portal } from '@/shared/components'
-
 import { useOutsideClick } from '@/shared/hooks'
+
+import { Season, SeasonListResponse } from '../types'
 
 interface SeasonChipProps {
   magazineId: string

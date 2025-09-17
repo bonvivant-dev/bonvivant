@@ -2,29 +2,18 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { overlay } from 'overlay-kit'
 import { useState, useEffect } from 'react'
 
 import { useAuth } from '@/features/auth'
-import {
-  CategoryChip,
-  Category,
-  CategoryListResponse,
-} from '@/features/category'
+import { CategoryChip } from '@/features/category'
 import { Magazine, MagazineListResponse } from '@/features/magazine'
 import { convertPdfToImages } from '@/features/magazine'
-import {
-  SeasonManagerModal,
-  SeasonChip,
-  Season,
-  SeasonListResponse,
-} from '@/features/season'
+import { SeasonChip, Season, SeasonListResponse } from '@/features/season'
 
 export default function MagazinesPage() {
   const { user, loading, signOut, isAdmin } = useAuth()
   const [magazines, setMagazines] = useState<Magazine[]>([])
   const [seasons, setSeasons] = useState<Season[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -32,16 +21,6 @@ export default function MagazinesPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [uploading, setUploading] = useState(false)
-
-  const openSeasonModal = () => {
-    overlay.open(({ isOpen, close }) => (
-      <SeasonManagerModal
-        isOpen={isOpen}
-        onClose={close}
-        onSeasonChange={fetchSeasons}
-      />
-    ))
-  }
 
   const fetchMagazines = async (page = 1, search = '', seasonId = '') => {
     try {
@@ -85,24 +64,11 @@ export default function MagazinesPage() {
     }
   }
 
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch('/api/categories')
-      if (response.ok) {
-        const data: CategoryListResponse = await response.json()
-        setCategories(data.categories)
-      }
-    } catch (err) {
-      console.error('Failed to fetch categories:', err)
-    }
-  }
-
   useEffect(() => {
     if (user && isAdmin) {
       Promise.all([
         fetchMagazines(currentPage, searchTerm, selectedSeasonId),
         fetchSeasons(),
-        fetchCategories(),
       ])
     }
   }, [user, isAdmin, currentPage, searchTerm, selectedSeasonId])
@@ -181,12 +147,6 @@ export default function MagazinesPage() {
   const handleSeasonFilter = (seasonId: string) => {
     setSelectedSeasonId(seasonId)
     setCurrentPage(1)
-  }
-
-  const getSeasonName = (seasonId: string | null) => {
-    if (!seasonId) return '시즌 없음'
-    const season = seasons.find(s => s.id === seasonId)
-    return season?.name || '알 수 없는 시즌'
   }
 
   const handleCategoryUpdate = (
