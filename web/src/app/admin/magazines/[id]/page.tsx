@@ -178,7 +178,7 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
             매거진을 찾을 수 없습니다
           </h2>
           <Link
-            href="/magazines"
+            href="/admin/magazines"
             className="text-blue-600 hover:text-blue-800 font-medium"
           >
             매거진 목록으로 돌아가기
@@ -196,7 +196,7 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-4">
               <Link
-                href="/magazines"
+                href="/admin/magazines"
                 className="text-blue-600 hover:text-blue-800 text-sm font-medium"
               >
                 ← 매거진 목록으로 돌아가기
@@ -356,7 +356,7 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
 
                   <div className="flex justify-end space-x-3">
                     <Link
-                      href="/magazines"
+                      href="/admin/magazines"
                       className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-md text-sm font-medium"
                     >
                       취소

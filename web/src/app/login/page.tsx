@@ -1,33 +1,23 @@
 'use client'
 
-import { useSearchParams } from 'next/navigation'
-import { useState, useEffect, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 
 import { useAuth } from '@/features/auth'
 
 function LoginForm() {
-  const [localLoading, setLocalLoading] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const { signInWithGoogle, loading: authLoading } = useAuth()
-  const searchParams = useSearchParams()
-
-  useEffect(() => {
-    const errorParam = searchParams.get('error')
-    if (errorParam === 'admin_required') {
-      setError('관리자 권한이 필요합니다. 시스템 관리자에게 문의하세요.')
-      setLocalLoading(false) // 에러 발생 시 로딩 상태 해제
-    }
-  }, [searchParams])
+  const { signInWithGoogle } = useAuth()
 
   const handleGoogleLogin = async () => {
-    setLocalLoading(true)
+    setLoading(true)
     setError('')
 
     try {
       await signInWithGoogle()
     } catch (err: any) {
       setError(err.message || '구글 로그인에 실패했습니다.')
-      setLocalLoading(false)
+      setLoading(false)
     }
   }
 
@@ -42,7 +32,7 @@ function LoginForm() {
       <div>
         <button
           onClick={handleGoogleLogin}
-          disabled={localLoading || authLoading}
+          disabled={loading}
           className="group relative w-full flex justify-center py-3 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -63,7 +53,7 @@ function LoginForm() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          {(localLoading || authLoading) ? '로그인 중...' : 'Google로 로그인'}
+          {loading ? '로그인 중...' : 'Google로 로그인'}
         </button>
       </div>
     </div>

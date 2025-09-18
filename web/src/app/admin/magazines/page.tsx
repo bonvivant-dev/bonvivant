@@ -148,7 +148,6 @@ export default function MagazinesPage() {
     setCurrentPage(1)
   }
 
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -184,7 +183,7 @@ export default function MagazinesPage() {
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-4">
               <Link
-                href="/"
+                href="/admin"
                 className="text-blue-600 hover:text-blue-800 text-sm font-medium"
               >
                 ← 대시보드로 돌아가기
@@ -367,7 +366,7 @@ export default function MagazinesPage() {
                         </div>
                         <div className="flex items-center space-x-2">
                           <Link
-                            href={`/magazines/${magazine.id}`}
+                            href={`/admin/magazines/${magazine.id}`}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium"
                           >
                             편집
