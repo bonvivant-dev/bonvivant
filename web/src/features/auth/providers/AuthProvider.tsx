@@ -12,6 +12,7 @@ interface AuthContextType {
   loading: boolean
   signOut: () => Promise<void>
   isAdmin: boolean
+  isSigningOut: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -29,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -139,7 +141,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
+    const confirmed = window.confirm('로그아웃하시겠습니까?')
+    if (!confirmed) return
+
     try {
+      setIsSigningOut(true)
       const { error } = await supabaseBrowserClient.auth.signOut()
       if (error) throw error
 
@@ -151,6 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null)
       setSession(null)
       setIsAdmin(false)
+      setIsSigningOut(false)
       throw error
     }
   }
@@ -161,6 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     signOut,
     isAdmin,
+    isSigningOut,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
