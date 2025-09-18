@@ -4,16 +4,15 @@ import { User, Session } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { createContext, useContext, useEffect, useState } from 'react'
 
-import { supabaseBrowserClient } from '@/shared/lib/supabase/client'
+import { supabaseBrowserClient } from '@/shared/utils/supabase/client'
 
 interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
-  signInWithGoogle: () => Promise<void>
-  signInWithEmail: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   isAdmin: boolean
+  isSigningOut: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -31,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -140,37 +140,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signInWithGoogle = async () => {
-    const { error } = await supabaseBrowserClient.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-    if (error) throw error
-  }
-
-  const signInWithEmail = async (email: string, password: string) => {
-    const { error } = await supabaseBrowserClient.auth.signInWithPassword({
-      email,
-      password,
-    })
-    if (error) throw error
-  }
-
   const signOut = async () => {
+    const confirmed = window.confirm('로그아웃하시겠습니까?')
+    if (!confirmed) return
+
     try {
+      setIsSigningOut(true)
       const { error } = await supabaseBrowserClient.auth.signOut()
       if (error) throw error
 
       setUser(null)
       setSession(null)
       setIsAdmin(false)
-      router.replace('/login')
+      router.replace('/')
     } catch (error) {
       setUser(null)
       setSession(null)
       setIsAdmin(false)
+      setIsSigningOut(false)
       throw error
     }
   }
@@ -179,10 +166,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     session,
     loading,
-    signInWithGoogle,
-    signInWithEmail,
     signOut,
     isAdmin,
+    isSigningOut,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
