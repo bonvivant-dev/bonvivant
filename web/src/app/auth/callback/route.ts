@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import { supabaseServerClient } from '@/shared/lib'
+import { supabaseServerClient } from '@/shared/utils/supabase/server'
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)

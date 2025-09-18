@@ -4,7 +4,7 @@ import { User, Session } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { createContext, useContext, useEffect, useState } from 'react'
 
-import { supabaseBrowserClient } from '@/shared/lib/supabase/client'
+import { supabaseBrowserClient } from '@/shared/utils/supabase/client'
 
 interface AuthContextType {
   user: User | null
