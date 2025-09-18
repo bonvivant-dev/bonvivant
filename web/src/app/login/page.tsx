@@ -2,12 +2,11 @@
 
 import { useState, Suspense } from 'react'
 
-import { useAuth } from '@/features/auth'
+import { signInWithGoogle } from '@/features/auth/action'
 
 function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const { signInWithGoogle } = useAuth()
 
   const handleGoogleLogin = async () => {
     setLoading(true)

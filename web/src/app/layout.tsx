@@ -1,8 +1,6 @@
 import './globals.css'
 import { OverlayProvider } from 'overlay-kit'
 
-import { AuthProvider } from '@/features/auth'
-
 export const metadata = {
   title: 'Bonvivant Admin',
   description: 'Bonvivant 관리자 사이트',
@@ -16,9 +14,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
-        <OverlayProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </OverlayProvider>
+        <OverlayProvider>{children}</OverlayProvider>
       </body>
     </html>
   )
