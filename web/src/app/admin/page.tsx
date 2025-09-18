@@ -1,7 +1,8 @@
 'use client'
 
-import { Header } from '@/shared/components'
 import Link from 'next/link'
+
+import { Header } from '@/shared/components'
 
 export default function Home() {
   return (

@@ -8,7 +8,6 @@ import { useAuth } from '@/features/auth'
 import { Magazine, MagazineListResponse } from '@/features/magazine'
 import { convertPdfToImages } from '@/features/magazine'
 import { Season, SeasonListResponse } from '@/features/season'
-
 import { Header } from '@/shared/components'
 
 export default function MagazinesPage() {

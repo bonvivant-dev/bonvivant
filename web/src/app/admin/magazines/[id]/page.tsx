@@ -16,7 +16,7 @@ interface MagazineEditPageProps {
 }
 
 export default function MagazineEditPage({ params }: MagazineEditPageProps) {
-  const { user, signOut, isAdmin } = useAuth()
+  const { user, isAdmin } = useAuth()
   const [magazine, setMagazine] = useState<Magazine | null>(null)
   const [seasons, setSeasons] = useState<Season[]>([])
   const [isLoading, setIsLoading] = useState(true)
