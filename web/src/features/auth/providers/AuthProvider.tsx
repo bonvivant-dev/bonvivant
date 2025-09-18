@@ -152,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null)
       setSession(null)
       setIsAdmin(false)
-      router.replace('/login')
+      router.replace('/')
     } catch (error) {
       setUser(null)
       setSession(null)

@@ -44,18 +44,15 @@ export async function updateSession(request: NextRequest) {
   // 로그인되지 않은 사용자 처리
   if (!user) {
     // 로그인 페이지, auth 관련 경로는 접근 허용
-    if (
-      pathname.startsWith('/login') ||
-      pathname.startsWith('/auth') ||
-      pathname.startsWith('/error')
-    ) {
+    if (pathname.startsWith('/auth') || pathname.startsWith('/error')) {
       return supabaseResponse
     }
 
-    // 그 외의 경우 로그인 페이지로 리다이렉트
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+    if (pathname !== '/') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/'
+      return NextResponse.redirect(url)
+    }
   }
 
   // 로그인된 사용자 처리
@@ -70,16 +67,9 @@ export async function updateSession(request: NextRequest) {
     const isAdmin = profile?.role === 'admin'
 
     // 로그인 페이지나 루트 경로 접근 시 관리자는 /admin으로 리다이렉트
-    if ((pathname === '/login' || pathname === '/') && isAdmin) {
+    if (pathname === '/' && isAdmin) {
       const url = request.nextUrl.clone()
       url.pathname = '/admin'
-      return NextResponse.redirect(url)
-    }
-
-    // 관리자가 아닌 경우 관리자 페이지 접근 차단
-    if (!isAdmin && (pathname.startsWith('/admin') || pathname === '/')) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/login'
       return NextResponse.redirect(url)
     }
   }
