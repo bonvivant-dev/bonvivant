@@ -1,21 +1,21 @@
-import "./globals.css";
-import { AuthProvider } from "@/contexts/AuthContext";
+import './globals.css'
+import { OverlayProvider } from 'overlay-kit'
 
 export const metadata = {
-  title: "Bonvivant Admin",
-  description: "Bonvivant 관리자 사이트",
-};
+  title: 'Bonvivant Admin',
+  description: 'Bonvivant 관리자 사이트',
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="ko">
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <OverlayProvider>{children}</OverlayProvider>
       </body>
     </html>
-  );
+  )
 }

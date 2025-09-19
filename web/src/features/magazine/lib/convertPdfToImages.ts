@@ -1,8 +1,8 @@
 export async function convertPdfToImages(file: File): Promise<Blob[]> {
   try {
     const pdfjs = await import('pdfjs-dist/legacy/build/pdf.min.mjs')
-    pdfjs.GlobalWorkerOptions.workerSrc =
-      window.location.origin + '/pdf.worker.min.mjs'
+    pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+
     const arrayBuffer = await file.arrayBuffer()
     const uint8Array = new Uint8Array(arrayBuffer)
 

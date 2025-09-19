@@ -3,7 +3,7 @@ import path from 'path'
 import { NextRequest, NextResponse } from 'next/server'
 import { v4 as uuidv4 } from 'uuid'
 
-import { supabaseServerClient } from '@/utils/supabase/server'
+import { supabaseServerClient } from '@/shared/utils/supabase/server'
 
 interface UploadPdfToStorageOptions {
   supabase: any

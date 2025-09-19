@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { supabaseServerClient } from '@/utils/supabase/server'
+import { supabaseServerClient } from '@/shared/utils/supabase/server'
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const search = searchParams.get('search') || ''
+    const seasonId = searchParams.get('season_id')
 
     let query = supabase
       .from('magazines')
@@ -25,6 +26,14 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       query = query.ilike('title', `%${search}%`)
+    }
+
+    if (seasonId) {
+      if (seasonId === 'null') {
+        query = query.is('season_id', null)
+      } else {
+        query = query.eq('season_id', seasonId)
+      }
     }
 
     const { data: magazines, error } = await query.range(
@@ -36,9 +45,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    const { count } = await supabase
+    let countQuery = supabase
       .from('magazines')
       .select('*', { count: 'exact', head: true })
+
+    if (search) {
+      countQuery = countQuery.ilike('title', `%${search}%`)
+    }
+
+    if (seasonId) {
+      if (seasonId === 'null') {
+        countQuery = countQuery.is('season_id', null)
+      } else {
+        countQuery = countQuery.eq('season_id', seasonId)
+      }
+    }
+
+    const { count } = await countQuery
 
     return NextResponse.json({
       magazines: magazines || [],
