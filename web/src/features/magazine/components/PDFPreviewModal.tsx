@@ -26,31 +26,35 @@ export function PDFPreviewModal({
   onConfirm,
   title,
 }: PDFPreviewModalProps) {
-  const [selectedPageNumbers, setSelectedPageNumbers] = useState<Set<number>>(
-    new Set(),
-  )
+  const [selectedPageOrder, setSelectedPageOrder] = useState<number[]>([])
   const [, setCurrentSlide] = useState(0)
 
   const togglePageSelection = (pageNumber: number) => {
-    const newSelection = new Set(selectedPageNumbers)
-    if (newSelection.has(pageNumber)) {
-      newSelection.delete(pageNumber)
-    } else {
-      newSelection.add(pageNumber)
-    }
-    setSelectedPageNumbers(newSelection)
+    setSelectedPageOrder(prevOrder => {
+      if (prevOrder.includes(pageNumber)) {
+        // 선택 해제: 배열에서 제거
+        return prevOrder.filter(num => num !== pageNumber)
+      } else {
+        // 선택: 배열 끝에 추가 (선택 순서 유지)
+        return [...prevOrder, pageNumber]
+      }
+    })
   }
 
   const handleConfirm = () => {
-    const selectedPages = pages.filter(page =>
-      selectedPageNumbers.has(page.pageNumber),
-    )
+    // 선택된 순서대로 페이지 반환
+    const selectedPages = selectedPageOrder
+      .map(pageNumber => pages.find(page => page.pageNumber === pageNumber))
+      .filter(Boolean) as PDFPageImage[]
+
     onConfirm(selectedPages)
   }
 
-  const selectedPages = pages.filter(page =>
-    selectedPageNumbers.has(page.pageNumber),
-  )
+  const selectedPages = selectedPageOrder
+    .map(pageNumber => pages.find(page => page.pageNumber === pageNumber))
+    .filter(Boolean) as PDFPageImage[]
+
+  const selectedPageNumbers = new Set(selectedPageOrder)
 
   if (!isOpen) return null
 
@@ -136,33 +140,31 @@ export function PDFPreviewModal({
           {/* Selected Images Section */}
           <div className="border-t border-gray-400 bg-gray-50 p-4 h-[280px] flex flex-col">
             <h3 className="text-sm text-gray-600 mb-3">
-              선택한 페이지가 순서대로 보여집니다
+              선택한 순서대로 미리보기에 사용됩니다 ({selectedPages.length}개)
             </h3>
             <div className="flex gap-2 overflow-x-auto h-full">
               {selectedPages.length > 0 ? (
-                selectedPages
-                  .sort((a, b) => a.pageNumber - b.pageNumber)
-                  .map(page => (
-                    <div
-                      key={page.pageNumber}
-                      className="flex-shrink-0 relative"
-                    >
-                      <img
-                        src={page.dataUrl}
-                        alt={`Page ${page.pageNumber}`}
-                        className="h-full object-cover rounded border"
-                      />
-                      <div className="absolute top-1 left-1 bg-black/60 text-white px-2 py-1 rounded text-sm">
-                        {page.pageNumber}
-                      </div>
-                      <button
-                        onClick={() => togglePageSelection(page.pageNumber)}
-                        className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 cursor-pointer"
-                      >
-                        ×
-                      </button>
+                selectedPages.map((page, index) => (
+                  <div
+                    key={`${page.pageNumber}-${index}`}
+                    className="flex-shrink-0 relative"
+                  >
+                    <img
+                      src={page.dataUrl}
+                      alt={`Page ${page.pageNumber}`}
+                      className="h-full object-cover rounded border"
+                    />
+                    <div className="absolute top-1 left-1 bg-black/60 text-white px-2 py-1 rounded text-sm">
+                      {page.pageNumber}
                     </div>
-                  ))
+                    <button
+                      onClick={() => togglePageSelection(page.pageNumber)}
+                      className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 cursor-pointer"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))
               ) : (
                 <div className="h-[200px] w-[150px] border-2 border-dashed border-gray-300 rounded flex items-center justify-center text-gray-500">
                   <p className="text-center">
@@ -187,10 +189,10 @@ export function PDFPreviewModal({
             </button>
             <button
               onClick={handleConfirm}
-              disabled={selectedPageNumbers.size === 0}
+              disabled={selectedPageOrder.length === 0}
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer text-lg"
             >
-              확인 ({selectedPageNumbers.size}개)
+              확인 ({selectedPageOrder.length}개)
             </button>
           </div>
         </div>

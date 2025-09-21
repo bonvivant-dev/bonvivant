@@ -85,12 +85,22 @@ export default function MagazinesPage() {
         const formData = new FormData()
         formData.append('file', file)
 
-        // 선택된 페이지들만 FormData에 추가
+        // 선택된 페이지들을 순서와 메타데이터와 함께 FormData에 추가
+        const pageMetadata = selectedPages.map((page, index) => ({
+          order: index,
+          originalPageNumber: page.pageNumber,
+          fileName: `${page.pageNumber}.jpg`
+        }))
+
+        // 메타데이터 정보 추가
+        formData.append('pageMetadata', JSON.stringify(pageMetadata))
+
+        // 선택된 페이지들을 순서대로 추가 (원본 페이지 번호로 파일명 설정)
         selectedPages.forEach((page, index) => {
           formData.append(
             `image-${index}`,
             page.blob,
-            `page-${page.pageNumber}.jpg`,
+            `${page.pageNumber}.jpg`,
           )
         })
 

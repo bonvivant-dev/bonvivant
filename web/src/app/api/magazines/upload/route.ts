@@ -67,15 +67,31 @@ export async function POST(request: NextRequest) {
         pdfBuffer,
       })
 
+      // 페이지 메타데이터 파싱
+      const pageMetadataStr = formData.get('pageMetadata') as string
+      const pageMetadata = pageMetadataStr ? JSON.parse(pageMetadataStr) : []
+
       // 클라이언트에서 변환된 이미지들을 Supabase Storage에 업로드
       const previewImages: string[] = []
-      const imageEntries = Array.from(formData.entries()).filter(([key]) =>
-        key.startsWith('image-'),
-      )
+      const imageEntries = Array.from(formData.entries())
+        .filter(([key]) => key.startsWith('image-'))
+        .sort(([a], [b]) => {
+          // image-0, image-1, image-2 순서로 정렬
+          const indexA = parseInt(a.split('-')[1])
+          const indexB = parseInt(b.split('-')[1])
+          return indexA - indexB
+        })
 
       for (const [key, imageBlob] of imageEntries) {
-        const index = key.split('-')[1]
-        const fileName = `${storageKey}/page-${parseInt(index) + 1}.jpg`
+        const index = parseInt(key.split('-')[1])
+        const metadata = pageMetadata[index]
+
+        if (!metadata) {
+          console.error(`No metadata found for index ${index}`)
+          continue
+        }
+
+        const fileName = `${storageKey}/${metadata.originalPageNumber}.jpg`
 
         const { error: imageUploadError } = await supabase.storage
           .from('covers')
@@ -87,16 +103,12 @@ export async function POST(request: NextRequest) {
         if (imageUploadError) {
           console.error(`Error uploading image ${index}:`, imageUploadError)
         } else {
-          // Public URL 생성
-          const {
-            data: { publicUrl },
-          } = supabase.storage.from('covers').getPublicUrl(fileName)
-
-          // get only filename from publicUrl
-          const filename = publicUrl.split('/').pop() || ''
-          previewImages.push(filename)
+          previewImages.push(`${metadata.originalPageNumber}.jpg`)
         }
       }
+
+      // null 값 제거 (업로드 실패한 이미지)
+      const finalPreviewImages = previewImages.filter(Boolean)
 
       const { data: magazine, error: dbError } = await supabase
         .from('magazines')
@@ -105,8 +117,8 @@ export async function POST(request: NextRequest) {
           storage_key: storageKey,
           original_filename: originalFileName,
           safe_filename: safeFileName,
-          cover_image: previewImages[0] || null,
-          preview_images: previewImages,
+          cover_image: finalPreviewImages[0] || null,
+          preview_images: finalPreviewImages,
         })
         .select()
         .single()
