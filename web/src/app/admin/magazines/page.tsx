@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { overlay } from 'overlay-kit'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 import { Magazine, MagazineListResponse } from '@/features/magazine'
 import { convertPdfToImages, PDFPageImage } from '@/features/magazine'
@@ -74,6 +74,48 @@ export default function MagazinesPage() {
     ])
   }, [currentPage, searchTerm, selectedSeasonId])
 
+  const handleConfirmUpload = useCallback(
+    async (selectedPages: PDFPageImage[], file: File) => {
+      if (!file) return
+
+      setUploading(true)
+      setError(null)
+
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+
+        // 선택된 페이지들만 FormData에 추가
+        selectedPages.forEach((page, index) => {
+          formData.append(
+            `image-${index}`,
+            page.blob,
+            `page-${page.pageNumber}.jpg`,
+          )
+        })
+
+        const response = await fetch('/api/magazines/upload', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Upload failed')
+        }
+
+        await fetchMagazines(1, searchTerm, selectedSeasonId)
+        setCurrentPage(1)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Upload failed')
+      } finally {
+        setSelectedFile(null)
+        setUploading(false)
+      }
+    },
+    [searchTerm, selectedSeasonId],
+  )
+
   const handleFileSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -97,12 +139,9 @@ export default function MagazinesPage() {
       overlay.open(({ isOpen, close }) => (
         <PDFPreviewModal
           isOpen={isOpen}
-          onClose={() => {
-            close()
-            setSelectedFile(null)
-          }}
+          onClose={close}
           pages={pages}
-          onConfirm={handleConfirmUpload}
+          onConfirm={selectedPages => handleConfirmUpload(selectedPages, file)}
           title={file.name || 'PDF 미리보기'}
         />
       ))
@@ -113,47 +152,6 @@ export default function MagazinesPage() {
 
     // 파일 입력 초기화
     event.target.value = ''
-  }
-
-  const handleConfirmUpload = async (selectedPages: PDFPageImage[]) => {
-    if (!selectedFile) return
-
-    setUploading(true)
-    setError(null)
-
-    try {
-      const formData = new FormData()
-      formData.append('file', selectedFile)
-
-      // 선택된 페이지들만 FormData에 추가
-      selectedPages.forEach((page, index) => {
-        formData.append(
-          `image-${index}`,
-          page.blob,
-          `page-${page.pageNumber}.jpg`,
-        )
-      })
-
-      const response = await fetch('/api/magazines/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Upload failed')
-      }
-
-      await fetchMagazines(1, searchTerm, selectedSeasonId)
-      setCurrentPage(1)
-
-      // 상태 초기화
-      setSelectedFile(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed')
-    } finally {
-      setUploading(false)
-    }
   }
 
   const handleDelete = async (id: string) => {

@@ -56,7 +56,6 @@ export function PDFPreviewModal({
       selectedPageNumbers.has(page.pageNumber),
     )
     onConfirm(selectedPages)
-    onClose()
   }
 
   const selectedPages = pages.filter(page =>
@@ -163,6 +162,9 @@ export function PDFPreviewModal({
                         alt={`Page ${page.pageNumber}`}
                         className="h-full object-cover rounded border"
                       />
+                      <div className="absolute top-1 left-1 bg-black/60 text-white px-2 py-1 rounded text-sm">
+                        {page.pageNumber}
+                      </div>
                       <button
                         onClick={() => togglePageSelection(page.pageNumber)}
                         className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 cursor-pointer"
