@@ -41,6 +41,16 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
 
+  // 로그인된 사용자 처리
+  if (user) {
+    // 메인 페이지 접근 시 적절한 페이지로 리다이렉트
+    if (pathname === '/') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/admin' // 또는 사용자 대시보드 페이지
+      return NextResponse.redirect(url)
+    }
+  }
+
   // 로그인되지 않은 사용자 처리
   if (!user) {
     // auth 관련 경로는 접근 허용
