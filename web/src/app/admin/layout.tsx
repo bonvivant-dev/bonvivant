@@ -2,12 +2,13 @@
 
 import '../globals.css'
 
-import { AuthProvider, useAuth } from '@/features/auth'
+import { AuthProvider } from '@/features/auth'
+import { useAuth } from '@/features/auth/store'
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
-  const { user, loading, isAdmin, signOut, isSigningOut } = useAuth()
+  const { loading, isAdmin, signOut } = useAuth()
 
-  if (loading || isSigningOut) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -15,7 +16,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (!user || !isAdmin) {
+  if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
