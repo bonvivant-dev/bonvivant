@@ -1,4 +1,10 @@
-export async function convertPdfToImages(file: File): Promise<Blob[]> {
+export interface PDFPageImage {
+  blob: Blob
+  dataUrl: string
+  pageNumber: number
+}
+
+export async function convertPdfToImages(file: File, maxPages?: number): Promise<PDFPageImage[]> {
   try {
     const pdfjs = await import('pdfjs-dist/legacy/build/pdf.min.mjs')
     pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
@@ -9,8 +15,8 @@ export async function convertPdfToImages(file: File): Promise<Blob[]> {
     const loadingTask = pdfjs.getDocument({ data: uint8Array })
     const pdfDocument = await loadingTask.promise
 
-    const numPages = Math.min(pdfDocument.numPages, 3) // 최대 3페이지
-    const imageBlobs: Blob[] = []
+    const numPages = maxPages ? Math.min(pdfDocument.numPages, maxPages) : pdfDocument.numPages
+    const pageImages: PDFPageImage[] = []
 
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
       const page = await pdfDocument.getPage(pageNum)
@@ -30,17 +36,29 @@ export async function convertPdfToImages(file: File): Promise<Blob[]> {
 
       await page.render(renderContext).promise
 
-      // Canvas를 Blob으로 변환
+      // Canvas를 Blob과 DataURL로 변환
       const blob = (await new Promise<Blob>(resolve => {
         canvas.toBlob(resolve as BlobCallback, 'image/jpeg', 0.8)
       })) as Blob
 
-      imageBlobs.push(blob)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.8)
+
+      pageImages.push({
+        blob,
+        dataUrl,
+        pageNumber: pageNum,
+      })
     }
 
-    return imageBlobs
+    return pageImages
   } catch (error) {
     console.error('Error converting PDF to images:', error)
     throw error
   }
+}
+
+// 기존 함수와의 호환성을 위해 유지
+export async function convertPdfToImagesLegacy(file: File): Promise<Blob[]> {
+  const pageImages = await convertPdfToImages(file, 3)
+  return pageImages.map(page => page.blob)
 }

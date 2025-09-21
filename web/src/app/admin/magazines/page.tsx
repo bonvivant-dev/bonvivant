@@ -2,10 +2,13 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { overlay } from 'overlay-kit'
 import { useState, useEffect } from 'react'
 
 import { Magazine, MagazineListResponse } from '@/features/magazine'
-import { convertPdfToImages } from '@/features/magazine'
+import { convertPdfToImages, PDFPageImage } from '@/features/magazine'
+import { PDFLoadingOverlay } from '@/features/magazine/components/PDFLoadingOverlay'
+import { PDFPreviewModal } from '@/features/magazine/components/PDFPreviewModal'
 import { Season, SeasonListResponse } from '@/features/season'
 import { Header } from '@/shared/components'
 
@@ -19,6 +22,8 @@ export default function MagazinesPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [uploading, setUploading] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [isConverting, setIsConverting] = useState(false)
 
   const fetchMagazines = async (page = 1, search = '', seasonId = '') => {
     try {
@@ -69,7 +74,7 @@ export default function MagazinesPage() {
     ])
   }, [currentPage, searchTerm, selectedSeasonId])
 
-  const handleFileUpload = async (
+  const handleFileSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0]
@@ -80,19 +85,53 @@ export default function MagazinesPage() {
       return
     }
 
+    setError(null)
+    setSelectedFile(file)
+    setIsConverting(true)
+
+    try {
+      // PDF의 모든 페이지를 이미지로 변환
+      const pages = await convertPdfToImages(file)
+      setIsConverting(false)
+
+      overlay.open(({ isOpen, close }) => (
+        <PDFPreviewModal
+          isOpen={isOpen}
+          onClose={() => {
+            close()
+            setSelectedFile(null)
+          }}
+          pages={pages}
+          onConfirm={handleConfirmUpload}
+          title={file.name || 'PDF 미리보기'}
+        />
+      ))
+    } catch (err) {
+      setIsConverting(false)
+      setError(err instanceof Error ? err.message : 'PDF 변환 실패')
+    }
+
+    // 파일 입력 초기화
+    event.target.value = ''
+  }
+
+  const handleConfirmUpload = async (selectedPages: PDFPageImage[]) => {
+    if (!selectedFile) return
+
     setUploading(true)
     setError(null)
 
     try {
-      // 클라이언트 사이드에서 PDF를 이미지로 변환
-      const imageBlobs = await convertPdfToImages(file)
-
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('file', selectedFile)
 
-      // 변환된 이미지들도 FormData에 추가
-      imageBlobs.forEach((blob, index) => {
-        formData.append(`image-${index}`, blob, `page-${index + 1}.jpg`)
+      // 선택된 페이지들만 FormData에 추가
+      selectedPages.forEach((page, index) => {
+        formData.append(
+          `image-${index}`,
+          page.blob,
+          `page-${page.pageNumber}.jpg`,
+        )
       })
 
       const response = await fetch('/api/magazines/upload', {
@@ -108,7 +147,8 @@ export default function MagazinesPage() {
       await fetchMagazines(1, searchTerm, selectedSeasonId)
       setCurrentPage(1)
 
-      event.target.value = ''
+      // 상태 초기화
+      setSelectedFile(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
@@ -162,7 +202,7 @@ export default function MagazinesPage() {
                     <input
                       type="file"
                       accept=".pdf"
-                      onChange={handleFileUpload}
+                      onChange={handleFileSelect}
                       disabled={uploading}
                       className="hidden"
                     />
@@ -177,8 +217,8 @@ export default function MagazinesPage() {
                     </span>
                   </label>
                   <span className="text-sm text-gray-500">
-                    PDF 파일만 업로드 가능합니다. 첫 3페이지가 미리보기로
-                    변환됩니다.
+                    PDF 파일만 업로드 가능합니다. 미리보기로 사용할 페이지를
+                    선택할 수 있습니다.
                   </span>
                 </div>
               </div>
@@ -392,6 +432,12 @@ export default function MagazinesPage() {
           </div>
         </main>
       </div>
+
+      {/* PDF Converting Overlay */}
+      <PDFLoadingOverlay
+        isOpen={isConverting}
+        fileName={selectedFile?.name || ''}
+      />
     </>
   )
 }
