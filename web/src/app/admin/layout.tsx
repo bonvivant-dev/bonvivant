@@ -2,7 +2,7 @@
 
 import '../globals.css'
 
-import { AuthProvider } from '@/features/auth'
+import { AuthProvider } from '@/features/auth/providers'
 import { useAuth } from '@/features/auth/store'
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {

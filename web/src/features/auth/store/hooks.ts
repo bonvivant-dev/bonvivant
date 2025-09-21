@@ -8,7 +8,6 @@ export function useAuth() {
 
   const signOut = useCallback(async () => {
     try {
-      store.setIsSigningOut(true)
       await authService.signOut()
       store.reset()
       window.location.href = '/'
