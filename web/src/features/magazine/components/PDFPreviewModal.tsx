@@ -165,7 +165,7 @@ export function PDFPreviewModal({
                       />
                       <button
                         onClick={() => togglePageSelection(page.pageNumber)}
-                        className="absolute top-1 left-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-600 cursor-pointer"
+                        className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 cursor-pointer"
                       >
                         ×
                       </button>
