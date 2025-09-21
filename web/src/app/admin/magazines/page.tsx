@@ -75,7 +75,7 @@ export default function MagazinesPage() {
   }, [currentPage, searchTerm, selectedSeasonId])
 
   const handleConfirmUpload = useCallback(
-    async (selectedPages: PDFPageImage[], file: File) => {
+    async (selectedPages: PDFPageImage[], file: File, magazineFormData?: any) => {
       if (!file) return
 
       setUploading(true)
@@ -84,6 +84,15 @@ export default function MagazinesPage() {
       try {
         const formData = new FormData()
         formData.append('file', file)
+
+        // Add magazine metadata if provided
+        if (magazineFormData) {
+          formData.append('title', magazineFormData.title)
+          formData.append('summary', magazineFormData.summary)
+          formData.append('introduction', magazineFormData.introduction)
+          formData.append('category_id', magazineFormData.category_id)
+          formData.append('season_id', magazineFormData.season_id)
+        }
 
         // 선택된 페이지들을 순서와 메타데이터와 함께 FormData에 추가
         const pageMetadata = selectedPages.map((page, index) => ({
@@ -153,8 +162,8 @@ export default function MagazinesPage() {
             pages={pages}
             isOpen={isOpen}
             onClose={close}
-            onConfirm={async selectedPages => {
-              await handleConfirmUpload(selectedPages, file)
+            onConfirm={async (selectedPages, formData) => {
+              await handleConfirmUpload(selectedPages, file, formData)
               resolve(true)
               close()
             }}

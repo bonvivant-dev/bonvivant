@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Navigation } from 'swiper/modules'
 import { Swiper, SwiperSlide } from 'swiper/react'
 
@@ -11,11 +11,41 @@ import 'swiper/css/navigation'
 
 import { PDFPageImage } from '../lib/convertPdfToImages'
 
+interface Category {
+  id: string
+  name: string
+  created_at: string
+  updated_at: string | null
+}
+
+interface Season {
+  id: string
+  name: string
+  created_at: string
+  updated_at: string | null
+}
+
+interface CategoryListResponse {
+  categories: Category[]
+}
+
+interface SeasonListResponse {
+  seasons: Season[]
+}
+
+interface MagazineFormData {
+  title: string
+  summary: string
+  introduction: string
+  category_id: string
+  season_id: string
+}
+
 interface PDFPreviewModalProps {
   isOpen: boolean
   onClose: () => void
   pages: PDFPageImage[]
-  onConfirm: (selectedPages: PDFPageImage[]) => void
+  onConfirm: (selectedPages: PDFPageImage[], formData: MagazineFormData) => void
   title: string
 }
 
@@ -28,6 +58,65 @@ export function PDFPreviewModal({
 }: PDFPreviewModalProps) {
   const [selectedPageOrder, setSelectedPageOrder] = useState<number[]>([])
   const [, setCurrentSlide] = useState(0)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [seasons, setSeasons] = useState<Season[]>([])
+  const [formData, setFormData] = useState<MagazineFormData>({
+    title: title.replace('.pdf', '') || '',
+    summary: '',
+    introduction: '',
+    category_id: '',
+    season_id: '',
+  })
+
+  // Fetch categories and seasons when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchCategories()
+      fetchSeasons()
+      // Reset form data when modal opens
+      setFormData({
+        title: title.replace('.pdf', '') || '',
+        summary: '',
+        introduction: '',
+        category_id: '',
+        season_id: '',
+      })
+      setSelectedPageOrder([])
+    }
+  }, [isOpen, title])
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/categories')
+      if (response.ok) {
+        const data: CategoryListResponse = await response.json()
+        setCategories(data.categories)
+      }
+    } catch (err) {
+      console.error('Failed to fetch categories:', err)
+    }
+  }
+
+  const fetchSeasons = async () => {
+    try {
+      const response = await fetch('/api/seasons')
+      if (response.ok) {
+        const data: SeasonListResponse = await response.json()
+        setSeasons(data.seasons)
+      }
+    } catch (err) {
+      console.error('Failed to fetch seasons:', err)
+    }
+  }
+
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
 
   const togglePageSelection = (pageNumber: number) => {
     setSelectedPageOrder(prevOrder => {
@@ -47,7 +136,7 @@ export function PDFPreviewModal({
       .map(pageNumber => pages.find(page => page.pageNumber === pageNumber))
       .filter(Boolean) as PDFPageImage[]
 
-    onConfirm(selectedPages)
+    onConfirm(selectedPages, formData)
   }
 
   const selectedPages = selectedPageOrder
@@ -76,110 +165,225 @@ export function PDFPreviewModal({
           </button>
         </div>
 
-        <div className="flex flex-col">
-          {/* Swiper Section */}
-          <div className="p-4">
-            <p className="text-sm text-gray-600 mb-3">
-              미리보기로 사용할 페이지를 선택하세요
-            </p>
-            <div className="relative">
-              <Swiper
-                modules={[Navigation]}
-                navigation={{
-                  nextEl: '.swiper-button-next-custom',
-                  prevEl: '.swiper-button-prev-custom',
-                }}
-                spaceBetween={12}
-                slidesPerView={4}
-                onSlideChange={swiper => setCurrentSlide(swiper.activeIndex)}
-                className="h-full"
-              >
-                {pages.map(page => (
-                  <SwiperSlide
-                    key={page.pageNumber}
-                    className="flex items-center justify-center content-center"
-                  >
-                    <div
-                      className="relative cursor-pointer border border-gray-400 p-1 hover:opacity-80"
-                      onClick={() => togglePageSelection(page.pageNumber)}
-                    >
-                      <img
-                        src={page.dataUrl}
-                        alt={`Page ${page.pageNumber}`}
-                        className="max-h-full max-w-full object-contain"
-                      />
-                      <div className="absolute top-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-sm">
-                        {page.pageNumber}
-                      </div>
-                      <button
-                        className={`absolute top-2 right-2 w-8 h-8 rounded-full border-2 flex items-center justify-center ${
-                          selectedPageNumbers.has(page.pageNumber)
-                            ? 'bg-blue-500 border-blue-500 text-white'
-                            : 'bg-white border-gray-300 text-gray-600'
-                        }`}
-                      >
-                        {selectedPageNumbers.has(page.pageNumber) && '✓'}
-                      </button>
-                    </div>
-                  </SwiperSlide>
-                ))}
-              </Swiper>
+        <div className="flex h-full">
+          {/* Left Column - Magazine Information Form */}
+          <div className="w-1/4 p-6 border-r border-gray-300 overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">매거진 정보</h3>
+            <div className="space-y-4">
+              {/* Title */}
+              <div>
+                <label
+                  htmlFor="title"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  제목 *
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="매거진 제목을 입력하세요"
+                />
+              </div>
 
-              {/* Custom Navigation Buttons */}
-              <div className="flex justify-center mt-4 gap-4">
-                <button className="swiper-button-prev-custom bg-gray-200 hover:bg-gray-300 text-gray-700 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer">
-                  ‹
-                </button>
-                <button className="swiper-button-next-custom bg-gray-200 hover:bg-gray-300 text-gray-700 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer">
-                  ›
-                </button>
+              {/* Summary */}
+              <div>
+                <label
+                  htmlFor="summary"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  요약
+                </label>
+                <textarea
+                  id="summary"
+                  name="summary"
+                  rows={3}
+                  value={formData.summary}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="매거진의 간단한 요약을 입력하세요..."
+                />
+              </div>
+
+              {/* Introduction */}
+              <div>
+                <label
+                  htmlFor="introduction"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  소개글
+                </label>
+                <textarea
+                  id="introduction"
+                  name="introduction"
+                  rows={4}
+                  value={formData.introduction}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="매거진에 대한 자세한 소개글을 입력하세요..."
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label
+                  htmlFor="category_id"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  카테고리
+                </label>
+                <select
+                  id="category_id"
+                  name="category_id"
+                  value={formData.category_id}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">카테고리 선택</option>
+                  {categories.map(category => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Season */}
+              <div>
+                <label
+                  htmlFor="season_id"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  시즌
+                </label>
+                <select
+                  id="season_id"
+                  name="season_id"
+                  value={formData.season_id}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">시즌 선택</option>
+                  {seasons.map(season => (
+                    <option key={season.id} value={season.id}>
+                      {season.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
 
-          {/* Selected Images Section */}
-          <div className="border-t border-gray-400 bg-gray-50 p-4 h-[280px] flex flex-col">
-            <h3 className="text-sm text-gray-600 mb-3">
-              선택한 순서대로 미리보기에 사용됩니다 ({selectedPages.length}개)
-            </h3>
-            <div className="flex gap-2 overflow-x-auto h-full">
-              {selectedPages.length > 0 ? (
-                selectedPages.map((page, index) => (
-                  <div
-                    key={`${page.pageNumber}-${index}`}
-                    className="flex-shrink-0 relative"
-                  >
-                    <img
-                      src={page.dataUrl}
-                      alt={`Page ${page.pageNumber}`}
-                      className="h-full object-cover rounded border"
-                    />
-                    <div className="absolute top-1 left-1 bg-black/60 text-white px-2 py-1 rounded text-sm">
-                      {page.pageNumber}
-                    </div>
-                    <button
-                      onClick={() => togglePageSelection(page.pageNumber)}
-                      className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 cursor-pointer"
+          {/* Right Column - PDF Page Selection */}
+          <div className="w-3/4 flex flex-col">
+            {/* Swiper Section */}
+            <div className="p-4 flex-1">
+              <p className="text-sm text-gray-600 mb-3">
+                미리보기로 사용할 페이지를 선택하세요
+              </p>
+              <div className="relative">
+                <Swiper
+                  modules={[Navigation]}
+                  navigation={{
+                    nextEl: '.swiper-button-next-custom',
+                    prevEl: '.swiper-button-prev-custom',
+                  }}
+                  spaceBetween={12}
+                  slidesPerView={4}
+                  onSlideChange={swiper => setCurrentSlide(swiper.activeIndex)}
+                  className="h-full"
+                >
+                  {pages.map(page => (
+                    <SwiperSlide
+                      key={page.pageNumber}
+                      className="flex items-center justify-center content-center"
                     >
-                      ×
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <div className="h-[200px] w-[150px] border-2 border-dashed border-gray-300 rounded flex items-center justify-center text-gray-500">
-                  <p className="text-center">
-                    선택된 페이지가
-                    <br />
-                    없습니다.
-                  </p>
+                      <div
+                        className="relative cursor-pointer border border-gray-400 p-1 hover:opacity-80"
+                        onClick={() => togglePageSelection(page.pageNumber)}
+                      >
+                        <img
+                          src={page.dataUrl}
+                          alt={`Page ${page.pageNumber}`}
+                          className="max-h-full max-w-full object-contain"
+                        />
+                        <div className="absolute top-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-sm">
+                          {page.pageNumber}
+                        </div>
+                        <button
+                          className={`absolute top-2 right-2 w-8 h-8 rounded-full border-2 flex items-center justify-center ${
+                            selectedPageNumbers.has(page.pageNumber)
+                              ? 'bg-blue-500 border-blue-500 text-white'
+                              : 'bg-white border-gray-300 text-gray-600'
+                          }`}
+                        >
+                          {selectedPageNumbers.has(page.pageNumber) && '✓'}
+                        </button>
+                      </div>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+
+                {/* Custom Navigation Buttons */}
+                <div className="flex justify-center mt-4 gap-4">
+                  <button className="swiper-button-prev-custom bg-gray-200 hover:bg-gray-300 text-gray-700 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer">
+                    ‹
+                  </button>
+                  <button className="swiper-button-next-custom bg-gray-200 hover:bg-gray-300 text-gray-700 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer">
+                    ›
+                  </button>
                 </div>
-              )}
+              </div>
+            </div>
+
+            {/* Selected Images Section */}
+            <div className="border-t border-gray-400 bg-gray-50 p-4 h-[280px] flex flex-col">
+              <h3 className="text-sm text-gray-600 mb-3">
+                선택한 순서대로 미리보기에 사용됩니다 ({selectedPages.length}개)
+              </h3>
+              <div className="flex gap-2 overflow-x-auto h-full">
+                {selectedPages.length > 0 ? (
+                  selectedPages.map((page, index) => (
+                    <div
+                      key={`${page.pageNumber}-${index}`}
+                      className="flex-shrink-0 relative"
+                    >
+                      <img
+                        src={page.dataUrl}
+                        alt={`Page ${page.pageNumber}`}
+                        className="h-full object-cover rounded border"
+                      />
+                      <div className="absolute top-1 left-1 bg-black/60 text-white px-2 py-1 rounded text-sm">
+                        {page.pageNumber}
+                      </div>
+                      <button
+                        onClick={() => togglePageSelection(page.pageNumber)}
+                        className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 cursor-pointer"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="h-[200px] w-[150px] border-2 border-dashed border-gray-300 rounded flex items-center justify-center text-gray-500">
+                    <p className="text-center">
+                      선택된 페이지가
+                      <br />
+                      없습니다.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="items-center justify-between p-2 bg-gray-50">
+        <div className="items-center justify-between p-2 bg-gray-50 border-t border-gray-300">
           <div className="flex gap-3 justify-end">
             <button
               onClick={onClose}
@@ -189,7 +393,9 @@ export function PDFPreviewModal({
             </button>
             <button
               onClick={handleConfirm}
-              disabled={selectedPageOrder.length === 0}
+              disabled={
+                selectedPageOrder.length === 0 || !formData.title.trim()
+              }
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer text-lg"
             >
               확인 ({selectedPageOrder.length}개)

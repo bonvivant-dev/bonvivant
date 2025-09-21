@@ -50,9 +50,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Extract magazine metadata from form
+    const title = formData.get('title') as string
+    const summary = formData.get('summary') as string
+    const introduction = formData.get('introduction') as string
+    const categoryId = formData.get('category_id') as string
+    const seasonId = formData.get('season_id') as string
+
     const storageKey = uuidv4()
     const originalFileName = file.name
-    const titleWithoutExt = path.parse(originalFileName).name
+    const titleWithoutExt = title || path.parse(originalFileName).name
     const fileExtension = path.parse(originalFileName).ext
     const safeFileName = `${storageKey}${fileExtension}`
 
@@ -114,6 +121,10 @@ export async function POST(request: NextRequest) {
         .from('magazines')
         .insert({
           title: titleWithoutExt,
+          summary: summary || null,
+          introduction: introduction || null,
+          category_id: categoryId || null,
+          season_id: seasonId || null,
           storage_key: storageKey,
           original_filename: originalFileName,
           safe_filename: safeFileName,
