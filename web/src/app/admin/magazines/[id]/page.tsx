@@ -4,7 +4,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 
-import { useAuth } from '@/features/auth'
 import { CategoryChip } from '@/features/category'
 import { Magazine } from '@/features/magazine'
 import { SeasonChip } from '@/features/season'
@@ -16,7 +15,6 @@ interface MagazineEditPageProps {
 }
 
 export default function MagazineEditPage({ params }: MagazineEditPageProps) {
-  const { user, isAdmin } = useAuth()
   const [magazine, setMagazine] = useState<Magazine | null>(null)
   const [seasons, setSeasons] = useState<Season[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -59,11 +57,9 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
   }, [params])
 
   useEffect(() => {
-    if (user && isAdmin) {
-      fetchMagazine()
-      fetchSeasons()
-    }
-  }, [user, isAdmin, fetchMagazine])
+    fetchMagazine()
+    fetchSeasons()
+  }, [])
 
   const fetchSeasons = async () => {
     try {
@@ -128,7 +124,6 @@ export default function MagazineEditPage({ params }: MagazineEditPageProps) {
   }
 
   const handleSeasonUpdate = (seasonId: string | null) => {
-    console.log('seasonId', seasonId)
     setFormData(prev => ({ ...prev, season_id: seasonId || '' }))
   }
 

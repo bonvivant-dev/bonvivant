@@ -4,14 +4,12 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
-import { useAuth } from '@/features/auth'
 import { Magazine, MagazineListResponse } from '@/features/magazine'
 import { convertPdfToImages } from '@/features/magazine'
 import { Season, SeasonListResponse } from '@/features/season'
 import { Header } from '@/shared/components'
 
 export default function MagazinesPage() {
-  const { user, isAdmin } = useAuth()
   const [magazines, setMagazines] = useState<Magazine[]>([])
   const [seasons, setSeasons] = useState<Season[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -65,13 +63,11 @@ export default function MagazinesPage() {
   }
 
   useEffect(() => {
-    if (user && isAdmin) {
-      Promise.all([
-        fetchMagazines(currentPage, searchTerm, selectedSeasonId),
-        fetchSeasons(),
-      ])
-    }
-  }, [user, isAdmin, currentPage, searchTerm, selectedSeasonId])
+    Promise.all([
+      fetchMagazines(currentPage, searchTerm, selectedSeasonId),
+      fetchSeasons(),
+    ])
+  }, [currentPage, searchTerm, selectedSeasonId])
 
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
