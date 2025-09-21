@@ -136,15 +136,21 @@ export default function MagazinesPage() {
       const pages = await convertPdfToImages(file)
       setIsConverting(false)
 
-      overlay.open(({ isOpen, close }) => (
-        <PDFPreviewModal
-          isOpen={isOpen}
-          onClose={close}
-          pages={pages}
-          onConfirm={selectedPages => handleConfirmUpload(selectedPages, file)}
-          title={file.name || 'PDF 미리보기'}
-        />
-      ))
+      new Promise(resolve => {
+        overlay.open(({ isOpen, close }) => (
+          <PDFPreviewModal
+            title={file.name || 'PDF 미리보기'}
+            pages={pages}
+            isOpen={isOpen}
+            onClose={close}
+            onConfirm={async selectedPages => {
+              await handleConfirmUpload(selectedPages, file)
+              resolve(true)
+              close()
+            }}
+          />
+        ))
+      })
     } catch (err) {
       setIsConverting(false)
       setError(err instanceof Error ? err.message : 'PDF 변환 실패')

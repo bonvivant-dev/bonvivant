@@ -200,7 +200,7 @@ export function PDFPreviewModal({
               disabled={selectedPageNumbers.size === 0}
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer text-lg"
             >
-              확인 ({selectedPageNumbers.size}개)
+              확인 (${selectedPageNumbers.size}개)
             </button>
           </div>
         </div>
