@@ -56,9 +56,3 @@ export async function convertPdfToImages(file: File, maxPages?: number): Promise
     throw error
   }
 }
-
-// 기존 함수와의 호환성을 위해 유지
-export async function convertPdfToImagesLegacy(file: File): Promise<Blob[]> {
-  const pageImages = await convertPdfToImages(file, 3)
-  return pageImages.map(page => page.blob)
-}
