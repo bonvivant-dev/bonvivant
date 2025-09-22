@@ -6,9 +6,13 @@ import { overlay } from 'overlay-kit'
 import { useState, useEffect, useCallback } from 'react'
 import { FcDocument } from 'react-icons/fc'
 
-import { Magazine, MagazineListResponse } from '@/features/magazine'
-import { convertPdfToImages, PDFPageImage } from '@/features/magazine'
-import { PDFPreviewModal } from '@/features/magazine/components/PDFPreviewModal'
+import {
+  Magazine,
+  MagazineListResponse,
+  convertPdfToImages,
+  PDFPageImage,
+  PDFPreviewModal,
+} from '@/features/magazine'
 import { Season, SeasonListResponse } from '@/features/season'
 import { Header, LoadingOverlay } from '@/shared/components'
 
