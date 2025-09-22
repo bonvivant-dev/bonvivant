@@ -9,7 +9,7 @@ import { useOutsideClick } from '@/shared/hooks'
 import { Season, SeasonListResponse } from '../types'
 
 interface SeasonChipProps {
-  magazineId: string
+  magazineId?: string
   currentSeasonId: string | null
   onUpdate: (seasonId: string | null) => void
 }
@@ -71,6 +71,14 @@ export function SeasonChip({
   }
 
   const updateMagazineSeason = async (seasonId: string | null) => {
+    // 매거진 ID가 없으면 바로 상태만 업데이트 (신규 생성 모드)
+    if (!magazineId) {
+      onUpdate(seasonId)
+      setIsOpen(false)
+      return
+    }
+
+    // 매거진 ID가 있으면 서버에 업데이트 요청 (수정 모드)
     try {
       const response = await fetch(`/api/magazines/${magazineId}`, {
         method: 'PUT',
@@ -101,15 +109,15 @@ export function SeasonChip({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: newSeasonName.trim() }),
       })
 
       if (response.ok) {
         const data = await response.json()
         await fetchSeasons()
-        await updateMagazineSeason(data.season.id)
         setNewSeasonName('')
         setShowCreateForm(false)
+        // 새로 생성된 시즌을 자동으로 선택
+        await updateMagazineSeason(data.season.id)
       } else {
         const errorData = await response.json()
         setError(errorData.error || '시즌 생성에 실패했습니다.')
@@ -131,6 +139,7 @@ export function SeasonChip({
 
       if (response.ok) {
         await fetchSeasons()
+        // 삭제된 시즌이 현재 선택된 시즌이었다면 선택 해제
         if (currentSeasonId === seasonId) {
           await updateMagazineSeason(null)
         }
@@ -158,8 +167,8 @@ export function SeasonChip({
       if (buttonRef.current) {
         const rect = buttonRef.current.getBoundingClientRect()
         setDropdownPosition({
-          top: rect.bottom + window.scrollY + 4,
-          left: rect.left + window.scrollX,
+          top: rect.bottom + 4,
+          left: rect.left,
         })
       }
     }

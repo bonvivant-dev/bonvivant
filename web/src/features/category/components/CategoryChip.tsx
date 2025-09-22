@@ -9,7 +9,7 @@ import { useOutsideClick } from '@/shared/hooks'
 import { Category, CategoryListResponse } from '../types'
 
 interface CategoryChipProps {
-  magazineId: string
+  magazineId?: string
   currentCategoryId: string | null
   onUpdate: (categoryId: string | null) => void
 }
@@ -71,6 +71,14 @@ export function CategoryChip({
   }
 
   const updateMagazineCategory = async (categoryId: string | null) => {
+    // 매거진 ID가 없으면 바로 상태만 업데이트 (신규 생성 모드)
+    if (!magazineId) {
+      onUpdate(categoryId)
+      setIsOpen(false)
+      return
+    }
+
+    // 매거진 ID가 있으면 서버에 업데이트 요청 (수정 모드)
     try {
       const response = await fetch(`/api/magazines/${magazineId}`, {
         method: 'PUT',
@@ -107,9 +115,10 @@ export function CategoryChip({
       if (response.ok) {
         const data = await response.json()
         await fetchCategories()
-        await updateMagazineCategory(data.category.id)
         setNewCategoryName('')
         setShowCreateForm(false)
+        // 새로 생성된 카테고리를 자동으로 선택
+        await updateMagazineCategory(data.category.id)
       } else {
         const errorData = await response.json()
         setError(errorData.error || '카테고리 생성에 실패했습니다.')
@@ -131,6 +140,7 @@ export function CategoryChip({
 
       if (response.ok) {
         await fetchCategories()
+        // 삭제된 카테고리가 현재 선택된 카테고리였다면 선택 해제
         if (currentCategoryId === categoryId) {
           await updateMagazineCategory(null)
         }
@@ -158,8 +168,8 @@ export function CategoryChip({
       if (buttonRef.current) {
         const rect = buttonRef.current.getBoundingClientRect()
         setDropdownPosition({
-          top: rect.bottom + window.scrollY + 4,
-          left: rect.left + window.scrollX,
+          top: rect.bottom + 4,
+          left: rect.left,
         })
       }
     }

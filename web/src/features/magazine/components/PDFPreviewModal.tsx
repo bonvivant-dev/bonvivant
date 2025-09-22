@@ -10,29 +10,11 @@ import { Swiper, SwiperSlide } from 'swiper/react'
 import 'swiper/css'
 import 'swiper/css/navigation'
 
+import { CategoryChip } from '@/features/category'
+import { SeasonChip } from '@/features/season'
+
 import { PDFPageImage } from '../lib/convertPdfToImages'
 
-interface Category {
-  id: string
-  name: string
-  created_at: string
-  updated_at: string | null
-}
-
-interface Season {
-  id: string
-  name: string
-  created_at: string
-  updated_at: string | null
-}
-
-interface CategoryListResponse {
-  categories: Category[]
-}
-
-interface SeasonListResponse {
-  seasons: Season[]
-}
 
 interface MagazineFormData {
   title: string
@@ -48,6 +30,7 @@ interface PDFPreviewModalProps {
   pages: PDFPageImage[]
   onConfirm: (selectedPages: PDFPageImage[], formData: MagazineFormData) => void
   title: string
+  magazineId?: string
 }
 
 export function PDFPreviewModal({
@@ -56,11 +39,10 @@ export function PDFPreviewModal({
   pages,
   onConfirm,
   title,
+  magazineId,
 }: PDFPreviewModalProps) {
   const [selectedPageOrder, setSelectedPageOrder] = useState<number[]>([])
   const [, setCurrentSlide] = useState(0)
-  const [categories, setCategories] = useState<Category[]>([])
-  const [seasons, setSeasons] = useState<Season[]>([])
   const [formData, setFormData] = useState<MagazineFormData>({
     title: title.replace('.pdf', '') || '',
     summary: '',
@@ -69,12 +51,9 @@ export function PDFPreviewModal({
     season_id: '',
   })
 
-  // Fetch categories and seasons when modal opens
+  // Reset form data when modal opens
   useEffect(() => {
     if (isOpen) {
-      fetchCategories()
-      fetchSeasons()
-      // Reset form data when modal opens
       setFormData({
         title: title.replace('.pdf', '') || '',
         summary: '',
@@ -86,37 +65,19 @@ export function PDFPreviewModal({
     }
   }, [isOpen, title])
 
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch('/api/categories')
-      if (response.ok) {
-        const data: CategoryListResponse = await response.json()
-        setCategories(data.categories)
-      }
-    } catch (err) {
-      console.error('Failed to fetch categories:', err)
-    }
-  }
-
-  const fetchSeasons = async () => {
-    try {
-      const response = await fetch('/api/seasons')
-      if (response.ok) {
-        const data: SeasonListResponse = await response.json()
-        setSeasons(data.seasons)
-      }
-    } catch (err) {
-      console.error('Failed to fetch seasons:', err)
-    }
-  }
-
   const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleSeasonUpdate = (seasonId: string | null) => {
+    setFormData(prev => ({ ...prev, season_id: seasonId || '' }))
+  }
+
+  const handleCategoryUpdate = (categoryId: string | null) => {
+    setFormData(prev => ({ ...prev, category_id: categoryId || '' }))
   }
 
   const togglePageSelection = (pageNumber: number) => {
@@ -169,6 +130,25 @@ export function PDFPreviewModal({
           <div className="w-1/4 p-4 border-r border-gray-300 overflow-y-auto">
             <p className="text-m text-gray-600 mb-3">매거진 정보</p>
             <div className="space-y-4">
+              {/* Category and Season Chips */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  카테고리 및 시즌
+                </label>
+                <div className="flex items-center space-x-2">
+                  <SeasonChip
+                    magazineId={magazineId}
+                    currentSeasonId={formData.season_id || null}
+                    onUpdate={handleSeasonUpdate}
+                  />
+                  <CategoryChip
+                    magazineId={magazineId}
+                    currentCategoryId={formData.category_id || null}
+                    onUpdate={handleCategoryUpdate}
+                  />
+                </div>
+              </div>
+
               {/* Title */}
               <div>
                 <label
@@ -227,53 +207,6 @@ export function PDFPreviewModal({
                 />
               </div>
 
-              {/* Category */}
-              <div>
-                <label
-                  htmlFor="category_id"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  카테고리
-                </label>
-                <select
-                  id="category_id"
-                  name="category_id"
-                  value={formData.category_id}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">카테고리 선택</option>
-                  {categories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Season */}
-              <div>
-                <label
-                  htmlFor="season_id"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  시즌
-                </label>
-                <select
-                  id="season_id"
-                  name="season_id"
-                  value={formData.season_id}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">시즌 선택</option>
-                  {seasons.map(season => (
-                    <option key={season.id} value={season.id}>
-                      {season.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>
           </div>
 
