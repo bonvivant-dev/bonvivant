@@ -2,6 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { IoMdClose } from 'react-icons/io'
 import { Navigation } from 'swiper/modules'
 import { Swiper, SwiperSlide } from 'swiper/react'
 
@@ -153,22 +154,20 @@ export function PDFPreviewModal({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-400">
           <div>
-            <h2 className="text-xl font-semibold">
-              {title} - 총 {pages.length}페이지
-            </h2>
+            <h2 className="text-xl font-semibold">{title}</h2>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl font-bold cursor-pointer"
+            className="text-xl font-bold cursor-pointer"
           >
-            ×
+            <IoMdClose size={24} />
           </button>
         </div>
 
         <div className="flex h-full">
           {/* Left Column - Magazine Information Form */}
-          <div className="w-1/4 p-6 border-r border-gray-300 overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">매거진 정보</h3>
+          <div className="w-1/4 p-4 border-r border-gray-300 overflow-y-auto">
+            <p className="text-m text-gray-600 mb-3">매거진 정보</p>
             <div className="space-y-4">
               {/* Title */}
               <div>
@@ -282,8 +281,8 @@ export function PDFPreviewModal({
           <div className="w-3/4 flex flex-col">
             {/* Swiper Section */}
             <div className="p-4 flex-1">
-              <p className="text-sm text-gray-600 mb-3">
-                미리보기로 사용할 페이지를 선택하세요
+              <p className="text-m text-gray-600 mb-3">
+                미리보기로 사용할 페이지를 선택하세요 (총 {pages.length}페이지)
               </p>
               <div className="relative">
                 <Swiper
@@ -342,7 +341,7 @@ export function PDFPreviewModal({
 
             {/* Selected Images Section */}
             <div className="border-t border-gray-400 bg-gray-50 p-4 h-[280px] flex flex-col">
-              <h3 className="text-sm text-gray-600 mb-3">
+              <h3 className="text-m text-gray-600 mb-3">
                 선택한 순서대로 미리보기에 사용됩니다 ({selectedPages.length}개)
               </h3>
               <div className="flex gap-2 overflow-x-auto h-full">
