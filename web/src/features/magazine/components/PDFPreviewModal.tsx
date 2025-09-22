@@ -314,7 +314,7 @@ export function PDFPreviewModal({
                           {page.pageNumber}
                         </div>
                         <button
-                          className={`absolute top-2 right-2 w-8 h-8 rounded-full border-2 flex items-center justify-center ${
+                          className={`absolute cursor-pointer top-2 right-2 w-8 h-8 rounded-full border-2 flex items-center justify-center ${
                             selectedPageNumbers.has(page.pageNumber)
                               ? 'bg-blue-500 border-blue-500 text-white'
                               : 'bg-white border-gray-300 text-gray-600'
