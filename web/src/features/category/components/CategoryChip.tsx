@@ -11,12 +11,14 @@ import { Category, CategoryListResponse } from '../types'
 interface CategoryChipProps {
   magazineId?: string
   currentCategoryId: string | null
+  setCurrentCategoryId: (categoryId: string | null) => void
   onUpdate: (categoryId: string | null) => void
 }
 
 export function CategoryChip({
   magazineId,
   currentCategoryId,
+  setCurrentCategoryId,
   onUpdate,
 }: CategoryChipProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -119,6 +121,7 @@ export function CategoryChip({
         setShowCreateForm(false)
         // 새로 생성된 카테고리를 자동으로 선택
         await updateMagazineCategory(data.category.id)
+        setCurrentCategoryId(data.category.id)
       } else {
         const errorData = await response.json()
         setError(errorData.error || '카테고리 생성에 실패했습니다.')
@@ -143,6 +146,7 @@ export function CategoryChip({
         // 삭제된 카테고리가 현재 선택된 카테고리였다면 선택 해제
         if (currentCategoryId === categoryId) {
           await updateMagazineCategory(null)
+          setCurrentCategoryId(null)
         }
       } else {
         const errorData = await response.json()
@@ -202,7 +206,7 @@ export function CategoryChip({
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium transition-colors ${
-          currentCategoryId
+          currentCategoryName
             ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
             : 'border border-dashed border-gray-400 text-gray-600 hover:border-gray-600 hover:text-gray-800'
         }`}
@@ -239,7 +243,11 @@ export function CategoryChip({
               <>
                 {/* 카테고리 없음 옵션 */}
                 <button
-                  onClick={() => updateMagazineCategory(null)}
+                  onClick={() => {
+                    setCurrentCategoryName(null)
+                    setCurrentCategoryId(null)
+                    setIsOpen(false)
+                  }}
                   className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
                     !currentCategoryId ? 'bg-gray-50 font-medium' : ''
                   }`}
@@ -258,7 +266,11 @@ export function CategoryChip({
                     }`}
                   >
                     <button
-                      onClick={() => updateMagazineCategory(category.id)}
+                      onClick={() => {
+                        setCurrentCategoryName(category.name)
+                        setCurrentCategoryId(category.id)
+                        setIsOpen(false)
+                      }}
                       className="flex-1 text-left"
                     >
                       {category.name}

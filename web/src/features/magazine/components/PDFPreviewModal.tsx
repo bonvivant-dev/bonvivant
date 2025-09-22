@@ -164,11 +164,23 @@ export function PDFPreviewModal({
                   <SeasonChip
                     magazineId={magazineId}
                     currentSeasonId={formData.season_id || null}
+                    setCurrentSeasonId={(seasonId: string | null) =>
+                      setFormData(prev => ({
+                        ...prev,
+                        season_id: seasonId || '',
+                      }))
+                    }
                     onUpdate={handleSeasonUpdate}
                   />
                   <CategoryChip
                     magazineId={magazineId}
                     currentCategoryId={formData.category_id || null}
+                    setCurrentCategoryId={(categoryId: string | null) =>
+                      setFormData(prev => ({
+                        ...prev,
+                        category_id: categoryId || '',
+                      }))
+                    }
                     onUpdate={handleCategoryUpdate}
                   />
                 </div>

@@ -11,12 +11,14 @@ import { Season, SeasonListResponse } from '../types'
 interface SeasonChipProps {
   magazineId?: string
   currentSeasonId: string | null
+  setCurrentSeasonId: (seasonId: string | null) => void
   onUpdate: (seasonId: string | null) => void
 }
 
 export function SeasonChip({
   magazineId,
   currentSeasonId,
+  setCurrentSeasonId,
   onUpdate,
 }: SeasonChipProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -109,6 +111,7 @@ export function SeasonChip({
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ name: newSeasonName.trim() }),
       })
 
       if (response.ok) {
@@ -118,6 +121,7 @@ export function SeasonChip({
         setShowCreateForm(false)
         // 새로 생성된 시즌을 자동으로 선택
         await updateMagazineSeason(data.season.id)
+        setCurrentSeasonId(data.season.id)
       } else {
         const errorData = await response.json()
         setError(errorData.error || '시즌 생성에 실패했습니다.')
@@ -142,6 +146,7 @@ export function SeasonChip({
         // 삭제된 시즌이 현재 선택된 시즌이었다면 선택 해제
         if (currentSeasonId === seasonId) {
           await updateMagazineSeason(null)
+          setCurrentSeasonId(null)
         }
       } else {
         const errorData = await response.json()
@@ -201,7 +206,7 @@ export function SeasonChip({
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium transition-colors ${
-          currentSeasonId
+          currentSeasonName
             ? 'bg-green-100 text-green-800 hover:bg-green-200'
             : 'border border-dashed border-gray-400 text-gray-600 hover:border-gray-600 hover:text-gray-800'
         }`}
@@ -238,7 +243,11 @@ export function SeasonChip({
               <>
                 {/* 시즌 없음 옵션 */}
                 <button
-                  onClick={() => updateMagazineSeason(null)}
+                  onClick={() => {
+                    setCurrentSeasonName(null)
+                    setCurrentSeasonId(null)
+                    setIsOpen(false)
+                  }}
                   className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
                     !currentSeasonId ? 'bg-gray-50 font-medium' : ''
                   }`}
@@ -257,7 +266,11 @@ export function SeasonChip({
                     }`}
                   >
                     <button
-                      onClick={() => updateMagazineSeason(season.id)}
+                      onClick={() => {
+                        setCurrentSeasonName(season.name)
+                        setCurrentSeasonId(season.id)
+                        setIsOpen(false)
+                      }}
                       className="flex-1 text-left"
                     >
                       {season.name}
