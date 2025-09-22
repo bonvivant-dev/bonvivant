@@ -4,13 +4,13 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { overlay } from 'overlay-kit'
 import { useState, useEffect, useCallback } from 'react'
+import { FcDocument } from 'react-icons/fc'
 
 import { Magazine, MagazineListResponse } from '@/features/magazine'
 import { convertPdfToImages, PDFPageImage } from '@/features/magazine'
-import { PDFLoadingOverlay } from '@/features/magazine/components/PDFLoadingOverlay'
 import { PDFPreviewModal } from '@/features/magazine/components/PDFPreviewModal'
 import { Season, SeasonListResponse } from '@/features/season'
-import { Header } from '@/shared/components'
+import { Header, LoadingOverlay } from '@/shared/components'
 
 export default function MagazinesPage() {
   const [magazines, setMagazines] = useState<Magazine[]>([])
@@ -75,7 +75,11 @@ export default function MagazinesPage() {
   }, [currentPage, searchTerm, selectedSeasonId])
 
   const handleConfirmUpload = useCallback(
-    async (selectedPages: PDFPageImage[], file: File, magazineFormData?: any) => {
+    async (
+      selectedPages: PDFPageImage[],
+      file: File,
+      magazineFormData?: any,
+    ) => {
       if (!file) return
 
       setUploading(true)
@@ -98,7 +102,7 @@ export default function MagazinesPage() {
         const pageMetadata = selectedPages.map((page, index) => ({
           order: index,
           originalPageNumber: page.pageNumber,
-          fileName: `${page.pageNumber}.jpg`
+          fileName: `${page.pageNumber}.jpg`,
         }))
 
         // 메타데이터 정보 추가
@@ -106,11 +110,7 @@ export default function MagazinesPage() {
 
         // 선택된 페이지들을 순서대로 추가 (원본 페이지 번호로 파일명 설정)
         selectedPages.forEach((page, index) => {
-          formData.append(
-            `image-${index}`,
-            page.blob,
-            `${page.pageNumber}.jpg`,
-          )
+          formData.append(`image-${index}`, page.blob, `${page.pageNumber}.jpg`)
         })
 
         const response = await fetch('/api/magazines/upload', {
@@ -455,11 +455,15 @@ export default function MagazinesPage() {
           </div>
         </main>
       </div>
-
-      {/* PDF Converting Overlay */}
-      <PDFLoadingOverlay
+      <LoadingOverlay
         isOpen={isConverting}
-        fileName={selectedFile?.name || ''}
+        icon={<FcDocument size={40} />}
+        title="PDF 변환 중"
+        message={
+          selectedFile?.name
+            ? `${selectedFile.name}을 이미지로 변환하고 있습니다...`
+            : 'PDF 변환 중...'
+        }
       />
     </>
   )
