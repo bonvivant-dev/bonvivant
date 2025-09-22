@@ -1,7 +1,6 @@
 'use client'
 
 import Image from 'next/image'
-import Link from 'next/link'
 import { overlay } from 'overlay-kit'
 import { useState, useEffect, useCallback } from 'react'
 import { FcDocument } from 'react-icons/fc'
@@ -10,6 +9,7 @@ import {
   Magazine,
   MagazineListResponse,
   convertPdfToImages,
+  convertPdfFromStorage,
   PDFPageImage,
   PDFPreviewModal,
 } from '@/features/magazine'
@@ -28,6 +28,7 @@ export default function MagazinesPage() {
   const [uploading, setUploading] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isConverting, setIsConverting] = useState(false)
+  const [isLoadingPdf, setIsLoadingPdf] = useState(false)
 
   const fetchMagazines = async (page = 1, search = '', seasonId = '') => {
     try {
@@ -81,17 +82,20 @@ export default function MagazinesPage() {
   const handleConfirmUpload = useCallback(
     async (
       selectedPages: PDFPageImage[],
-      file: File,
+      file: File | null,
       magazineFormData?: any,
+      editingMagazineId?: string,
     ) => {
-      if (!file) return
-
       setUploading(true)
       setError(null)
 
       try {
         const formData = new FormData()
-        formData.append('file', file)
+
+        // 편집 모드일 때는 file이 없을 수 있음 (PDF는 변경하지 않는 경우)
+        if (file) {
+          formData.append('file', file)
+        }
 
         // Add magazine metadata if provided
         if (magazineFormData) {
@@ -117,20 +121,35 @@ export default function MagazinesPage() {
           formData.append(`image-${index}`, page.blob, `${page.pageNumber}.jpg`)
         })
 
-        const response = await fetch('/api/magazines/upload', {
-          method: 'POST',
+        const url = editingMagazineId
+          ? `/api/magazines/${editingMagazineId}`
+          : '/api/magazines/upload'
+
+        const method = editingMagazineId ? 'PUT' : 'POST'
+
+        const response = await fetch(url, {
+          method,
           body: formData,
         })
 
         if (!response.ok) {
           const errorData = await response.json()
-          throw new Error(errorData.error || 'Upload failed')
+          throw new Error(
+            errorData.error ||
+              (editingMagazineId ? 'Update failed' : 'Upload failed'),
+          )
         }
 
         await fetchMagazines(1, searchTerm, selectedSeasonId)
         setCurrentPage(1)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Upload failed')
+        setError(
+          err instanceof Error
+            ? err.message
+            : editingMagazineId
+              ? 'Update failed'
+              : 'Upload failed',
+        )
       } finally {
         setSelectedFile(null)
         setUploading(false)
@@ -181,6 +200,61 @@ export default function MagazinesPage() {
 
     // 파일 입력 초기화
     event.target.value = ''
+  }
+
+  const handleEdit = async (magazine: Magazine) => {
+    setIsLoadingPdf(true)
+    setError(null)
+
+    try {
+      // Storage에서 PDF를 불러와서 이미지로 변환
+      const pages = await convertPdfFromStorage(
+        magazine.storage_key,
+        `${magazine.storage_key}.pdf`,
+      )
+      setIsLoadingPdf(false)
+
+      // 현재 선택된 미리보기 이미지 순서 추출
+      const selectedPages =
+        magazine.preview_images?.map(imageName => {
+          const pageNumber = parseInt(imageName.replace('.jpg', ''))
+          return pageNumber
+        }) || []
+
+      new Promise(resolve => {
+        overlay.open(({ isOpen, close }) => (
+          <PDFPreviewModal
+            title={magazine.title || 'PDF 편집'}
+            pages={pages}
+            isOpen={isOpen}
+            onClose={close}
+            editMode={true}
+            magazineId={magazine.id}
+            initialData={{
+              title: magazine.title || '',
+              summary: magazine.summary || '',
+              introduction: magazine.introduction || '',
+              category_id: magazine.category_id || '',
+              season_id: magazine.season_id || '',
+              selectedPages,
+            }}
+            onConfirm={async (selectedPages, formData) => {
+              await handleConfirmUpload(
+                selectedPages,
+                null,
+                formData,
+                magazine.id,
+              )
+              resolve(true)
+              close()
+            }}
+          />
+        ))
+      })
+    } catch (err) {
+      setIsLoadingPdf(false)
+      setError(err instanceof Error ? err.message : 'PDF 로딩 실패')
+    }
   }
 
   const handleDelete = async (id: string) => {
@@ -376,12 +450,13 @@ export default function MagazinesPage() {
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Link
-                              href={`/admin/magazines/${magazine.id}`}
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium"
+                            <button
+                              onClick={() => handleEdit(magazine)}
+                              disabled={isLoadingPdf}
+                              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-sm font-medium"
                             >
-                              편집
-                            </Link>
+                              {isLoadingPdf ? '로딩...' : '편집'}
+                            </button>
                             <button
                               onClick={() => handleDelete(magazine.id)}
                               className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium"
@@ -460,13 +535,15 @@ export default function MagazinesPage() {
         </main>
       </div>
       <LoadingOverlay
-        isOpen={isConverting}
+        isOpen={isConverting || isLoadingPdf}
         icon={<FcDocument size={40} />}
-        title="PDF 변환 중"
+        title={isConverting ? 'PDF 변환 중' : 'PDF 로딩 중'}
         message={
-          selectedFile?.name
-            ? `${selectedFile.name}을 이미지로 변환하고 있습니다...`
-            : 'PDF 변환 중...'
+          isConverting
+            ? selectedFile?.name
+              ? `${selectedFile.name}을 이미지로 변환하고 있습니다...`
+              : 'PDF 변환 중...'
+            : 'PDF를 불러오고 있습니다...'
         }
       />
     </>

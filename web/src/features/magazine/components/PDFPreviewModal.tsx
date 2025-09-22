@@ -15,7 +15,6 @@ import { SeasonChip } from '@/features/season'
 
 import { PDFPageImage } from '../lib/convertPdfToImages'
 
-
 interface MagazineFormData {
   title: string
   summary: string
@@ -31,6 +30,15 @@ interface PDFPreviewModalProps {
   onConfirm: (selectedPages: PDFPageImage[], formData: MagazineFormData) => void
   title: string
   magazineId?: string
+  editMode?: boolean
+  initialData?: {
+    title: string
+    summary: string
+    introduction: string
+    category_id: string
+    season_id: string
+    selectedPages?: number[]
+  }
 }
 
 export function PDFPreviewModal({
@@ -40,6 +48,8 @@ export function PDFPreviewModal({
   onConfirm,
   title,
   magazineId,
+  editMode = false,
+  initialData,
 }: PDFPreviewModalProps) {
   const [selectedPageOrder, setSelectedPageOrder] = useState<number[]>([])
   const [, setCurrentSlide] = useState(0)
@@ -51,19 +61,32 @@ export function PDFPreviewModal({
     season_id: '',
   })
 
-  // Reset form data when modal opens
+  // Initialize form data when modal opens
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        title: title.replace('.pdf', '') || '',
-        summary: '',
-        introduction: '',
-        category_id: '',
-        season_id: '',
-      })
-      setSelectedPageOrder([])
+      if (editMode && initialData) {
+        // 편집 모드: 기존 데이터로 초기화
+        setFormData({
+          title: initialData.title,
+          summary: initialData.summary,
+          introduction: initialData.introduction,
+          category_id: initialData.category_id,
+          season_id: initialData.season_id,
+        })
+        setSelectedPageOrder(initialData.selectedPages || [])
+      } else {
+        // 신규 생성 모드: 기본값으로 초기화
+        setFormData({
+          title: title.replace('.pdf', '') || '',
+          summary: '',
+          introduction: '',
+          category_id: '',
+          season_id: '',
+        })
+        setSelectedPageOrder([])
+      }
     }
-  }, [isOpen, title])
+  }, [isOpen, title, editMode, initialData])
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -115,7 +138,9 @@ export function PDFPreviewModal({
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-400">
           <div>
-            <h2 className="text-xl font-semibold">{title}</h2>
+            <h2 className="text-xl font-semibold">
+              {editMode ? `매거진 편집 - ${title}` : title}
+            </h2>
           </div>
           <button
             onClick={onClose}
@@ -206,7 +231,6 @@ export function PDFPreviewModal({
                   placeholder="매거진에 대한 자세한 소개글을 입력하세요..."
                 />
               </div>
-
             </div>
           </div>
 
@@ -328,9 +352,9 @@ export function PDFPreviewModal({
               disabled={
                 selectedPageOrder.length === 0 || !formData.title.trim()
               }
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer text-lg"
+              className="px-4 py-2 bg-blue-500 w-[100px] text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer text-lg"
             >
-              확인 ({selectedPageOrder.length}개)
+              {editMode ? '수정' : '확인'}
             </button>
           </div>
         </div>
