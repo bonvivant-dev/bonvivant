@@ -27,7 +27,6 @@ export function CategoryChip({
     null,
   )
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -52,7 +51,6 @@ export function CategoryChip({
         setCurrentCategoryName(null)
       }
     } catch (err) {
-      console.error('Failed to fetch current category:', err)
       setCurrentCategoryName(null)
     }
   }, [currentCategoryId])
@@ -66,7 +64,7 @@ export function CategoryChip({
         setCategories(data.categories)
       }
     } catch (err) {
-      setError('카테고리를 불러오는데 실패했습니다.')
+      console.error('Failed to fetch categories:', err)
     } finally {
       setIsLoading(false)
     }
@@ -93,11 +91,9 @@ export function CategoryChip({
       if (response.ok) {
         onUpdate(categoryId)
         setIsOpen(false)
-      } else {
-        setError('카테고리 업데이트에 실패했습니다.')
       }
     } catch (err) {
-      setError('카테고리 업데이트에 실패했습니다.')
+      console.error('Failed to update magazine category:', err)
     }
   }
 
@@ -119,15 +115,10 @@ export function CategoryChip({
         await fetchCategories()
         setNewCategoryName('')
         setShowCreateForm(false)
-        // 새로 생성된 카테고리를 자동으로 선택
         await updateMagazineCategory(data.category.id)
-        setCurrentCategoryId(data.category.id)
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || '카테고리 생성에 실패했습니다.')
       }
     } catch (err) {
-      setError('카테고리 생성에 실패했습니다.')
+      console.error('Failed to create category:', err)
     } finally {
       setIsCreating(false)
     }
@@ -148,12 +139,9 @@ export function CategoryChip({
           await updateMagazineCategory(null)
           setCurrentCategoryId(null)
         }
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || '카테고리 삭제에 실패했습니다.')
       }
     } catch (err) {
-      setError('카테고리 삭제에 실패했습니다.')
+      console.error('Failed to delete category:', err)
     }
   }
 
@@ -164,7 +152,6 @@ export function CategoryChip({
   useEffect(() => {
     if (isOpen) {
       fetchCategories()
-      setError(null)
       setShowCreateForm(false)
       setNewCategoryName('')
 
@@ -337,12 +324,6 @@ export function CategoryChip({
                   </button>
                 )}
               </>
-            )}
-
-            {error && (
-              <div className="px-3 py-2 text-xs text-red-600 border-t border-gray-100">
-                {error}
-              </div>
             )}
           </div>
         </div>

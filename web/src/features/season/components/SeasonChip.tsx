@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 
 import { useState, useEffect, useRef, RefObject, useCallback } from 'react'
@@ -27,7 +26,6 @@ export function SeasonChip({
     null,
   )
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [newSeasonName, setNewSeasonName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -66,7 +64,7 @@ export function SeasonChip({
         setSeasons(data.seasons)
       }
     } catch (err) {
-      setError('시즌을 불러오는데 실패했습니다.')
+      console.error('Failed to fetch seasons:', err)
     } finally {
       setIsLoading(false)
     }
@@ -93,11 +91,9 @@ export function SeasonChip({
       if (response.ok) {
         onUpdate(seasonId)
         setIsOpen(false)
-      } else {
-        setError('시즌 업데이트에 실패했습니다.')
       }
     } catch (err) {
-      setError('시즌 업데이트에 실패했습니다.')
+      console.error('Failed to update magazine season:', err)
     }
   }
 
@@ -122,12 +118,9 @@ export function SeasonChip({
         // 새로 생성된 시즌을 자동으로 선택
         await updateMagazineSeason(data.season.id)
         setCurrentSeasonId(data.season.id)
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || '시즌 생성에 실패했습니다.')
       }
     } catch (err) {
-      setError('시즌 생성에 실패했습니다.')
+      console.error('Failed to create season:', err)
     } finally {
       setIsCreating(false)
     }
@@ -148,12 +141,9 @@ export function SeasonChip({
           await updateMagazineSeason(null)
           setCurrentSeasonId(null)
         }
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || '시즌 삭제에 실패했습니다.')
       }
     } catch (err) {
-      setError('시즌 삭제에 실패했습니다.')
+      console.error('Failed to delete season:', err)
     }
   }
 
@@ -164,7 +154,6 @@ export function SeasonChip({
   useEffect(() => {
     if (isOpen) {
       fetchSeasons()
-      setError(null)
       setShowCreateForm(false)
       setNewSeasonName('')
 
@@ -337,12 +326,6 @@ export function SeasonChip({
                   </button>
                 )}
               </>
-            )}
-
-            {error && (
-              <div className="px-3 py-2 text-xs text-red-600 border-t border-gray-100">
-                {error}
-              </div>
             )}
           </div>
         </div>
