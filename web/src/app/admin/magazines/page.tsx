@@ -19,19 +19,17 @@ export default function MagazinesPage() {
   const [magazines, setMagazines] = useState<Magazine[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isConverting, setIsConverting] = useState(false)
 
-  const fetchMagazines = async (page = 1, search = '') => {
+  const fetchMagazines = async (page = 1) => {
     try {
       setIsLoading(true)
       const searchParams = new URLSearchParams({
         page: page.toString(),
         limit: '10',
-        search: search,
       })
 
       const response = await fetch(`/api/magazines?${searchParams}`)
@@ -52,8 +50,8 @@ export default function MagazinesPage() {
   }
 
   useEffect(() => {
-    fetchMagazines(currentPage, searchTerm)
-  }, [currentPage, searchTerm])
+    fetchMagazines(currentPage)
+  }, [currentPage])
 
   const handleConfirmUpload = useCallback(
     async (
@@ -122,7 +120,7 @@ export default function MagazinesPage() {
           }
         }
 
-        await fetchMagazines(1, searchTerm)
+        await fetchMagazines(1)
         setCurrentPage(1)
       } catch (err) {
         setError(
@@ -136,7 +134,7 @@ export default function MagazinesPage() {
         setSelectedFile(null)
       }
     },
-    [searchTerm],
+    [],
   )
 
   const handleFileSelect = async (
@@ -250,16 +248,10 @@ export default function MagazinesPage() {
         throw new Error('Failed to delete magazine')
       }
 
-      await fetchMagazines(currentPage, searchTerm)
+      await fetchMagazines(currentPage)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Delete failed')
     }
-  }
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setCurrentPage(1)
-    fetchMagazines(1, searchTerm)
   }
 
   return (
@@ -268,57 +260,6 @@ export default function MagazinesPage() {
       <div className="min-h-screen bg-gray-50">
         <main className="max-w-7xl mx-auto sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
-            {/* Upload Section */}
-            <div className="bg-white overflow-hidden shadow rounded-lg mb-6">
-              <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                  새 매거진 업로드
-                </h3>
-                <div className="flex items-center space-x-4">
-                  <label className="cursor-pointer">
-                    <input
-                      type="file"
-                      accept=".pdf"
-                      onChange={handleFileSelect}
-                      className="hidden"
-                    />
-                    <span className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer">
-                      PDF 업로드
-                    </span>
-                  </label>
-                  <span className="text-sm text-gray-500">
-                    PDF 파일만 업로드 가능합니다. 미리보기로 사용할 페이지를
-                    선택할 수 있습니다.
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Search and Filter */}
-            <div className="bg-white overflow-hidden shadow rounded-lg mb-6">
-              <div className="px-4 py-5 sm:p-6">
-                <div className="space-y-4">
-                  <form onSubmit={handleSearch} className="flex space-x-4">
-                    <div className="flex-1">
-                      <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        placeholder="매거진 제목으로 검색..."
-                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                    >
-                      검색
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </div>
-
             {/* Error Message */}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
@@ -344,15 +285,28 @@ export default function MagazinesPage() {
             {/* Magazines List */}
             <div className="bg-white shadow overflow-hidden sm:rounded-md mt-6">
               {/* flex div */}
-              <div className="flex items-center justify-between px-4 py-5">
+              <div className="flex items-start justify-between px-4 py-5">
                 <div>
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  <h1 className="text-2xl leading-6 font-medium text-gray-900">
                     매거진 목록
-                  </h3>
-                  <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                    총 {magazines.length}개의 매거진이 있습니다.
-                  </p>
+                  </h1>
+                  {!isLoading && magazines.length > 0 && (
+                    <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                      총 {magazines.length}개
+                    </p>
+                  )}
                 </div>
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  <span className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer">
+                    PDF 업로드
+                  </span>
+                </label>
               </div>
 
               {isLoading ? (
@@ -362,11 +316,7 @@ export default function MagazinesPage() {
                 </div>
               ) : magazines.length === 0 ? (
                 <div className="px-4 py-12 text-center">
-                  <p className="text-gray-500">
-                    {searchTerm
-                      ? '검색 결과가 없습니다.'
-                      : '등록된 매거진이 없습니다.'}
-                  </p>
+                  <p className="text-gray-500">등록된 매거진이 없습니다.</p>
                 </div>
               ) : (
                 <ul className="divide-y divide-gray-200">
