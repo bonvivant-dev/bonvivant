@@ -154,19 +154,17 @@ export default function MagazinesPage() {
 
     try {
       // PDF의 모든 페이지를 이미지로 변환
-      const pages = await convertPdfToImages(file)
-
-      new Promise(resolve => {
+      await convertPdfToImages(file).then(pages => {
+        setIsConverting(false)
+        // openPreviewModal(pages)
         overlay.open(({ isOpen, close }) => (
           <PDFPreviewModal
-            title={file.name || 'PDF 미리보기'}
+            title={selectedFile?.name || 'PDF 미리보기'}
             pages={pages}
             isOpen={isOpen}
             onClose={close}
             onConfirm={async (selectedPages, formData) => {
               await handleConfirmUpload(selectedPages, file, formData)
-              resolve(true)
-              close()
             }}
           />
         ))
@@ -186,7 +184,6 @@ export default function MagazinesPage() {
     setIsConverting(true)
 
     try {
-      // Storage에서 PDF를 불러와서 이미지로 변환
       const pages = await convertPdfFromStorage(
         magazine.storage_key,
         `${magazine.storage_key}.pdf`,
@@ -199,36 +196,32 @@ export default function MagazinesPage() {
           return pageNumber
         }) || []
 
-      new Promise(resolve => {
-        overlay.open(({ isOpen, close }) => (
-          <PDFPreviewModal
-            title={magazine.title || 'PDF 편집'}
-            pages={pages}
-            isOpen={isOpen}
-            onClose={close}
-            editMode={true}
-            magazineId={magazine.id}
-            initialData={{
-              title: magazine.title || '',
-              summary: magazine.summary || '',
-              introduction: magazine.introduction || '',
-              category_id: magazine.category_id || '',
-              season_id: magazine.season_id || '',
+      overlay.open(({ isOpen, close }) => (
+        <PDFPreviewModal
+          title={magazine.title || 'PDF 편집'}
+          pages={pages}
+          isOpen={isOpen}
+          onClose={close}
+          editMode={true}
+          magazineId={magazine.id}
+          initialData={{
+            title: magazine.title || '',
+            summary: magazine.summary || '',
+            introduction: magazine.introduction || '',
+            category_id: magazine.category_id || '',
+            season_id: magazine.season_id || '',
+            selectedPages,
+          }}
+          onConfirm={async (selectedPages, formData) => {
+            await handleConfirmUpload(
               selectedPages,
-            }}
-            onConfirm={async (selectedPages, formData) => {
-              await handleConfirmUpload(
-                selectedPages,
-                null,
-                formData,
-                magazine.id,
-              )
-              resolve(true)
-              close()
-            }}
-          />
-        ))
-      })
+              null,
+              formData,
+              magazine.id,
+            )
+          }}
+        />
+      ))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'PDF 로딩 실패')
     } finally {

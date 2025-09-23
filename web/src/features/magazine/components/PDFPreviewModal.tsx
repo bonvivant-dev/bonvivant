@@ -149,7 +149,10 @@ interface PDFPreviewModalProps {
   isOpen: boolean
   onClose: () => void
   pages: PDFPageImage[]
-  onConfirm: (selectedPages: PDFPageImage[], formData: MagazineFormData) => void
+  onConfirm: (
+    selectedPages: PDFPageImage[],
+    formData: MagazineFormData,
+  ) => Promise<void>
   title: string
   magazineId?: string
   editMode?: boolean
@@ -183,6 +186,7 @@ export function PDFPreviewModal({
 }: PDFPreviewModalProps) {
   const [selectedPageOrder, setSelectedPageOrder] = useState<number[]>([])
   const [formData, setFormData] = useState<MagazineFormData>(initialFormData)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Move function for drag and drop
   const moveCard = useCallback((dragIndex: number, hoverIndex: number) => {
@@ -242,13 +246,25 @@ export function PDFPreviewModal({
     })
   }
 
-  const handleConfirm = () => {
-    // 선택된 순서대로 페이지 반환
-    const selectedPages = selectedPageOrder
-      .map(pageNumber => pages.find(page => page.pageNumber === pageNumber))
-      .filter(Boolean) as PDFPageImage[]
+  const handleConfirm = async () => {
+    try {
+      setIsSubmitting(true)
 
-    onConfirm(selectedPages, formData)
+      // 선택된 순서대로 페이지 반환
+      const selectedPages = selectedPageOrder
+        .map(pageNumber => pages.find(page => page.pageNumber === pageNumber))
+        .filter(Boolean) as PDFPageImage[]
+
+      await onConfirm(selectedPages, formData)
+
+      // onConfirm 성공 후 모달 닫기
+      onClose()
+    } catch (error) {
+      // 에러가 발생한 경우 모달을 열어둠
+      console.error('Failed to confirm:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const selectedPages = selectedPageOrder
@@ -256,6 +272,8 @@ export function PDFPreviewModal({
     .filter(Boolean) as PDFPageImage[]
 
   const selectedPageNumbers = new Set(selectedPageOrder)
+
+  if (!isOpen) return null
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -475,18 +493,31 @@ export function PDFPreviewModal({
             <div className="flex gap-3 justify-end">
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-gray-600 w-[100px] border border-gray-300 rounded hover:bg-gray-200 cursor-pointer text-lg"
+                className="px-4 py-2 text-gray-600 w-[100px] h-[48px] border border-gray-300 rounded hover:bg-gray-200 cursor-pointer text-lg"
+                disabled={isSubmitting}
               >
-                취소
+                {isSubmitting ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 m-auto"></div>
+                ) : (
+                  '취소'
+                )}
               </button>
               <button
                 onClick={handleConfirm}
                 disabled={
-                  selectedPageOrder.length === 0 || !formData.title.trim()
+                  selectedPageOrder.length === 0 ||
+                  !formData.title.trim() ||
+                  isSubmitting
                 }
-                className="px-4 py-2 bg-blue-500 w-[100px] text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer text-lg"
+                className="px-4 py-2 bg-blue-500 w-[100px] h-[48px] text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer text-lg flex items-center justify-center"
               >
-                {editMode ? '수정' : '확인'}
+                {isSubmitting ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white m-auto"></div>
+                ) : editMode ? (
+                  '수정'
+                ) : (
+                  '확인'
+                )}
               </button>
             </div>
           </div>
