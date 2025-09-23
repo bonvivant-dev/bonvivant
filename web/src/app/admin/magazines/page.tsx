@@ -13,24 +13,19 @@ import {
   PDFPageImage,
   PDFPreviewModal,
 } from '@/features/magazine'
-import { Season, SeasonListResponse } from '@/features/season'
 import { Header, LoadingOverlay } from '@/shared/components'
 
 export default function MagazinesPage() {
   const [magazines, setMagazines] = useState<Magazine[]>([])
-  const [seasons, setSeasons] = useState<Season[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedSeasonId, setSelectedSeasonId] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [uploading, setUploading] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isConverting, setIsConverting] = useState(false)
-  const [isLoadingPdf, setIsLoadingPdf] = useState(false)
 
-  const fetchMagazines = async (page = 1, search = '', seasonId = '') => {
+  const fetchMagazines = async (page = 1, search = '') => {
     try {
       setIsLoading(true)
       const searchParams = new URLSearchParams({
@@ -38,10 +33,6 @@ export default function MagazinesPage() {
         limit: '10',
         search: search,
       })
-
-      if (seasonId) {
-        searchParams.append('season_id', seasonId)
-      }
 
       const response = await fetch(`/api/magazines?${searchParams}`)
 
@@ -60,24 +51,9 @@ export default function MagazinesPage() {
     }
   }
 
-  const fetchSeasons = async () => {
-    try {
-      const response = await fetch('/api/seasons')
-      if (response.ok) {
-        const data: SeasonListResponse = await response.json()
-        setSeasons(data.seasons)
-      }
-    } catch (err) {
-      console.error('Failed to fetch seasons:', err)
-    }
-  }
-
   useEffect(() => {
-    Promise.all([
-      fetchMagazines(currentPage, searchTerm, selectedSeasonId),
-      fetchSeasons(),
-    ])
-  }, [currentPage, searchTerm, selectedSeasonId])
+    fetchMagazines(currentPage, searchTerm)
+  }, [currentPage, searchTerm])
 
   const handleConfirmUpload = useCallback(
     async (
@@ -86,7 +62,6 @@ export default function MagazinesPage() {
       magazineFormData?: any,
       editingMagazineId?: string,
     ) => {
-      setUploading(true)
       setError(null)
 
       try {
@@ -121,26 +96,33 @@ export default function MagazinesPage() {
           formData.append(`image-${index}`, page.blob, `${page.pageNumber}.jpg`)
         })
 
-        const url = editingMagazineId
-          ? `/api/magazines/${editingMagazineId}`
-          : '/api/magazines/upload'
+        if (editingMagazineId) {
+          const url = `/api/magazines/${editingMagazineId}`
+          const method = 'PUT'
+          const response = await fetch(url, {
+            method,
+            body: formData,
+          })
 
-        const method = editingMagazineId ? 'PUT' : 'POST'
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.error || 'Update failed')
+          }
+        } else {
+          const url = '/api/magazines/upload'
+          const method = 'POST'
+          const response = await fetch(url, {
+            method,
+            body: formData,
+          })
 
-        const response = await fetch(url, {
-          method,
-          body: formData,
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(
-            errorData.error ||
-              (editingMagazineId ? 'Update failed' : 'Upload failed'),
-          )
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.error || 'Upload failed')
+          }
         }
 
-        await fetchMagazines(1, searchTerm, selectedSeasonId)
+        await fetchMagazines(1, searchTerm)
         setCurrentPage(1)
       } catch (err) {
         setError(
@@ -152,10 +134,9 @@ export default function MagazinesPage() {
         )
       } finally {
         setSelectedFile(null)
-        setUploading(false)
       }
     },
-    [searchTerm, selectedSeasonId],
+    [searchTerm],
   )
 
   const handleFileSelect = async (
@@ -176,7 +157,6 @@ export default function MagazinesPage() {
     try {
       // PDF의 모든 페이지를 이미지로 변환
       const pages = await convertPdfToImages(file)
-      setIsConverting(false)
 
       new Promise(resolve => {
         overlay.open(({ isOpen, close }) => (
@@ -194,8 +174,9 @@ export default function MagazinesPage() {
         ))
       })
     } catch (err) {
-      setIsConverting(false)
       setError(err instanceof Error ? err.message : 'PDF 변환 실패')
+    } finally {
+      setIsConverting(false)
     }
 
     // 파일 입력 초기화
@@ -203,8 +184,8 @@ export default function MagazinesPage() {
   }
 
   const handleEdit = async (magazine: Magazine) => {
-    setIsLoadingPdf(true)
     setError(null)
+    setIsConverting(true)
 
     try {
       // Storage에서 PDF를 불러와서 이미지로 변환
@@ -212,7 +193,6 @@ export default function MagazinesPage() {
         magazine.storage_key,
         `${magazine.storage_key}.pdf`,
       )
-      setIsLoadingPdf(false)
 
       // 현재 선택된 미리보기 이미지 순서 추출
       const selectedPages =
@@ -252,8 +232,9 @@ export default function MagazinesPage() {
         ))
       })
     } catch (err) {
-      setIsLoadingPdf(false)
       setError(err instanceof Error ? err.message : 'PDF 로딩 실패')
+    } finally {
+      setIsConverting(false)
     }
   }
 
@@ -269,7 +250,7 @@ export default function MagazinesPage() {
         throw new Error('Failed to delete magazine')
       }
 
-      await fetchMagazines(currentPage, searchTerm, selectedSeasonId)
+      await fetchMagazines(currentPage, searchTerm)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Delete failed')
     }
@@ -278,12 +259,7 @@ export default function MagazinesPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     setCurrentPage(1)
-    fetchMagazines(1, searchTerm, selectedSeasonId)
-  }
-
-  const handleSeasonFilter = (seasonId: string) => {
-    setSelectedSeasonId(seasonId)
-    setCurrentPage(1)
+    fetchMagazines(1, searchTerm)
   }
 
   return (
@@ -304,17 +280,10 @@ export default function MagazinesPage() {
                       type="file"
                       accept=".pdf"
                       onChange={handleFileSelect}
-                      disabled={uploading}
                       className="hidden"
                     />
-                    <span
-                      className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
-                        uploading
-                          ? 'bg-gray-400 cursor-not-allowed'
-                          : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
-                      }`}
-                    >
-                      {uploading ? '업로드 중...' : 'PDF 파일 선택'}
+                    <span className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer">
+                      PDF 업로드
                     </span>
                   </label>
                   <span className="text-sm text-gray-500">
@@ -384,21 +353,6 @@ export default function MagazinesPage() {
                     총 {magazines.length}개의 매거진이 있습니다.
                   </p>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <select
-                    value={selectedSeasonId}
-                    onChange={e => handleSeasonFilter(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">모든 시즌</option>
-                    <option value="null">시즌 없음</option>
-                    {seasons.map(season => (
-                      <option key={season.id} value={season.id}>
-                        {season.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
               </div>
 
               {isLoading ? (
@@ -452,10 +406,9 @@ export default function MagazinesPage() {
                           <div className="flex items-center space-x-2">
                             <button
                               onClick={() => handleEdit(magazine)}
-                              disabled={isLoadingPdf}
                               className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-sm font-medium"
                             >
-                              {isLoadingPdf ? '로딩...' : '편집'}
+                              편집
                             </button>
                             <button
                               onClick={() => handleDelete(magazine.id)}
@@ -535,14 +488,20 @@ export default function MagazinesPage() {
         </main>
       </div>
       <LoadingOverlay
-        isOpen={isConverting || isLoadingPdf}
+        isOpen={isConverting}
         icon={<FcDocument size={40} />}
-        title={isConverting ? 'PDF 변환 중' : 'PDF 로딩 중'}
+        title={
+          isConverting
+            ? selectedFile?.name
+              ? 'PDF 변환 중'
+              : 'PDF 로딩 중'
+            : 'PDF 로딩 중'
+        }
         message={
           isConverting
             ? selectedFile?.name
               ? `${selectedFile.name}을 이미지로 변환하고 있습니다...`
-              : 'PDF 변환 중...'
+              : 'PDF를 불러오고 있습니다...'
             : 'PDF를 불러오고 있습니다...'
         }
       />
