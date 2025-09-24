@@ -41,37 +41,30 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
 
-  // 로그인되지 않은 사용자 처리
-  if (!user) {
-    // 로그인 페이지, auth 관련 경로는 접근 허용
-    if (pathname.startsWith('/auth') || pathname.startsWith('/error')) {
-      return supabaseResponse
-    }
-
-    if (pathname !== '/') {
+  // 로그인된 사용자 처리
+  if (user) {
+    // 메인 페이지 접근 시 적절한 페이지로 리다이렉트
+    if (pathname === '/') {
       const url = request.nextUrl.clone()
-      url.pathname = '/'
+      url.pathname = '/admin' // 또는 사용자 대시보드 페이지
       return NextResponse.redirect(url)
     }
   }
 
-  // 로그인된 사용자 처리
-  if (user) {
-    // 관리자 권한 확인
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .maybeSingle()
-
-    const isAdmin = profile?.role === 'admin'
-
-    // 로그인 페이지나 루트 경로 접근 시 관리자는 /admin으로 리다이렉트
-    if (pathname === '/' && isAdmin) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/admin'
-      return NextResponse.redirect(url)
+  // 로그인되지 않은 사용자 처리
+  if (!user) {
+    // auth 관련 경로는 접근 허용
+    if (
+      pathname.startsWith('/auth') ||
+      pathname.startsWith('/error') ||
+      pathname === '/'
+    ) {
+      return supabaseResponse
     }
+
+    const url = request.nextUrl.clone()
+    url.pathname = '/'
+    return NextResponse.redirect(url)
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.

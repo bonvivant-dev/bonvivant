@@ -9,14 +9,16 @@ import { useOutsideClick } from '@/shared/hooks'
 import { Category, CategoryListResponse } from '../types'
 
 interface CategoryChipProps {
-  magazineId: string
+  magazineId?: string
   currentCategoryId: string | null
+  setCurrentCategoryId: (categoryId: string | null) => void
   onUpdate: (categoryId: string | null) => void
 }
 
 export function CategoryChip({
   magazineId,
   currentCategoryId,
+  setCurrentCategoryId,
   onUpdate,
 }: CategoryChipProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -25,7 +27,6 @@ export function CategoryChip({
     null,
   )
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -50,7 +51,6 @@ export function CategoryChip({
         setCurrentCategoryName(null)
       }
     } catch (err) {
-      console.error('Failed to fetch current category:', err)
       setCurrentCategoryName(null)
     }
   }, [currentCategoryId])
@@ -64,13 +64,21 @@ export function CategoryChip({
         setCategories(data.categories)
       }
     } catch (err) {
-      setError('카테고리를 불러오는데 실패했습니다.')
+      console.error('Failed to fetch categories:', err)
     } finally {
       setIsLoading(false)
     }
   }
 
   const updateMagazineCategory = async (categoryId: string | null) => {
+    // 매거진 ID가 없으면 바로 상태만 업데이트 (신규 생성 모드)
+    if (!magazineId) {
+      onUpdate(categoryId)
+      setIsOpen(false)
+      return
+    }
+
+    // 매거진 ID가 있으면 서버에 업데이트 요청 (수정 모드)
     try {
       const response = await fetch(`/api/magazines/${magazineId}`, {
         method: 'PUT',
@@ -83,11 +91,9 @@ export function CategoryChip({
       if (response.ok) {
         onUpdate(categoryId)
         setIsOpen(false)
-      } else {
-        setError('카테고리 업데이트에 실패했습니다.')
       }
     } catch (err) {
-      setError('카테고리 업데이트에 실패했습니다.')
+      console.error('Failed to update magazine category:', err)
     }
   }
 
@@ -107,15 +113,12 @@ export function CategoryChip({
       if (response.ok) {
         const data = await response.json()
         await fetchCategories()
-        await updateMagazineCategory(data.category.id)
         setNewCategoryName('')
         setShowCreateForm(false)
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || '카테고리 생성에 실패했습니다.')
+        await updateMagazineCategory(data.category.id)
       }
     } catch (err) {
-      setError('카테고리 생성에 실패했습니다.')
+      console.error('Failed to create category:', err)
     } finally {
       setIsCreating(false)
     }
@@ -131,15 +134,14 @@ export function CategoryChip({
 
       if (response.ok) {
         await fetchCategories()
+        // 삭제된 카테고리가 현재 선택된 카테고리였다면 선택 해제
         if (currentCategoryId === categoryId) {
           await updateMagazineCategory(null)
+          setCurrentCategoryId(null)
         }
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || '카테고리 삭제에 실패했습니다.')
       }
     } catch (err) {
-      setError('카테고리 삭제에 실패했습니다.')
+      console.error('Failed to delete category:', err)
     }
   }
 
@@ -150,7 +152,6 @@ export function CategoryChip({
   useEffect(() => {
     if (isOpen) {
       fetchCategories()
-      setError(null)
       setShowCreateForm(false)
       setNewCategoryName('')
 
@@ -158,8 +159,8 @@ export function CategoryChip({
       if (buttonRef.current) {
         const rect = buttonRef.current.getBoundingClientRect()
         setDropdownPosition({
-          top: rect.bottom + window.scrollY + 4,
-          left: rect.left + window.scrollX,
+          top: rect.bottom + 4,
+          left: rect.left,
         })
       }
     }
@@ -192,7 +193,7 @@ export function CategoryChip({
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium transition-colors ${
-          currentCategoryId
+          currentCategoryName
             ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
             : 'border border-dashed border-gray-400 text-gray-600 hover:border-gray-600 hover:text-gray-800'
         }`}
@@ -229,7 +230,11 @@ export function CategoryChip({
               <>
                 {/* 카테고리 없음 옵션 */}
                 <button
-                  onClick={() => updateMagazineCategory(null)}
+                  onClick={() => {
+                    setCurrentCategoryName(null)
+                    setCurrentCategoryId(null)
+                    setIsOpen(false)
+                  }}
                   className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
                     !currentCategoryId ? 'bg-gray-50 font-medium' : ''
                   }`}
@@ -248,7 +253,11 @@ export function CategoryChip({
                     }`}
                   >
                     <button
-                      onClick={() => updateMagazineCategory(category.id)}
+                      onClick={() => {
+                        setCurrentCategoryName(category.name)
+                        setCurrentCategoryId(category.id)
+                        setIsOpen(false)
+                      }}
                       className="flex-1 text-left"
                     >
                       {category.name}
@@ -315,12 +324,6 @@ export function CategoryChip({
                   </button>
                 )}
               </>
-            )}
-
-            {error && (
-              <div className="px-3 py-2 text-xs text-red-600 border-t border-gray-100">
-                {error}
-              </div>
             )}
           </div>
         </div>
