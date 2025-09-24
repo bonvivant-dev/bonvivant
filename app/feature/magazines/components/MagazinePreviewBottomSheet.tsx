@@ -18,17 +18,17 @@ import { Magazine } from '../types'
 
 const { width } = Dimensions.get('window')
 
-interface MagazineDetailModalProps {
+interface MagazinePreviewBottomSheetProps {
   visible: boolean
   magazine: Magazine | null
   onClose: () => void
 }
 
-export function MagazineDetailModal({
+export function MagazinePreviewBottomSheet({
   visible,
   magazine,
   onClose,
-}: MagazineDetailModalProps) {
+}: MagazinePreviewBottomSheetProps) {
   const router = useRouter()
 
   if (!magazine) return null

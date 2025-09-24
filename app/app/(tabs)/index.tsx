@@ -10,7 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 import {
   MagazineCarousel,
-  MagazineDetailModal,
+  MagazinePreviewBottomSheet,
   useMagazinesByCategory,
   Magazine,
 } from '@/feature/magazines'
@@ -20,7 +20,7 @@ export default function Index() {
 
   const handleMagazinePress = (magazine: Magazine) => {
     overlay.open(({ isOpen, close }) => (
-      <MagazineDetailModal
+      <MagazinePreviewBottomSheet
         visible={isOpen}
         magazine={magazine}
         onClose={close}
