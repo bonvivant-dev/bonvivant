@@ -145,7 +145,7 @@ interface MagazineFormData {
   season_id: string | null
 }
 
-interface PDFPreviewModalProps {
+interface BasePDFPreviewModalProps {
   isOpen: boolean
   onClose: () => void
   pages: PDFPageImage[]
@@ -154,7 +154,11 @@ interface PDFPreviewModalProps {
     formData: MagazineFormData,
   ) => Promise<void>
   title: string
-  magazine?: {
+}
+
+interface PDFEditPreviewModalProps extends BasePDFPreviewModalProps {
+  editMode: true
+  magazine: {
     id: string
     title: string
     summary: string
@@ -163,16 +167,6 @@ interface PDFPreviewModalProps {
     season_id: string | null
     selectedPages?: number[]
   }
-  // magazineId?: string
-  // initialData?: {
-  //   title: string
-  //   summary: string
-  //   introduction: string
-  //   category_id: string
-  //   season_id: string
-  //   selectedPages?: number[]
-  // }
-  editMode?: boolean
 }
 
 const initialFormData: MagazineFormData = {
@@ -189,10 +183,9 @@ export function PDFPreviewModal({
   pages,
   onConfirm,
   title,
-  magazine,
-  editMode = false,
-  // initialData,
-}: PDFPreviewModalProps) {
+  ...props
+}: BasePDFPreviewModalProps | PDFEditPreviewModalProps) {
+  const { editMode, magazine } = props as PDFEditPreviewModalProps
   const [selectedPageOrder, setSelectedPageOrder] = useState<number[]>([])
   const [formData, setFormData] = useState<MagazineFormData>(initialFormData)
   const [isSubmitting, setIsSubmitting] = useState(false)

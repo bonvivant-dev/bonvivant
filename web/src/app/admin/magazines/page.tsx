@@ -228,11 +228,11 @@ export default function MagazinesPage() {
 
       overlay.open(({ isOpen, close }) => (
         <PDFPreviewModal
+          editMode={true}
           title={magazine.title || 'PDF 편집'}
           pages={pages}
           isOpen={isOpen}
           onClose={close}
-          editMode={true}
           magazine={{
             id: magazine.id,
             title: magazine.title || '',
@@ -382,7 +382,10 @@ export default function MagazinesPage() {
                               <SwiperSlide key={magazine.id}>
                                 <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
                                   {magazine.cover_image && (
-                                    <div className="aspect-[3/4] mb-3">
+                                    <div
+                                      className="aspect-[3/4] mb-3 cursor-pointer"
+                                      onClick={() => handleEdit(magazine)}
+                                    >
                                       <Image
                                         src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${magazine.cover_image}`}
                                         alt={magazine.title || 'Cover'}
