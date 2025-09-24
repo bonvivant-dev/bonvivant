@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client'
 
 import { useState, useEffect, useRef, RefObject, useCallback } from 'react'
@@ -9,14 +8,16 @@ import { useOutsideClick } from '@/shared/hooks'
 import { Season, SeasonListResponse } from '../types'
 
 interface SeasonChipProps {
-  magazineId: string
+  magazineId?: string
   currentSeasonId: string | null
+  setCurrentSeasonId: (seasonId: string | null) => void
   onUpdate: (seasonId: string | null) => void
 }
 
 export function SeasonChip({
   magazineId,
   currentSeasonId,
+  setCurrentSeasonId,
   onUpdate,
 }: SeasonChipProps) {
   const [isOpen, setIsOpen] = useState(false)
@@ -25,7 +26,6 @@ export function SeasonChip({
     null,
   )
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [newSeasonName, setNewSeasonName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -64,13 +64,21 @@ export function SeasonChip({
         setSeasons(data.seasons)
       }
     } catch (err) {
-      setError('시즌을 불러오는데 실패했습니다.')
+      console.error('Failed to fetch seasons:', err)
     } finally {
       setIsLoading(false)
     }
   }
 
   const updateMagazineSeason = async (seasonId: string | null) => {
+    // 매거진 ID가 없으면 바로 상태만 업데이트 (신규 생성 모드)
+    if (!magazineId) {
+      onUpdate(seasonId)
+      setIsOpen(false)
+      return
+    }
+
+    // 매거진 ID가 있으면 서버에 업데이트 요청 (수정 모드)
     try {
       const response = await fetch(`/api/magazines/${magazineId}`, {
         method: 'PUT',
@@ -83,11 +91,9 @@ export function SeasonChip({
       if (response.ok) {
         onUpdate(seasonId)
         setIsOpen(false)
-      } else {
-        setError('시즌 업데이트에 실패했습니다.')
       }
     } catch (err) {
-      setError('시즌 업데이트에 실패했습니다.')
+      console.error('Failed to update magazine season:', err)
     }
   }
 
@@ -107,15 +113,14 @@ export function SeasonChip({
       if (response.ok) {
         const data = await response.json()
         await fetchSeasons()
-        await updateMagazineSeason(data.season.id)
         setNewSeasonName('')
         setShowCreateForm(false)
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || '시즌 생성에 실패했습니다.')
+        // 새로 생성된 시즌을 자동으로 선택
+        await updateMagazineSeason(data.season.id)
+        setCurrentSeasonId(data.season.id)
       }
     } catch (err) {
-      setError('시즌 생성에 실패했습니다.')
+      console.error('Failed to create season:', err)
     } finally {
       setIsCreating(false)
     }
@@ -131,15 +136,14 @@ export function SeasonChip({
 
       if (response.ok) {
         await fetchSeasons()
+        // 삭제된 시즌이 현재 선택된 시즌이었다면 선택 해제
         if (currentSeasonId === seasonId) {
           await updateMagazineSeason(null)
+          setCurrentSeasonId(null)
         }
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || '시즌 삭제에 실패했습니다.')
       }
     } catch (err) {
-      setError('시즌 삭제에 실패했습니다.')
+      console.error('Failed to delete season:', err)
     }
   }
 
@@ -150,7 +154,6 @@ export function SeasonChip({
   useEffect(() => {
     if (isOpen) {
       fetchSeasons()
-      setError(null)
       setShowCreateForm(false)
       setNewSeasonName('')
 
@@ -158,8 +161,8 @@ export function SeasonChip({
       if (buttonRef.current) {
         const rect = buttonRef.current.getBoundingClientRect()
         setDropdownPosition({
-          top: rect.bottom + window.scrollY + 4,
-          left: rect.left + window.scrollX,
+          top: rect.bottom + 4,
+          left: rect.left,
         })
       }
     }
@@ -192,7 +195,7 @@ export function SeasonChip({
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium transition-colors ${
-          currentSeasonId
+          currentSeasonName
             ? 'bg-green-100 text-green-800 hover:bg-green-200'
             : 'border border-dashed border-gray-400 text-gray-600 hover:border-gray-600 hover:text-gray-800'
         }`}
@@ -229,7 +232,11 @@ export function SeasonChip({
               <>
                 {/* 시즌 없음 옵션 */}
                 <button
-                  onClick={() => updateMagazineSeason(null)}
+                  onClick={() => {
+                    setCurrentSeasonName(null)
+                    setCurrentSeasonId(null)
+                    setIsOpen(false)
+                  }}
                   className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
                     !currentSeasonId ? 'bg-gray-50 font-medium' : ''
                   }`}
@@ -248,7 +255,11 @@ export function SeasonChip({
                     }`}
                   >
                     <button
-                      onClick={() => updateMagazineSeason(season.id)}
+                      onClick={() => {
+                        setCurrentSeasonName(season.name)
+                        setCurrentSeasonId(season.id)
+                        setIsOpen(false)
+                      }}
                       className="flex-1 text-left"
                     >
                       {season.name}
@@ -315,12 +326,6 @@ export function SeasonChip({
                   </button>
                 )}
               </>
-            )}
-
-            {error && (
-              <div className="px-3 py-2 text-xs text-red-600 border-t border-gray-100">
-                {error}
-              </div>
             )}
           </div>
         </div>

@@ -1,7 +1,6 @@
 import { usePathname, useRouter } from 'next/navigation'
 
-import { useAuth } from '@/features/auth'
-
+import { useAuth } from '@/features/auth/store'
 
 interface HeaderProps {
   title: string

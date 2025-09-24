@@ -1,5 +1,3 @@
-import path from 'path'
-
 import { NextRequest, NextResponse } from 'next/server'
 
 import { supabaseServerClient } from '@/shared/utils/supabase/server'
@@ -56,9 +54,6 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { title, summary, introduction, season_id, category_id } = body
-
     const { id } = await params
     const { data: currentMagazine, error: fetchError } = await supabase
       .from('magazines')
@@ -68,6 +63,77 @@ export async function PUT(
 
     if (fetchError || !currentMagazine) {
       return NextResponse.json({ error: 'Magazine not found' }, { status: 404 })
+    }
+
+    // Check if request has FormData (for image updates) or JSON (for simple updates)
+    const contentType = request.headers.get('content-type') || ''
+    let title, summary, introduction, season_id, category_id, pageMetadata
+
+    if (contentType.includes('multipart/form-data')) {
+      // Handle FormData (image updates included)
+      const formData = await request.formData()
+
+      title = formData.get('title') as string
+      summary = formData.get('summary') as string
+      introduction = formData.get('introduction') as string
+      season_id = formData.get('season_id') as string
+      category_id = formData.get('category_id') as string
+      pageMetadata = formData.get('pageMetadata') as string
+
+      // Handle preview image updates if pageMetadata exists
+      if (pageMetadata) {
+        try {
+          const metadata = JSON.parse(pageMetadata)
+          const previewImages: string[] = []
+
+          // Process new preview images
+          for (let i = 0; i < metadata.length; i++) {
+            const imageFile = formData.get(`image-${i}`) as File
+            if (imageFile) {
+              const fileName = metadata[i].fileName
+
+              // Upload to covers bucket
+              const { error: uploadError } = await supabase.storage
+                .from('covers')
+                .upload(
+                  `${currentMagazine.storage_key}/${fileName}`,
+                  imageFile,
+                  {
+                    contentType: 'image/jpeg',
+                    upsert: true,
+                  },
+                )
+
+              if (uploadError) {
+                console.error('Preview image upload error:', uploadError)
+              } else {
+                previewImages.push(fileName)
+              }
+            }
+          }
+
+          // Update preview_images and cover_image in database
+          if (previewImages.length > 0) {
+            await supabase
+              .from('magazines')
+              .update({
+                preview_images: previewImages,
+                cover_image: previewImages[0],
+              })
+              .eq('id', id)
+          }
+        } catch (metadataError) {
+          console.error('Preview image processing error:', metadataError)
+        }
+      }
+    } else {
+      // Handle JSON (simple metadata updates)
+      const body = await request.json()
+      title = body.title
+      summary = body.summary
+      introduction = body.introduction
+      season_id = body.season_id
+      category_id = body.category_id
     }
 
     const updateData: any = {
@@ -84,6 +150,7 @@ export async function PUT(
       updateData.category_id = category_id || null
     }
 
+    // Handle PDF file rename if title changed
     if (title && title !== currentMagazine.title) {
       try {
         const { data: files } = await supabase.storage
@@ -91,30 +158,33 @@ export async function PUT(
           .list(currentMagazine.storage_key)
 
         if (files && files.length > 0) {
-          const oldFile = files[0]
-          const oldFileName = oldFile.name
-          const fileExtension = path.extname(oldFileName)
-          const newFileName = `${title}${fileExtension}`
+          const pdfFile = files.find(file => file.name.endsWith('.pdf'))
+          if (pdfFile) {
+            const oldFileName = pdfFile.name
+            const newFileName = `${currentMagazine.storage_key}.pdf`
 
-          const { data: fileData } = await supabase.storage
-            .from('magazines')
-            .download(`${currentMagazine.storage_key}/${oldFileName}`)
+            if (oldFileName !== newFileName) {
+              const { data: fileData } = await supabase.storage
+                .from('magazines')
+                .download(`${currentMagazine.storage_key}/${oldFileName}`)
 
-          if (fileData) {
-            await supabase.storage
-              .from('magazines')
-              .upload(
-                `${currentMagazine.storage_key}/${newFileName}`,
-                fileData,
-                {
-                  contentType: 'application/pdf',
-                  upsert: true,
-                },
-              )
+              if (fileData) {
+                await supabase.storage
+                  .from('magazines')
+                  .upload(
+                    `${currentMagazine.storage_key}/${newFileName}`,
+                    fileData,
+                    {
+                      contentType: 'application/pdf',
+                      upsert: true,
+                    },
+                  )
 
-            await supabase.storage
-              .from('magazines')
-              .remove([`${currentMagazine.storage_key}/${oldFileName}`])
+                await supabase.storage
+                  .from('magazines')
+                  .remove([`${currentMagazine.storage_key}/${oldFileName}`])
+              }
+            }
           }
         }
       } catch (storageError) {

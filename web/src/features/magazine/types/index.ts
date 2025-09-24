@@ -1,8 +1,8 @@
 export interface Magazine {
   id: string
-  title: string | null
-  summary: string | null
-  introduction: string | null
+  title: string
+  summary: string
+  introduction: string
   storage_key: string
   cover_image: string | null
   preview_images: string[]
@@ -24,4 +24,13 @@ export interface MagazineListResponse {
   page: number
   limit: number
   totalPages: number
+}
+
+export interface MagazinesByCategory {
+  categories: Array<{
+    id: string
+    name: string
+    magazines: Magazine[]
+  }>
+  uncategorized: Magazine[]
 }
