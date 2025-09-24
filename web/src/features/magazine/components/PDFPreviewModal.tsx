@@ -141,8 +141,8 @@ interface MagazineFormData {
   title: string
   summary: string
   introduction: string
-  category_id: string
-  season_id: string
+  category_id: string | null
+  season_id: string | null
 }
 
 interface PDFPreviewModalProps {
@@ -154,16 +154,25 @@ interface PDFPreviewModalProps {
     formData: MagazineFormData,
   ) => Promise<void>
   title: string
-  magazineId?: string
-  editMode?: boolean
-  initialData?: {
+  magazine?: {
+    id: string
     title: string
     summary: string
     introduction: string
-    category_id: string
-    season_id: string
+    category_id: string | null
+    season_id: string | null
     selectedPages?: number[]
   }
+  // magazineId?: string
+  // initialData?: {
+  //   title: string
+  //   summary: string
+  //   introduction: string
+  //   category_id: string
+  //   season_id: string
+  //   selectedPages?: number[]
+  // }
+  editMode?: boolean
 }
 
 const initialFormData: MagazineFormData = {
@@ -180,9 +189,9 @@ export function PDFPreviewModal({
   pages,
   onConfirm,
   title,
-  magazineId,
+  magazine,
   editMode = false,
-  initialData,
+  // initialData,
 }: PDFPreviewModalProps) {
   const [selectedPageOrder, setSelectedPageOrder] = useState<number[]>([])
   const [formData, setFormData] = useState<MagazineFormData>(initialFormData)
@@ -202,23 +211,23 @@ export function PDFPreviewModal({
   // Initialize form data when modal opens
   useEffect(() => {
     if (isOpen) {
-      if (editMode && initialData) {
+      if (editMode && magazine) {
         // 편집 모드: 기존 데이터로 초기화
         setFormData({
-          title: initialData.title,
-          summary: initialData.summary,
-          introduction: initialData.introduction,
-          category_id: initialData.category_id,
-          season_id: initialData.season_id,
+          title: magazine.title,
+          summary: magazine.summary,
+          introduction: magazine.introduction,
+          category_id: magazine.category_id,
+          season_id: magazine.season_id,
         })
-        setSelectedPageOrder(initialData.selectedPages || [])
+        setSelectedPageOrder(magazine.selectedPages || [])
       } else {
         // 신규 생성 모드: 기본값으로 초기화
         setFormData(initialFormData)
         setSelectedPageOrder([])
       }
     }
-  }, [isOpen, title, editMode, initialData])
+  }, [isOpen, title, editMode, magazine])
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -306,7 +315,7 @@ export function PDFPreviewModal({
                   </label>
                   <div className="flex items-center space-x-2">
                     <SeasonChip
-                      magazineId={magazineId}
+                      magazineId={magazine?.id}
                       currentSeasonId={formData.season_id || null}
                       setCurrentSeasonId={(seasonId: string | null) =>
                         setFormData(prev => ({
@@ -317,7 +326,7 @@ export function PDFPreviewModal({
                       onUpdate={handleSeasonUpdate}
                     />
                     <CategoryChip
-                      magazineId={magazineId}
+                      magazineId={magazine?.id}
                       currentCategoryId={formData.category_id || null}
                       setCurrentCategoryId={(categoryId: string | null) =>
                         setFormData(prev => ({

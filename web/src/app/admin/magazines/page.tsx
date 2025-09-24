@@ -4,10 +4,47 @@ import Image from 'next/image'
 import { overlay } from 'overlay-kit'
 import { useState, useEffect, useCallback } from 'react'
 import { FcDocument } from 'react-icons/fc'
+import { Navigation } from 'swiper/modules'
+import { Swiper, SwiperSlide } from 'swiper/react'
+
+// Import Swiper styles
+import 'swiper/css'
+import 'swiper/css/navigation'
+
+// Custom Swiper styles
+const swiperStyles = `
+  .magazine-swiper .swiper-button-next,
+  .magazine-swiper .swiper-button-prev {
+    color: #3b82f6;
+    background: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    margin-top: -20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  .magazine-swiper .swiper-button-next:after,
+  .magazine-swiper .swiper-button-prev:after {
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+`
 
 import {
   Magazine,
-  MagazineListResponse,
+  MagazinesByCategory,
   convertPdfToImages,
   convertPdfFromStorage,
   PDFPageImage,
@@ -16,32 +53,24 @@ import {
 import { Header, LoadingOverlay } from '@/shared/components'
 
 export default function MagazinesPage() {
-  const [magazines, setMagazines] = useState<Magazine[]>([])
+  const [magazinesByCategory, setMagazinesByCategory] =
+    useState<MagazinesByCategory | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isConverting, setIsConverting] = useState(false)
 
-  const fetchMagazines = async (page = 1) => {
+  const fetchMagazines = async () => {
     try {
       setIsLoading(true)
-      const searchParams = new URLSearchParams({
-        page: page.toString(),
-        limit: '10',
-      })
-
-      const response = await fetch(`/api/magazines?${searchParams}`)
+      const response = await fetch('/api/magazines/by-categories')
 
       if (!response.ok) {
         throw new Error('Failed to fetch magazines')
       }
 
-      const data: MagazineListResponse = await response.json()
-      setMagazines(data.magazines)
-      setTotalPages(data.totalPages)
-      setCurrentPage(data.page)
+      const data: MagazinesByCategory = await response.json()
+      setMagazinesByCategory(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -50,8 +79,8 @@ export default function MagazinesPage() {
   }
 
   useEffect(() => {
-    fetchMagazines(currentPage)
-  }, [currentPage])
+    fetchMagazines()
+  }, [])
 
   const handleConfirmUpload = useCallback(
     async (
@@ -120,8 +149,7 @@ export default function MagazinesPage() {
           }
         }
 
-        await fetchMagazines(1)
-        setCurrentPage(1)
+        await fetchMagazines()
       } catch (err) {
         setError(
           err instanceof Error
@@ -156,13 +184,15 @@ export default function MagazinesPage() {
       // PDF의 모든 페이지를 이미지로 변환
       await convertPdfToImages(file).then(pages => {
         setIsConverting(false)
-        // openPreviewModal(pages)
         overlay.open(({ isOpen, close }) => (
           <PDFPreviewModal
             title={selectedFile?.name || 'PDF 미리보기'}
             pages={pages}
             isOpen={isOpen}
-            onClose={close}
+            onClose={() => {
+              close()
+              setSelectedFile(null)
+            }}
             onConfirm={async (selectedPages, formData) => {
               await handleConfirmUpload(selectedPages, file, formData)
             }}
@@ -203,8 +233,8 @@ export default function MagazinesPage() {
           isOpen={isOpen}
           onClose={close}
           editMode={true}
-          magazineId={magazine.id}
-          initialData={{
+          magazine={{
+            id: magazine.id,
             title: magazine.title || '',
             summary: magazine.summary || '',
             introduction: magazine.introduction || '',
@@ -229,8 +259,8 @@ export default function MagazinesPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('정말로 이 매거진을 삭제하시겠습니까?')) return
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`${title}을 삭제할까요?`)) return
 
     try {
       const response = await fetch(`/api/magazines/${id}`, {
@@ -241,14 +271,18 @@ export default function MagazinesPage() {
         throw new Error('Failed to delete magazine')
       }
 
-      await fetchMagazines(currentPage)
+      await fetchMagazines()
     } catch (err) {
+      alert(`${title} 삭제에 실패했어요`)
       setError(err instanceof Error ? err.message : 'Delete failed')
     }
   }
 
   return (
     <>
+      <style jsx global>
+        {swiperStyles}
+      </style>
       <Header title="매거진 관리" />
       <div className="min-h-screen bg-gray-50">
         <main className="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -275,20 +309,11 @@ export default function MagazinesPage() {
               </div>
             )}
 
-            {/* Magazines List */}
             <div className="bg-white shadow overflow-hidden sm:rounded-md mt-6">
-              {/* flex div */}
-              <div className="flex items-start justify-between px-4 py-5">
-                <div>
-                  <h1 className="text-2xl leading-6 font-medium text-gray-900">
-                    매거진 목록
-                  </h1>
-                  {!isLoading && magazines.length > 0 && (
-                    <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                      총 {magazines.length}개
-                    </p>
-                  )}
-                </div>
+              <div className="flex items-center justify-between px-6 py-5">
+                <h1 className="text-2xl leading-6 font-medium text-gray-900">
+                  서재
+                </h1>
                 <label className="cursor-pointer">
                   <input
                     type="file"
@@ -301,130 +326,200 @@ export default function MagazinesPage() {
                   </span>
                 </label>
               </div>
+            </div>
 
+            <div className="mt-6 space-y-8">
               {isLoading ? (
-                <div className="px-4 py-12 text-center">
+                <div className="bg-white rounded-lg shadow px-6 py-12 text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="mt-4 text-gray-500">로딩 중...</p>
+                  <p className="mt-4 text-gray-500">매거진을 불러오는 중...</p>
                 </div>
-              ) : magazines.length === 0 ? (
-                <div className="px-4 py-12 text-center">
-                  <p className="text-gray-500">등록된 매거진이 없습니다.</p>
+              ) : !magazinesByCategory ? (
+                <div className="bg-white rounded-lg shadow px-6 py-12 text-center">
+                  <p className="text-gray-500">
+                    매거진 데이터를 불러올 수 없습니다.
+                  </p>
                 </div>
               ) : (
-                <ul className="divide-y divide-gray-200">
-                  {magazines.map(magazine => (
-                    <li key={magazine.id}>
-                      <div className="px-4 py-4 sm:px-6 hover:bg-gray-50">
-                        <div className="flex items-center justify-between">
-                          <div className="flex space-x-4">
-                            {magazine.cover_image && (
-                              <Image
-                                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${magazine.cover_image}`}
-                                alt={magazine.title || 'Cover'}
-                                className="w-20 h-25 object-cover rounded-md shadow-sm"
-                                width={80}
-                                height={100}
-                              />
-                            )}
-                            <div className="flex flex-col justify-between space-x-4">
-                              <div className="flex flex-col items-start">
-                                <p className="text-lg font-medium text-gray-900">
+                <>
+                  {/* Categories with Magazines */}
+                  {magazinesByCategory.categories.map(category => (
+                    <div
+                      key={category.id}
+                      className="bg-white rounded-lg shadow overflow-hidden"
+                    >
+                      <div className="px-6 py-4 border-b border-gray-200">
+                        <h2 className="text-xl font-semibold text-gray-900">
+                          {category.name}
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-1">
+                          총 {category.magazines.length}개
+                        </p>
+                      </div>
+
+                      {category.magazines.length === 0 ? (
+                        <div className="px-6 py-8 text-center">
+                          <p className="text-gray-400">
+                            이 카고에 속한 매거진이 없어요.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="p-6">
+                          <Swiper
+                            modules={[Navigation]}
+                            navigation={true}
+                            spaceBetween={20}
+                            slidesPerView={1}
+                            breakpoints={{
+                              640: { slidesPerView: 2 },
+                              768: { slidesPerView: 3 },
+                              1024: { slidesPerView: 4 },
+                              1280: { slidesPerView: 5 },
+                            }}
+                            className="magazine-swiper"
+                          >
+                            {category.magazines.map(magazine => (
+                              <SwiperSlide key={magazine.id}>
+                                <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                                  {magazine.cover_image && (
+                                    <div className="aspect-[3/4] mb-3">
+                                      <Image
+                                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${magazine.cover_image}`}
+                                        alt={magazine.title || 'Cover'}
+                                        className="w-full h-full object-cover rounded-md shadow-sm"
+                                        width={150}
+                                        height={200}
+                                      />
+                                    </div>
+                                  )}
+                                  <h3 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
+                                    {magazine.title || '제목 없음'}
+                                  </h3>
+                                  <p className="text-xs text-gray-500 mb-2 line-clamp-1">
+                                    {magazine.summary || '요약 없음'}
+                                  </p>
+                                  <p className="text-xs text-gray-400 mb-3">
+                                    {new Date(
+                                      magazine.created_at,
+                                    ).toLocaleDateString('ko-KR')}
+                                  </p>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => handleEdit(magazine)}
+                                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs font-medium"
+                                    >
+                                      편집
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        handleDelete(
+                                          magazine.id,
+                                          magazine.title || '',
+                                        )
+                                      }
+                                      className="flex-1 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-medium"
+                                    >
+                                      삭제
+                                    </button>
+                                  </div>
+                                </div>
+                              </SwiperSlide>
+                            ))}
+                          </Swiper>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Uncategorized Magazines */}
+                  {magazinesByCategory.uncategorized.length > 0 && (
+                    <div className="bg-white rounded-lg shadow overflow-hidden">
+                      <div className="px-6 py-4 border-b border-gray-200">
+                        <h2 className="text-xl font-semibold text-gray-900">
+                          카테고리 없음
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-1">
+                          총 {magazinesByCategory.uncategorized.length}개의
+                          매거진
+                        </p>
+                      </div>
+
+                      <div className="p-6">
+                        <Swiper
+                          modules={[Navigation]}
+                          navigation={true}
+                          spaceBetween={20}
+                          slidesPerView={1}
+                          breakpoints={{
+                            640: { slidesPerView: 2 },
+                            768: { slidesPerView: 3 },
+                            1024: { slidesPerView: 4 },
+                            1280: { slidesPerView: 5 },
+                          }}
+                          className="magazine-swiper"
+                        >
+                          {magazinesByCategory.uncategorized.map(magazine => (
+                            <SwiperSlide key={magazine.id}>
+                              <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                                {magazine.cover_image && (
+                                  <div className="aspect-[3/4] mb-3">
+                                    <Image
+                                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${magazine.cover_image}`}
+                                      alt={magazine.title || 'Cover'}
+                                      className="w-full h-full object-cover rounded-md shadow-sm"
+                                      width={150}
+                                      height={200}
+                                    />
+                                  </div>
+                                )}
+                                <h3 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
                                   {magazine.title || '제목 없음'}
-                                </p>
-                              </div>
-                              <div className="flex flex-col items-start">
-                                <p className="text-sm text-gray-500">
+                                </h3>
+                                <p className="text-xs text-gray-500 mb-2 line-clamp-1">
                                   {magazine.summary || '요약 없음'}
                                 </p>
-                                <p className="text-xs text-gray-400">
-                                  생성일:{' '}
+                                <p className="text-xs text-gray-400 mb-3">
                                   {new Date(
                                     magazine.created_at,
                                   ).toLocaleDateString('ko-KR')}
                                 </p>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleEdit(magazine)}
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs font-medium"
+                                  >
+                                    편집
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleDelete(
+                                        magazine.id,
+                                        magazine.title || '',
+                                      )
+                                    }
+                                    className="flex-1 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-medium"
+                                  >
+                                    삭제
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => handleEdit(magazine)}
-                              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-3 py-1 rounded text-sm font-medium"
-                            >
-                              편집
-                            </button>
-                            <button
-                              onClick={() => handleDelete(magazine.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium"
-                            >
-                              삭제
-                            </button>
-                          </div>
-                        </div>
+                            </SwiperSlide>
+                          ))}
+                        </Swiper>
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
+                    </div>
+                  )}
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                  <div className="flex-1 flex justify-between sm:hidden">
-                    <button
-                      onClick={() =>
-                        setCurrentPage(Math.max(1, currentPage - 1))
-                      }
-                      disabled={currentPage === 1}
-                      className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      이전
-                    </button>
-                    <button
-                      onClick={() =>
-                        setCurrentPage(Math.min(totalPages, currentPage + 1))
-                      }
-                      disabled={currentPage === totalPages}
-                      className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      다음
-                    </button>
-                  </div>
-                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-sm text-gray-700">
-                        총 <span className="font-medium">{totalPages}</span>{' '}
-                        페이지 중{' '}
-                        <span className="font-medium">{currentPage}</span>{' '}
-                        페이지
-                      </p>
-                    </div>
-                    <div>
-                      <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                        <button
-                          onClick={() =>
-                            setCurrentPage(Math.max(1, currentPage - 1))
-                          }
-                          disabled={currentPage === 1}
-                          className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          이전
-                        </button>
-                        <button
-                          onClick={() =>
-                            setCurrentPage(
-                              Math.min(totalPages, currentPage + 1),
-                            )
-                          }
-                          disabled={currentPage === totalPages}
-                          className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          다음
-                        </button>
-                      </nav>
-                    </div>
-                  </div>
-                </div>
+                  {/* Empty State */}
+                  {magazinesByCategory.categories.length === 0 &&
+                    magazinesByCategory.uncategorized.length === 0 && (
+                      <div className="bg-white rounded-lg shadow px-6 py-12 text-center">
+                        <p className="text-gray-500">
+                          등록된 매거진이 없습니다.
+                        </p>
+                      </div>
+                    )}
+                </>
               )}
             </div>
           </div>
@@ -436,9 +531,9 @@ export default function MagazinesPage() {
         title={
           isConverting
             ? selectedFile?.name
-              ? 'PDF 변환 중'
-              : 'PDF 로딩 중'
-            : 'PDF 로딩 중'
+              ? 'PDF 업로드 중'
+              : 'PDF 불러오는 중'
+            : 'PDF 불러오는 중'
         }
         message={
           isConverting
