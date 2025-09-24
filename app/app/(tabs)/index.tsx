@@ -2,39 +2,21 @@ import { overlay } from 'overlay-kit'
 import {
   Text,
   View,
-  FlatList,
+  ScrollView,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import {
-  MagazineItem,
+  MagazineCarousel,
   MagazineDetailModal,
-  useMagazines,
+  useMagazinesByCategory,
   Magazine,
 } from '@/feature/magazines'
 
-const ITEM_MARGIN = 12
-const MAGAZINE_GRID_COLUMNS = 3
-
 export default function Index() {
-  const { magazines, loading, error } = useMagazines()
-
-  // 3의 배수가 되도록 빈 슬롯 추가
-  const createGridData = (data: Magazine[]) => {
-    const remainder = data.length % MAGAZINE_GRID_COLUMNS
-    if (remainder === 0) return data
-
-    const emptySlots = MAGAZINE_GRID_COLUMNS - remainder
-    const gridData: (Magazine | null)[] = [...data]
-
-    for (let i = 0; i < emptySlots; i++) {
-      gridData.push(null)
-    }
-
-    return gridData
-  }
+  const { magazinesByCategory, loading, error } = useMagazinesByCategory()
 
   const handleMagazinePress = (magazine: Magazine) => {
     overlay.open(({ isOpen, close }) => (
@@ -68,24 +50,32 @@ export default function Index() {
     )
   }
 
-  const gridData = createGridData(magazines)
-
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>매거진</Text>
+        <Text style={styles.headerTitle}>Bon Vivant</Text>
       </View>
 
-      <FlatList
-        data={gridData}
-        renderItem={({ item }) => (
-          <MagazineItem magazine={item} onPress={handleMagazinePress} />
-        )}
-        numColumns={MAGAZINE_GRID_COLUMNS}
-        keyExtractor={(item, index) => item?.id || `empty-${index}`}
-        contentContainerStyle={styles.listContainer}
+      <ScrollView
+        style={styles.scrollView}
         showsVerticalScrollIndicator={false}
-      />
+        contentContainerStyle={styles.scrollContent}
+      >
+        {magazinesByCategory?.categories.map(category => (
+          <MagazineCarousel
+            key={category.id}
+            title={category.name}
+            magazines={category.magazines}
+            onMagazinePress={handleMagazinePress}
+          />
+        ))}
+
+        {magazinesByCategory?.categories.length === 0 && (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>등록된 매거진이 없습니다.</Text>
+          </View>
+        )}
+      </ScrollView>
     </SafeAreaView>
   )
 }
@@ -96,7 +86,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   header: {
-    paddingHorizontal: ITEM_MARGIN,
+    paddingHorizontal: 16,
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
@@ -106,8 +96,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  listContainer: {
-    paddingHorizontal: ITEM_MARGIN,
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
     paddingVertical: 16,
   },
   centered: {
@@ -128,6 +120,17 @@ const styles = StyleSheet.create({
   },
   errorDetail: {
     fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
+    fontSize: 16,
     color: '#666',
     textAlign: 'center',
   },
