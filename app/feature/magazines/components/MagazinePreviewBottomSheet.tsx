@@ -172,8 +172,7 @@ const styles = StyleSheet.create({
   },
   coverImage: {
     width: width * 0.5,
-    aspectRatio: 3 / 4,
-    borderRadius: 12,
+    aspectRatio: 320 / 470,
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: {
