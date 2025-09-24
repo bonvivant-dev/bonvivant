@@ -86,11 +86,11 @@ export function MagazinePreviewer({ magazineId }: { magazineId: string }) {
   const handlePageChange = (pageIndex: number) => {
     setCurrentPage(pageIndex)
 
-    // 마지막 페이지에 도달했을 때 구매 다이얼로그 표시
-    if (
+    const isLastPage =
       magazine?.preview_images &&
-      pageIndex === magazine.preview_images.slice(0, 3).length - 1
-    ) {
+      pageIndex === magazine.preview_images.length - 1
+    // 마지막 페이지에 도달했을 때 구매 다이얼로그 표시
+    if (isLastPage) {
       setTimeout(() => {
         showPurchaseDialog()
       }, 500) // 0.5초 후에 다이얼로그 표시
