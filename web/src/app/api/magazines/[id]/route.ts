@@ -112,11 +112,14 @@ export async function PUT(
             }
           }
 
-          // Update preview_images in database
+          // Update preview_images and cover_image in database
           if (previewImages.length > 0) {
             await supabase
               .from('magazines')
-              .update({ preview_images: previewImages })
+              .update({
+                preview_images: previewImages,
+                cover_image: previewImages[0],
+              })
               .eq('id', id)
           }
         } catch (metadataError) {
