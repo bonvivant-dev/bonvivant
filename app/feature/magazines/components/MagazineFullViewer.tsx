@@ -291,7 +291,6 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
             renderLoading={() => (
               <View style={styles.pdfLoading}>
                 <ActivityIndicator size="large" color="#007AFF" />
-                {/* <Text style={styles.loadingText}>PDF 로딩 중...</Text> */}
               </View>
             )}
             scalesPageToFit={true}
