@@ -25,65 +25,69 @@ export const useMagazinesByCategory = () => {
       setLoading(true)
       setError(null)
 
-      // Fetch magazines with category information
+      // Fetch all categories
+      const { data: categories, error: categoriesError } = await supabase
+        .from('categories')
+        .select('id, name')
+        .order('created_at', { ascending: false })
+
+      if (categoriesError) {
+        throw categoriesError
+      }
+
+      // Sort categories with 'new' first
+      const sortedCategories = categories ? [...categories].sort((a, b) => {
+        if (a.name.toLowerCase() === 'new') return -1
+        if (b.name.toLowerCase() === 'new') return 1
+        return 0
+      }) : []
+
+      // Fetch magazines with category relationships
       const { data: magazines, error: magazinesError } = await supabase
         .from('magazines')
-        .select(
-          `
+        .select(`
           *,
-          categories (
-            id,
-            name
+          magazine_categories (
+            category_id,
+            categories (
+              id,
+              name
+            )
           )
-        `
-        )
+        `)
         .order('created_at', { ascending: false })
 
       if (magazinesError) {
         throw magazinesError
       }
 
-      // Fetch all categories
-      const { data: categories, error: categoriesError } = await supabase
-        .from('categories')
-        .select('id, name')
-        .order('name')
-
-      if (categoriesError) {
-        throw categoriesError
-      }
+      // Process magazines to include category_ids and categories
+      const processedMagazines = (magazines || []).map(magazine => ({
+        ...magazine,
+        category_ids: magazine.magazine_categories?.map((mc: any) => mc.category_id) || [],
+        categories: magazine.magazine_categories?.map((mc: any) => mc.categories).filter(Boolean) || [],
+      }))
 
       // Group magazines by category
       const categoriesWithMagazines: Category[] = []
 
-      // Initialize categories with empty magazines array
-      categories?.forEach(category => {
-        categoriesWithMagazines.push({
-          id: category.id,
-          name: category.name,
-          magazines: [],
-        })
-      })
+      // Initialize categories and add magazines
+      sortedCategories.forEach(category => {
+        const categoryMagazines = processedMagazines.filter(magazine =>
+          magazine.category_ids.includes(category.id)
+        )
 
-      // Distribute magazines to categories or uncategorized
-      magazines?.forEach(magazine => {
-        if (magazine.categories && magazine.category_id) {
-          const categoryIndex = categoriesWithMagazines.findIndex(
-            cat => cat.id === magazine.category_id
-          )
-          if (categoryIndex >= 0) {
-            categoriesWithMagazines[categoryIndex].magazines.push(magazine)
-          }
+        if (categoryMagazines.length > 0) {
+          categoriesWithMagazines.push({
+            id: category.id,
+            name: category.name,
+            magazines: categoryMagazines,
+          })
         }
       })
 
-      // Filter out categories with no magazines
-      const filteredCategories = categoriesWithMagazines.filter(
-        category => category.magazines.length > 0
-      )
-
       setMagazinesByCategory({
-        categories: filteredCategories,
+        categories: categoriesWithMagazines,
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
