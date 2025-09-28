@@ -5,8 +5,9 @@ import * as WebBrowser from 'expo-web-browser'
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { Alert, Platform } from 'react-native'
 
+import { supabase } from '@/feature/shared'
+
 import { AuthErrorMessage } from '../constants'
-import { supabase } from '../lib'
 
 interface AuthContextType {
   user: User | null
@@ -38,9 +39,7 @@ export const useAuth = () => {
   return context
 }
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
