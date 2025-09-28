@@ -28,6 +28,13 @@ export async function GET() {
       .select('*')
       .order('created_at', { ascending: false })
 
+    // 'new' 카테고리를 맨 위로 정렬
+    const sortedCategories = categories ? [...categories].sort((a, b) => {
+      if (a.name.toLowerCase() === 'new') return -1
+      if (b.name.toLowerCase() === 'new') return 1
+      return 0
+    }) : []
+
     if (categoriesError) {
       return NextResponse.json(
         { error: categoriesError.message },
@@ -35,10 +42,19 @@ export async function GET() {
       )
     }
 
-    // 모든 매거진 조회
+    // 모든 매거진과 카테고리 관계 조회
     const { data: magazines, error: magazinesError } = await supabase
       .from('magazines')
-      .select('*')
+      .select(`
+        *,
+        magazine_categories (
+          category_id,
+          categories (
+            id,
+            name
+          )
+        )
+      `)
       .order('created_at', { ascending: false })
 
     if (magazinesError) {
@@ -48,6 +64,13 @@ export async function GET() {
       )
     }
 
+    // 매거진 데이터 정리 (category_ids 추가)
+    const processedMagazines = (magazines || []).map(magazine => ({
+      ...magazine,
+      category_ids: magazine.magazine_categories?.map((mc: any) => mc.category_id) || [],
+      categories: magazine.magazine_categories?.map((mc: any) => mc.categories).filter(Boolean) || [],
+    }))
+
     // 카테고리별로 매거진 그룹핑
     const result: MagazinesByCategory = {
       categories: [],
@@ -55,9 +78,9 @@ export async function GET() {
     }
 
     // 카테고리가 있는 매거진들을 카테고리별로 분류
-    for (const category of categories || []) {
-      const categoryMagazines = (magazines || []).filter(
-        magazine => magazine.category_id === category.id,
+    for (const category of sortedCategories) {
+      const categoryMagazines = processedMagazines.filter(magazine =>
+        magazine.category_ids.includes(category.id)
       )
 
       result.categories.push({
@@ -68,8 +91,8 @@ export async function GET() {
     }
 
     // 카테고리가 없는 매거진들
-    result.uncategorized = (magazines || []).filter(
-      magazine => !magazine.category_id,
+    result.uncategorized = processedMagazines.filter(
+      magazine => magazine.category_ids.length === 0,
     )
 
     return NextResponse.json(result)
