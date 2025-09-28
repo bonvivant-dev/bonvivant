@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router'
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Modal,
   View,
@@ -9,6 +9,7 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
+  FlatList,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -30,6 +31,7 @@ export function MagazinePreviewBottomSheet({
   onClose,
 }: MagazinePreviewBottomSheetProps) {
   const router = useRouter()
+  const [currentPreviewPage, setCurrentPreviewPage] = useState(0)
 
   if (!magazine) return null
 
@@ -43,9 +45,10 @@ export function MagazinePreviewBottomSheet({
 
   const coverImageUrl = getCoverImageUrl(magazine)
 
-  const handlePreview = () => {
-    onClose()
-    router.push(`/magazine/${magazine.id}/preview`)
+  const getPreviewImageUrl = (imagePath: string) => {
+    return supabase.storage
+      .from('covers')
+      .getPublicUrl(`${magazine.storage_key}/${imagePath}`).data.publicUrl
   }
 
   // TODO: 구매 기능 구현
@@ -75,58 +78,78 @@ export function MagazinePreviewBottomSheet({
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Cover Image */}
-          <View style={styles.imageContainer}>
-            {coverImageUrl ? (
-              <Image
-                source={{ uri: coverImageUrl }}
-                style={styles.coverImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={[styles.coverImage, styles.placeholderImage]}>
-                <Text style={styles.placeholderText}>No Image</Text>
-              </View>
-            )}
+          {/* Top Section: Cover Image and Title */}
+          <View style={styles.topSection}>
+            <View style={styles.coverContainer}>
+              {coverImageUrl ? (
+                <Image
+                  source={{ uri: coverImageUrl }}
+                  style={styles.coverImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={[styles.coverImage, styles.placeholderImage]}>
+                  <Text style={styles.placeholderText}>No Image</Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>{magazine.title}</Text>
+            </View>
           </View>
 
-          {/* Title */}
-          <Text style={styles.title}>{magazine.title}</Text>
-
-          {/* Summary */}
-          {magazine.summary && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>요약</Text>
-              <Text style={styles.summary}>{magazine.summary}</Text>
-            </View>
-          )}
-
-          {/* Introduction */}
-          {magazine.introduction && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>소개</Text>
-              <Text style={styles.introduction}>{magazine.introduction}</Text>
-            </View>
-          )}
-
-          {/* Action Buttons */}
-          <View style={styles.buttonContainer}>
+          {/* Purchase Button */}
+          <View style={styles.purchaseContainer}>
             <TouchableOpacity
-              style={[styles.button, styles.previewButton]}
-              onPress={handlePreview}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.previewButtonText}>미리보기</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.button, styles.purchaseButton]}
+              style={styles.purchaseButton}
               onPress={handlePurchase}
               activeOpacity={0.8}
             >
               <Text style={styles.purchaseButtonText}>구매하기</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Introduction */}
+          <View style={styles.introSection}>
+            <Text style={styles.sectionTitle}>소개</Text>
+            <Text style={styles.introduction}>
+              {magazine.introduction || '등록된 소개글이 없어요'}
+            </Text>
+          </View>
+
+          {/* Preview Images */}
+          {magazine.preview_images && magazine.preview_images.length > 0 && (
+            <View style={styles.previewSection}>
+              <Text style={styles.sectionTitle}>미리보기</Text>
+              <View style={styles.previewContainer}>
+                <FlatList
+                  data={magazine.preview_images}
+                  renderItem={({ item }) => {
+                    const imageUrl = getPreviewImageUrl(item)
+                    return (
+                      <View style={styles.previewImageContainer}>
+                        <Image
+                          source={{ uri: imageUrl }}
+                          style={styles.previewImage}
+                          resizeMode="contain"
+                        />
+                      </View>
+                    )
+                  }}
+                  keyExtractor={(item, index) => `preview-${index}`}
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  onMomentumScrollEnd={event => {
+                    const pageIndex = Math.round(
+                      event.nativeEvent.contentOffset.x / (width * 0.7)
+                    )
+                    setCurrentPreviewPage(pageIndex)
+                  }}
+                />
+              </View>
+            </View>
+          )}
         </ScrollView>
       </SafeAreaView>
     </Modal>
@@ -166,12 +189,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 40,
   },
-  imageContainer: {
-    alignItems: 'center',
-    marginVertical: 20,
+  topSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 20,
+    marginBottom: 24,
+  },
+  coverContainer: {
+    marginRight: 16,
   },
   coverImage: {
-    width: width * 0.5,
+    width: width * 0.35,
     aspectRatio: 320 / 470,
     elevation: 3,
     shadowColor: '#000',
@@ -191,15 +219,32 @@ const styles = StyleSheet.create({
     color: '#999',
     fontSize: 14,
   },
+  titleContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 32,
+    lineHeight: 28,
   },
-  section: {
+  purchaseContainer: {
+    marginBottom: 24,
+  },
+  purchaseButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  purchaseButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  introSection: {
     marginBottom: 24,
   },
   sectionTitle: {
@@ -208,44 +253,26 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 12,
   },
-  summary: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 24,
-  },
   introduction: {
     fontSize: 16,
     color: '#666',
     lineHeight: 24,
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
+  previewSection: {
+    marginBottom: 24,
   },
-  button: {
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
+  previewContainer: {
+    height: 180,
+  },
+  previewImageContainer: {
+    width: 110,
+    height: 150,
     justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 1,
   },
-  previewButton: {
-    backgroundColor: '#f0f0f0',
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  previewButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  purchaseButton: {
-    backgroundColor: '#007AFF',
-  },
-  purchaseButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+  previewImage: {
+    width: '100%',
+    height: '100%',
   },
 })
