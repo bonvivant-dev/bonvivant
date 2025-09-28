@@ -17,6 +17,8 @@ import { supabase } from '@/feature/shared'
 
 import { Magazine } from '../types'
 
+import { MagazinePreviewModal } from './MagazinePreviewModal'
+
 const { width } = Dimensions.get('window')
 
 interface MagazinePreviewBottomSheetProps {
@@ -31,7 +33,8 @@ export function MagazinePreviewBottomSheet({
   onClose,
 }: MagazinePreviewBottomSheetProps) {
   const router = useRouter()
-  const [currentPreviewPage, setCurrentPreviewPage] = useState(0)
+  const [isImageViewerVisible, setIsImageViewerVisible] = useState(false)
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
   if (!magazine) return null
 
@@ -56,6 +59,15 @@ export function MagazinePreviewBottomSheet({
     // 구매 후 이동
     onClose()
     router.push(`/magazine/${magazine.id}/view`)
+  }
+
+  const handleImagePress = (index: number) => {
+    setSelectedImageIndex(index)
+    setIsImageViewerVisible(true)
+  }
+
+  const closeImageViewer = () => {
+    setIsImageViewerVisible(false)
   }
 
   return (
@@ -124,34 +136,40 @@ export function MagazinePreviewBottomSheet({
               <View style={styles.previewContainer}>
                 <FlatList
                   data={magazine.preview_images}
-                  renderItem={({ item }) => {
+                  renderItem={({ item, index }) => {
                     const imageUrl = getPreviewImageUrl(item)
                     return (
-                      <View style={styles.previewImageContainer}>
+                      <TouchableOpacity
+                        style={styles.previewImageContainer}
+                        onPress={() => handleImagePress(index)}
+                        activeOpacity={0.8}
+                      >
                         <Image
                           source={{ uri: imageUrl }}
                           style={styles.previewImage}
                           resizeMode="contain"
                         />
-                      </View>
+                      </TouchableOpacity>
                     )
                   }}
                   keyExtractor={(item, index) => `preview-${index}`}
                   horizontal
                   pagingEnabled
                   showsHorizontalScrollIndicator={false}
-                  onMomentumScrollEnd={event => {
-                    const pageIndex = Math.round(
-                      event.nativeEvent.contentOffset.x / (width * 0.7)
-                    )
-                    setCurrentPreviewPage(pageIndex)
-                  }}
                 />
               </View>
             </View>
           )}
         </ScrollView>
       </SafeAreaView>
+
+      {/* Full Screen Image Viewer Modal */}
+      <MagazinePreviewModal
+        visible={isImageViewerVisible}
+        magazine={magazine}
+        initialImageIndex={selectedImageIndex}
+        onClose={closeImageViewer}
+      />
     </Modal>
   )
 }
