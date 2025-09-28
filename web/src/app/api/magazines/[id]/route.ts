@@ -67,7 +67,7 @@ export async function PUT(
 
     // Check if request has FormData (for image updates) or JSON (for simple updates)
     const contentType = request.headers.get('content-type') || ''
-    let title, summary, introduction, season_id, category_id, pageMetadata
+    let title, summary, introduction, season_id, category_ids, pageMetadata
 
     if (contentType.includes('multipart/form-data')) {
       // Handle FormData (image updates included)
@@ -77,7 +77,8 @@ export async function PUT(
       summary = formData.get('summary') as string
       introduction = formData.get('introduction') as string
       season_id = formData.get('season_id') as string
-      category_id = formData.get('category_id') as string
+      const categoryIdsStr = formData.get('category_ids') as string
+      category_ids = categoryIdsStr ? JSON.parse(categoryIdsStr) : []
       pageMetadata = formData.get('pageMetadata') as string
 
       // Handle preview image updates if pageMetadata exists
@@ -133,7 +134,7 @@ export async function PUT(
       summary = body.summary
       introduction = body.introduction
       season_id = body.season_id
-      category_id = body.category_id
+      category_ids = body.category_ids
     }
 
     const updateData: any = {
@@ -145,9 +146,6 @@ export async function PUT(
     if (title !== undefined) updateData.title = title
     if (season_id !== undefined) {
       updateData.season_id = season_id || null
-    }
-    if (category_id !== undefined) {
-      updateData.category_id = category_id || null
     }
 
     // Handle PDF file rename if title changed
@@ -201,6 +199,31 @@ export async function PUT(
 
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 })
+    }
+
+    // 카테고리 관계 업데이트
+    if (category_ids !== undefined) {
+      // 기존 카테고리 관계 삭제
+      await supabase
+        .from('magazine_categories')
+        .delete()
+        .eq('magazine_id', id)
+
+      // 새로운 카테고리 관계 추가
+      if (category_ids.length > 0) {
+        const categoryRelations = category_ids.map((categoryId: string) => ({
+          magazine_id: id,
+          category_id: categoryId,
+        }))
+
+        const { error: categoryError } = await supabase
+          .from('magazine_categories')
+          .insert(categoryRelations)
+
+        if (categoryError) {
+          console.error('Failed to update category relations:', categoryError)
+        }
+      }
     }
 
     return NextResponse.json({

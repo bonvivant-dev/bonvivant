@@ -4,30 +4,13 @@ import Image from 'next/image'
 import { overlay } from 'overlay-kit'
 import { useState, useEffect, useCallback } from 'react'
 import { FcDocument } from 'react-icons/fc'
-import { Navigation } from 'swiper/modules'
 import { Swiper, SwiperSlide } from 'swiper/react'
 
 // Import Swiper styles
 import 'swiper/css'
-import 'swiper/css/navigation'
 
 // Custom Swiper styles
 const swiperStyles = `
-  .magazine-swiper .swiper-button-next,
-  .magazine-swiper .swiper-button-prev {
-    color: #3b82f6;
-    background: white;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    margin-top: -20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-  .magazine-swiper .swiper-button-next:after,
-  .magazine-swiper .swiper-button-prev:after {
-    font-size: 16px;
-    font-weight: bold;
-  }
   .line-clamp-1 {
     display: -webkit-box;
     -webkit-line-clamp: 1;
@@ -104,7 +87,10 @@ export default function MagazinesPage() {
           formData.append('title', magazineFormData.title)
           formData.append('summary', magazineFormData.summary)
           formData.append('introduction', magazineFormData.introduction)
-          formData.append('category_id', magazineFormData.category_id)
+          formData.append(
+            'category_ids',
+            JSON.stringify(magazineFormData.category_ids),
+          )
           formData.append('season_id', magazineFormData.season_id)
         }
 
@@ -238,7 +224,7 @@ export default function MagazinesPage() {
             title: magazine.title || '',
             summary: magazine.summary || '',
             introduction: magazine.introduction || '',
-            category_id: magazine.category_id || '',
+            category_ids: magazine.category_ids || [],
             season_id: magazine.season_id || '',
             selectedPages,
           }}
@@ -360,14 +346,12 @@ export default function MagazinesPage() {
                       {category.magazines.length === 0 ? (
                         <div className="px-6 py-8 text-center">
                           <p className="text-gray-400">
-                            이 카고에 속한 매거진이 없어요.
+                            [{category.name}] 카테고리에 속한 매거진이 없어요.
                           </p>
                         </div>
                       ) : (
                         <div className="p-6">
                           <Swiper
-                            modules={[Navigation]}
-                            navigation={true}
                             spaceBetween={20}
                             slidesPerView={1}
                             breakpoints={{
@@ -449,8 +433,6 @@ export default function MagazinesPage() {
 
                       <div className="p-6">
                         <Swiper
-                          modules={[Navigation]}
-                          navigation={true}
                           spaceBetween={20}
                           slidesPerView={1}
                           breakpoints={{

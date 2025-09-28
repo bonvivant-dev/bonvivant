@@ -12,7 +12,7 @@ import { Swiper, SwiperSlide } from 'swiper/react'
 import 'swiper/css'
 import 'swiper/css/navigation'
 
-import { CategoryChip } from '@/features/category'
+import { MultiCategoryChip } from '@/features/category'
 import { SeasonChip } from '@/features/season'
 
 import { PDFPageImage } from '../lib/convertPdfToImages'
@@ -141,7 +141,7 @@ interface MagazineFormData {
   title: string
   summary: string
   introduction: string
-  category_id: string | null
+  category_ids: string[]
   season_id: string | null
 }
 
@@ -163,7 +163,7 @@ interface PDFEditPreviewModalProps extends BasePDFPreviewModalProps {
     title: string
     summary: string
     introduction: string
-    category_id: string | null
+    category_ids: string[]
     season_id: string | null
     selectedPages?: number[]
   }
@@ -173,7 +173,7 @@ const initialFormData: MagazineFormData = {
   title: '',
   summary: '',
   introduction: '',
-  category_id: '',
+  category_ids: [],
   season_id: '',
 }
 
@@ -210,7 +210,7 @@ export function PDFPreviewModal({
           title: magazine.title,
           summary: magazine.summary,
           introduction: magazine.introduction,
-          category_id: magazine.category_id,
+          category_ids: magazine.category_ids,
           season_id: magazine.season_id,
         })
         setSelectedPageOrder(magazine.selectedPages || [])
@@ -233,8 +233,8 @@ export function PDFPreviewModal({
     setFormData(prev => ({ ...prev, season_id: seasonId || '' }))
   }
 
-  const handleCategoryUpdate = (categoryId: string | null) => {
-    setFormData(prev => ({ ...prev, category_id: categoryId || '' }))
+  const handleCategoryUpdate = (categoryIds: string[]) => {
+    setFormData(prev => ({ ...prev, category_ids: categoryIds }))
   }
 
   const togglePageSelection = (pageNumber: number) => {
@@ -318,13 +318,13 @@ export function PDFPreviewModal({
                       }
                       onUpdate={handleSeasonUpdate}
                     />
-                    <CategoryChip
+                    <MultiCategoryChip
                       magazineId={magazine?.id}
-                      currentCategoryId={formData.category_id || null}
-                      setCurrentCategoryId={(categoryId: string | null) =>
+                      currentCategoryIds={formData.category_ids}
+                      setCurrentCategoryIds={(categoryIds: string[]) =>
                         setFormData(prev => ({
                           ...prev,
-                          category_id: categoryId || '',
+                          category_ids: categoryIds,
                         }))
                       }
                       onUpdate={handleCategoryUpdate}

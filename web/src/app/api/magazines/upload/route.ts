@@ -54,7 +54,8 @@ export async function POST(request: NextRequest) {
     const title = formData.get('title') as string
     const summary = formData.get('summary') as string
     const introduction = formData.get('introduction') as string
-    const categoryId = formData.get('category_id') as string
+    const categoryIdsStr = formData.get('category_ids') as string
+    const categoryIds = categoryIdsStr ? JSON.parse(categoryIdsStr) : []
     const seasonId = formData.get('season_id') as string
 
     const storageKey = uuidv4()
@@ -123,7 +124,6 @@ export async function POST(request: NextRequest) {
           title: titleWithoutExt,
           summary: summary || null,
           introduction: introduction || null,
-          category_id: categoryId || null,
           season_id: seasonId || null,
           storage_key: storageKey,
           original_filename: originalFileName,
@@ -136,6 +136,22 @@ export async function POST(request: NextRequest) {
 
       if (dbError) {
         throw new Error(`Failed to save magazine: ${dbError.message}`)
+      }
+
+      // 카테고리 관계 저장
+      if (categoryIds.length > 0) {
+        const categoryRelations = categoryIds.map((categoryId: string) => ({
+          magazine_id: magazine.id,
+          category_id: categoryId,
+        }))
+
+        const { error: categoryError } = await supabase
+          .from('magazine_categories')
+          .insert(categoryRelations)
+
+        if (categoryError) {
+          console.error('Failed to save category relations:', categoryError)
+        }
       }
 
       return NextResponse.json({
