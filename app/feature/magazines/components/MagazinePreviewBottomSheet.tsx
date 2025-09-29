@@ -123,7 +123,6 @@ export function MagazinePreviewBottomSheet({
 
           {/* Introduction */}
           <View style={styles.introSection}>
-            <Text style={styles.sectionTitle}>소개</Text>
             <Text style={styles.introduction}>
               {magazine.introduction || '등록된 소개글이 없어요'}
             </Text>
@@ -132,7 +131,6 @@ export function MagazinePreviewBottomSheet({
           {/* Preview Images */}
           {magazine.preview_images && magazine.preview_images.length > 0 && (
             <View style={styles.previewSection}>
-              <Text style={styles.sectionTitle}>미리보기</Text>
               <View style={styles.previewContainer}>
                 <FlatList
                   data={magazine.preview_images}
