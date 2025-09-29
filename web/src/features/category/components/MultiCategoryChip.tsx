@@ -41,7 +41,7 @@ export function MultiCategoryChip({
 
     try {
       const categoryPromises = currentCategoryIds.map(id =>
-        fetch(`/api/categories/${id}`).then(res => res.json())
+        fetch(`/api/categories/${id}`).then(res => res.json()),
       )
       const responses = await Promise.all(categoryPromises)
       const validCategories = responses
@@ -100,7 +100,6 @@ export function MultiCategoryChip({
       : [...currentCategoryIds, categoryId]
 
     setCurrentCategoryIds(newCategoryIds)
-    updateMagazineCategories(newCategoryIds)
   }
 
   const createCategory = async () => {
@@ -146,7 +145,9 @@ export function MultiCategoryChip({
         await fetchCategories()
         // 삭제된 카테고리가 선택된 카테고리 중 하나였다면 선택 해제
         if (currentCategoryIds.includes(categoryId)) {
-          const newCategoryIds = currentCategoryIds.filter(id => id !== categoryId)
+          const newCategoryIds = currentCategoryIds.filter(
+            id => id !== categoryId,
+          )
           setCurrentCategoryIds(newCategoryIds)
           await updateMagazineCategories(newCategoryIds)
         }
@@ -249,7 +250,9 @@ export function MultiCategoryChip({
                 {/* 선택된 카테고리 표시 */}
                 {selectedCategories.length > 0 && (
                   <div className="px-3 py-2 border-b border-gray-100">
-                    <div className="text-xs text-gray-500 mb-1">선택된 카테고리:</div>
+                    <div className="text-xs text-gray-500 mb-1">
+                      선택된 카테고리:
+                    </div>
                     <div className="flex flex-wrap gap-1">
                       {selectedCategories.map(category => (
                         <span
