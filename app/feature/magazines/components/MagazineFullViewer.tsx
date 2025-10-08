@@ -107,10 +107,10 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
+        <Text style={styles.headerTitle}>{magazine.title}</Text>
         <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
           <Text style={styles.closeButtonText}>✕</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{magazine.title}</Text>
       </View>
 
       {/* PDF Content */}
@@ -237,14 +237,11 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
                         container.appendChild(pageDiv);
 
                         pdf.getPage(pageNum).then(function(page) {
-                          const scale = Math.min(
-                            (window.innerWidth) / page.getViewport({scale: 1}).width,
-                            (window.innerHeight) / page.getViewport({scale: 1}).height
-                          );
-
-                          const viewport = page.getViewport({scale: scale});
+                          const viewport = page.getViewport({scale: 2});
                           canvas.height = viewport.height;
                           canvas.width = viewport.width;
+                          canvas.style.width = '100%';
+                          canvas.style.height = '100%';
 
                           const renderContext = {
                             canvasContext: context,
@@ -284,7 +281,6 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
             onLoadEnd={() => console.log('PDF 로딩 완료')}
             onError={syntheticEvent => {
               const { nativeEvent } = syntheticEvent
-              console.error('WebView Error: ', nativeEvent)
               handleError(nativeEvent)
             }}
             startInLoadingState={true}
@@ -317,25 +313,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   header: {
+    position: 'absolute',
+    top: 50,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: '#000',
+    paddingVertical: 10,
+    zIndex: 1000,
   },
   closeButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  closeButtonText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: 'bold',
   },
   headerTitle: {
     fontSize: 16,
@@ -344,15 +337,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flex: 1,
   },
-  pageCounter: {
-    width: 60,
-    alignItems: 'flex-end',
-  },
-  pageCounterText: {
-    fontSize: 12,
+  closeButtonText: {
+    fontSize: 20,
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
+
   contentContainer: {
     flex: 1,
   },

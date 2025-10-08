@@ -119,7 +119,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-
   imageViewerHeader: {
     position: 'absolute',
     top: 50,
@@ -138,11 +137,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  imageViewerCloseText: {
-    fontSize: 20,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
   imageViewerTitle: {
     fontSize: 16,
     fontWeight: '600',
@@ -150,6 +144,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flex: 1,
     marginHorizontal: 16,
+  },
+  imageViewerCloseText: {
+    fontSize: 20,
+    color: '#fff',
+    fontWeight: 'bold',
   },
 
   imageViewerContent: {
