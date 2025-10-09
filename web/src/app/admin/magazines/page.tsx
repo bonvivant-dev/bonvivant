@@ -1,48 +1,59 @@
 'use client'
 
 import Image from 'next/image'
-import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { overlay } from 'overlay-kit'
+import { useState, useEffect, useCallback } from 'react'
+import { FcDocument } from 'react-icons/fc'
+import { Swiper, SwiperSlide } from 'swiper/react'
 
-import { Magazine, MagazineListResponse } from '@/features/magazine'
-import { convertPdfToImages } from '@/features/magazine'
-import { Season, SeasonListResponse } from '@/features/season'
-import { Header } from '@/shared/components'
+// Import Swiper styles
+import 'swiper/css'
+
+// Custom Swiper styles
+const swiperStyles = `
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+`
+
+import {
+  Magazine,
+  MagazinesByCategory,
+  convertPdfToImages,
+  convertPdfFromStorage,
+  PDFPageImage,
+  PDFPreviewModal,
+} from '@/features/magazine'
+import { Header, LoadingOverlay } from '@/shared/components'
 
 export default function MagazinesPage() {
-  const [magazines, setMagazines] = useState<Magazine[]>([])
-  const [seasons, setSeasons] = useState<Season[]>([])
+  const [magazinesByCategory, setMagazinesByCategory] =
+    useState<MagazinesByCategory | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedSeasonId, setSelectedSeasonId] = useState<string>('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [uploading, setUploading] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [isConverting, setIsConverting] = useState(false)
 
-  const fetchMagazines = async (page = 1, search = '', seasonId = '') => {
+  const fetchMagazines = async () => {
     try {
       setIsLoading(true)
-      const searchParams = new URLSearchParams({
-        page: page.toString(),
-        limit: '10',
-        search: search,
-      })
-
-      if (seasonId) {
-        searchParams.append('season_id', seasonId)
-      }
-
-      const response = await fetch(`/api/magazines?${searchParams}`)
+      const response = await fetch('/api/magazines/by-categories')
 
       if (!response.ok) {
         throw new Error('Failed to fetch magazines')
       }
 
-      const data: MagazineListResponse = await response.json()
-      setMagazines(data.magazines)
-      setTotalPages(data.totalPages)
-      setCurrentPage(data.page)
+      const data: MagazinesByCategory = await response.json()
+      setMagazinesByCategory(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -50,26 +61,97 @@ export default function MagazinesPage() {
     }
   }
 
-  const fetchSeasons = async () => {
-    try {
-      const response = await fetch('/api/seasons')
-      if (response.ok) {
-        const data: SeasonListResponse = await response.json()
-        setSeasons(data.seasons)
-      }
-    } catch (err) {
-      console.error('Failed to fetch seasons:', err)
-    }
-  }
-
   useEffect(() => {
-    Promise.all([
-      fetchMagazines(currentPage, searchTerm, selectedSeasonId),
-      fetchSeasons(),
-    ])
-  }, [currentPage, searchTerm, selectedSeasonId])
+    fetchMagazines()
+  }, [])
 
-  const handleFileUpload = async (
+  const handleConfirmUpload = useCallback(
+    async (
+      selectedPages: PDFPageImage[],
+      file: File | null,
+      magazineFormData?: any,
+      editingMagazineId?: string,
+    ) => {
+      setError(null)
+
+      try {
+        const formData = new FormData()
+
+        // 편집 모드일 때는 file이 없을 수 있음 (PDF는 변경하지 않는 경우)
+        if (file) {
+          formData.append('file', file)
+        }
+
+        // Add magazine metadata if provided
+        if (magazineFormData) {
+          formData.append('title', magazineFormData.title)
+          formData.append('summary', magazineFormData.summary)
+          formData.append('introduction', magazineFormData.introduction)
+          formData.append(
+            'category_ids',
+            JSON.stringify(magazineFormData.category_ids),
+          )
+          formData.append('season_id', magazineFormData.season_id)
+        }
+
+        // 선택된 페이지들을 순서와 메타데이터와 함께 FormData에 추가
+        const pageMetadata = selectedPages.map((page, index) => ({
+          order: index,
+          originalPageNumber: page.pageNumber,
+          fileName: `${page.pageNumber}.jpg`,
+        }))
+
+        // 메타데이터 정보 추가
+        formData.append('pageMetadata', JSON.stringify(pageMetadata))
+
+        // 선택된 페이지들을 순서대로 추가 (원본 페이지 번호로 파일명 설정)
+        selectedPages.forEach((page, index) => {
+          formData.append(`image-${index}`, page.blob, `${page.pageNumber}.jpg`)
+        })
+
+        if (editingMagazineId) {
+          const url = `/api/magazines/${editingMagazineId}`
+          const method = 'PUT'
+          const response = await fetch(url, {
+            method,
+            body: formData,
+          })
+
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.error || 'Update failed')
+          }
+        } else {
+          const url = '/api/magazines/upload'
+          const method = 'POST'
+          const response = await fetch(url, {
+            method,
+            body: formData,
+          })
+
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.error || 'Upload failed')
+          }
+        }
+
+        await fetchMagazines()
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : editingMagazineId
+              ? 'Update failed'
+              : 'Upload failed',
+        )
+      } finally {
+        setSelectedFile(null)
+      }
+    },
+    [],
+  )
+
+  const handleFileSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0]
@@ -80,44 +162,91 @@ export default function MagazinesPage() {
       return
     }
 
-    setUploading(true)
     setError(null)
+    setSelectedFile(file)
+    setIsConverting(true)
 
     try {
-      // 클라이언트 사이드에서 PDF를 이미지로 변환
-      const imageBlobs = await convertPdfToImages(file)
-
-      const formData = new FormData()
-      formData.append('file', file)
-
-      // 변환된 이미지들도 FormData에 추가
-      imageBlobs.forEach((blob, index) => {
-        formData.append(`image-${index}`, blob, `page-${index + 1}.jpg`)
+      // PDF의 모든 페이지를 이미지로 변환
+      await convertPdfToImages(file).then(pages => {
+        setIsConverting(false)
+        overlay.open(({ isOpen, close }) => (
+          <PDFPreviewModal
+            title={selectedFile?.name || 'PDF 미리보기'}
+            pages={pages}
+            isOpen={isOpen}
+            onClose={() => {
+              close()
+              setSelectedFile(null)
+            }}
+            onConfirm={async (selectedPages, formData) => {
+              await handleConfirmUpload(selectedPages, file, formData)
+            }}
+          />
+        ))
       })
-
-      const response = await fetch('/api/magazines/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Upload failed')
-      }
-
-      await fetchMagazines(1, searchTerm, selectedSeasonId)
-      setCurrentPage(1)
-
-      event.target.value = ''
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed')
+      setError(err instanceof Error ? err.message : 'PDF 변환 실패')
     } finally {
-      setUploading(false)
+      setIsConverting(false)
+    }
+
+    // 파일 입력 초기화
+    event.target.value = ''
+  }
+
+  const handleEdit = async (magazine: Magazine) => {
+    setError(null)
+    setIsConverting(true)
+
+    try {
+      const pages = await convertPdfFromStorage(
+        magazine.storage_key,
+        `${magazine.storage_key}.pdf`,
+      )
+
+      // 현재 선택된 미리보기 이미지 순서 추출
+      const selectedPages =
+        magazine.preview_images?.map(imageName => {
+          const pageNumber = parseInt(imageName.replace('.jpg', ''))
+          return pageNumber
+        }) || []
+
+      overlay.open(({ isOpen, close }) => (
+        <PDFPreviewModal
+          editMode={true}
+          title={magazine.title || 'PDF 편집'}
+          pages={pages}
+          isOpen={isOpen}
+          onClose={close}
+          magazine={{
+            id: magazine.id,
+            title: magazine.title || '',
+            summary: magazine.summary || '',
+            introduction: magazine.introduction || '',
+            category_ids: magazine.category_ids || [],
+            season_id: magazine.season_id || '',
+            selectedPages,
+          }}
+          onConfirm={async (selectedPages, formData) => {
+            await handleConfirmUpload(
+              selectedPages,
+              null,
+              formData,
+              magazine.id,
+            )
+          }}
+        />
+      ))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'PDF 로딩 실패')
+    } finally {
+      setIsConverting(false)
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('정말로 이 매거진을 삭제하시겠습니까?')) return
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`${title}을 삭제할까요?`)) return
 
     try {
       const response = await fetch(`/api/magazines/${id}`, {
@@ -128,87 +257,22 @@ export default function MagazinesPage() {
         throw new Error('Failed to delete magazine')
       }
 
-      await fetchMagazines(currentPage, searchTerm, selectedSeasonId)
+      await fetchMagazines()
     } catch (err) {
+      alert(`${title} 삭제에 실패했어요`)
       setError(err instanceof Error ? err.message : 'Delete failed')
     }
   }
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    setCurrentPage(1)
-    fetchMagazines(1, searchTerm, selectedSeasonId)
-  }
-
-  const handleSeasonFilter = (seasonId: string) => {
-    setSelectedSeasonId(seasonId)
-    setCurrentPage(1)
-  }
-
   return (
     <>
+      <style jsx global>
+        {swiperStyles}
+      </style>
       <Header title="매거진 관리" />
       <div className="min-h-screen bg-gray-50">
         <main className="max-w-7xl mx-auto sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
-            {/* Upload Section */}
-            <div className="bg-white overflow-hidden shadow rounded-lg mb-6">
-              <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                  새 매거진 업로드
-                </h3>
-                <div className="flex items-center space-x-4">
-                  <label className="cursor-pointer">
-                    <input
-                      type="file"
-                      accept=".pdf"
-                      onChange={handleFileUpload}
-                      disabled={uploading}
-                      className="hidden"
-                    />
-                    <span
-                      className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
-                        uploading
-                          ? 'bg-gray-400 cursor-not-allowed'
-                          : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
-                      }`}
-                    >
-                      {uploading ? '업로드 중...' : 'PDF 파일 선택'}
-                    </span>
-                  </label>
-                  <span className="text-sm text-gray-500">
-                    PDF 파일만 업로드 가능합니다. 첫 3페이지가 미리보기로
-                    변환됩니다.
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Search and Filter */}
-            <div className="bg-white overflow-hidden shadow rounded-lg mb-6">
-              <div className="px-4 py-5 sm:p-6">
-                <div className="space-y-4">
-                  <form onSubmit={handleSearch} className="flex space-x-4">
-                    <div className="flex-1">
-                      <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        placeholder="매거진 제목으로 검색..."
-                        className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                    >
-                      검색
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </div>
-
             {/* Error Message */}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
@@ -231,167 +295,239 @@ export default function MagazinesPage() {
               </div>
             )}
 
-            {/* Magazines List */}
             <div className="bg-white shadow overflow-hidden sm:rounded-md mt-6">
-              {/* flex div */}
-              <div className="flex items-center justify-between px-4 py-5">
-                <div>
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">
-                    매거진 목록
-                  </h3>
-                  <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                    총 {magazines.length}개의 매거진이 있습니다.
-                  </p>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <select
-                    value={selectedSeasonId}
-                    onChange={e => handleSeasonFilter(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">모든 시즌</option>
-                    <option value="null">시즌 없음</option>
-                    {seasons.map(season => (
-                      <option key={season.id} value={season.id}>
-                        {season.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div className="flex items-center justify-between px-6 py-5">
+                <h1 className="text-2xl leading-6 font-medium text-gray-900">
+                  서재
+                </h1>
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  <span className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer">
+                    PDF 업로드
+                  </span>
+                </label>
               </div>
+            </div>
 
+            <div className="mt-6 space-y-8">
               {isLoading ? (
-                <div className="px-4 py-12 text-center">
+                <div className="bg-white rounded-lg shadow px-6 py-12 text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="mt-4 text-gray-500">로딩 중...</p>
+                  <p className="mt-4 text-gray-500">매거진을 불러오는 중...</p>
                 </div>
-              ) : magazines.length === 0 ? (
-                <div className="px-4 py-12 text-center">
+              ) : !magazinesByCategory ? (
+                <div className="bg-white rounded-lg shadow px-6 py-12 text-center">
                   <p className="text-gray-500">
-                    {searchTerm
-                      ? '검색 결과가 없습니다.'
-                      : '등록된 매거진이 없습니다.'}
+                    매거진 데이터를 불러올 수 없습니다.
                   </p>
                 </div>
               ) : (
-                <ul className="divide-y divide-gray-200">
-                  {magazines.map(magazine => (
-                    <li key={magazine.id}>
-                      <div className="px-4 py-4 sm:px-6 hover:bg-gray-50">
-                        <div className="flex items-center justify-between">
-                          <div className="flex space-x-4">
-                            {magazine.cover_image && (
-                              <Image
-                                src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${magazine.cover_image}`}
-                                alt={magazine.title || 'Cover'}
-                                className="w-20 h-25 object-cover rounded-md shadow-sm"
-                                width={80}
-                                height={100}
-                              />
-                            )}
-                            <div className="flex flex-col justify-between space-x-4">
-                              <div className="flex flex-col items-start">
-                                <p className="text-lg font-medium text-gray-900">
+                <>
+                  {/* Categories with Magazines */}
+                  {magazinesByCategory.categories.map(category => (
+                    <div
+                      key={category.id}
+                      className="bg-white rounded-lg shadow overflow-hidden"
+                    >
+                      <div className="px-6 py-4 border-b border-gray-200">
+                        <h2 className="text-xl font-semibold text-gray-900">
+                          {category.name}
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-1">
+                          총 {category.magazines.length}개
+                        </p>
+                      </div>
+
+                      {category.magazines.length === 0 ? (
+                        <div className="px-6 py-8 text-center">
+                          <p className="text-gray-400">
+                            [{category.name}] 카테고리에 속한 매거진이 없어요.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="p-6">
+                          <Swiper
+                            spaceBetween={20}
+                            slidesPerView={1}
+                            breakpoints={{
+                              640: { slidesPerView: 2 },
+                              768: { slidesPerView: 3 },
+                              1024: { slidesPerView: 4 },
+                              1280: { slidesPerView: 5 },
+                            }}
+                            className="magazine-swiper"
+                          >
+                            {category.magazines.map(magazine => (
+                              <SwiperSlide key={magazine.id}>
+                                <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                                  {magazine.cover_image && (
+                                    <div
+                                      className="aspect-[3/4] mb-3 cursor-pointer"
+                                      onClick={() => handleEdit(magazine)}
+                                    >
+                                      <Image
+                                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${magazine.cover_image}`}
+                                        alt={magazine.title || 'Cover'}
+                                        className="w-full h-full object-cover rounded-md shadow-sm"
+                                        width={150}
+                                        height={200}
+                                      />
+                                    </div>
+                                  )}
+                                  <h3 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
+                                    {magazine.title || '제목 없음'}
+                                  </h3>
+                                  <p className="text-xs text-gray-500 mb-2 line-clamp-1">
+                                    {magazine.summary || '요약 없음'}
+                                  </p>
+                                  <p className="text-xs text-gray-400 mb-3">
+                                    {new Date(
+                                      magazine.created_at,
+                                    ).toLocaleDateString('ko-KR')}
+                                  </p>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => handleEdit(magazine)}
+                                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs font-medium"
+                                    >
+                                      편집
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        handleDelete(
+                                          magazine.id,
+                                          magazine.title || '',
+                                        )
+                                      }
+                                      className="flex-1 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-medium"
+                                    >
+                                      삭제
+                                    </button>
+                                  </div>
+                                </div>
+                              </SwiperSlide>
+                            ))}
+                          </Swiper>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Uncategorized Magazines */}
+                  {magazinesByCategory.uncategorized.length > 0 && (
+                    <div className="bg-white rounded-lg shadow overflow-hidden">
+                      <div className="px-6 py-4 border-b border-gray-200">
+                        <h2 className="text-xl font-semibold text-gray-900">
+                          카테고리 없음
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-1">
+                          총 {magazinesByCategory.uncategorized.length}개의
+                          매거진
+                        </p>
+                      </div>
+
+                      <div className="p-6">
+                        <Swiper
+                          spaceBetween={20}
+                          slidesPerView={1}
+                          breakpoints={{
+                            640: { slidesPerView: 2 },
+                            768: { slidesPerView: 3 },
+                            1024: { slidesPerView: 4 },
+                            1280: { slidesPerView: 5 },
+                          }}
+                          className="magazine-swiper"
+                        >
+                          {magazinesByCategory.uncategorized.map(magazine => (
+                            <SwiperSlide key={magazine.id}>
+                              <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                                {magazine.cover_image && (
+                                  <div className="aspect-[3/4] mb-3">
+                                    <Image
+                                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${magazine.cover_image}`}
+                                      alt={magazine.title || 'Cover'}
+                                      className="w-full h-full object-cover rounded-md shadow-sm"
+                                      width={150}
+                                      height={200}
+                                    />
+                                  </div>
+                                )}
+                                <h3 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
                                   {magazine.title || '제목 없음'}
-                                </p>
-                              </div>
-                              <div className="flex flex-col items-start">
-                                <p className="text-sm text-gray-500">
+                                </h3>
+                                <p className="text-xs text-gray-500 mb-2 line-clamp-1">
                                   {magazine.summary || '요약 없음'}
                                 </p>
-                                <p className="text-xs text-gray-400">
-                                  생성일:{' '}
+                                <p className="text-xs text-gray-400 mb-3">
                                   {new Date(
                                     magazine.created_at,
                                   ).toLocaleDateString('ko-KR')}
                                 </p>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleEdit(magazine)}
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs font-medium"
+                                  >
+                                    편집
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleDelete(
+                                        magazine.id,
+                                        magazine.title || '',
+                                      )
+                                    }
+                                    className="flex-1 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-medium"
+                                  >
+                                    삭제
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Link
-                              href={`/admin/magazines/${magazine.id}`}
-                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium"
-                            >
-                              편집
-                            </Link>
-                            <button
-                              onClick={() => handleDelete(magazine.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-medium"
-                            >
-                              삭제
-                            </button>
-                          </div>
-                        </div>
+                            </SwiperSlide>
+                          ))}
+                        </Swiper>
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
+                    </div>
+                  )}
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                  <div className="flex-1 flex justify-between sm:hidden">
-                    <button
-                      onClick={() =>
-                        setCurrentPage(Math.max(1, currentPage - 1))
-                      }
-                      disabled={currentPage === 1}
-                      className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      이전
-                    </button>
-                    <button
-                      onClick={() =>
-                        setCurrentPage(Math.min(totalPages, currentPage + 1))
-                      }
-                      disabled={currentPage === totalPages}
-                      className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      다음
-                    </button>
-                  </div>
-                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-sm text-gray-700">
-                        총 <span className="font-medium">{totalPages}</span>{' '}
-                        페이지 중{' '}
-                        <span className="font-medium">{currentPage}</span>{' '}
-                        페이지
-                      </p>
-                    </div>
-                    <div>
-                      <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                        <button
-                          onClick={() =>
-                            setCurrentPage(Math.max(1, currentPage - 1))
-                          }
-                          disabled={currentPage === 1}
-                          className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          이전
-                        </button>
-                        <button
-                          onClick={() =>
-                            setCurrentPage(
-                              Math.min(totalPages, currentPage + 1),
-                            )
-                          }
-                          disabled={currentPage === totalPages}
-                          className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          다음
-                        </button>
-                      </nav>
-                    </div>
-                  </div>
-                </div>
+                  {/* Empty State */}
+                  {magazinesByCategory.categories.length === 0 &&
+                    magazinesByCategory.uncategorized.length === 0 && (
+                      <div className="bg-white rounded-lg shadow px-6 py-12 text-center">
+                        <p className="text-gray-500">
+                          등록된 매거진이 없습니다.
+                        </p>
+                      </div>
+                    )}
+                </>
               )}
             </div>
           </div>
         </main>
       </div>
+      <LoadingOverlay
+        isOpen={isConverting}
+        icon={<FcDocument size={40} />}
+        title={
+          isConverting
+            ? selectedFile?.name
+              ? 'PDF 업로드 중'
+              : 'PDF 불러오는 중'
+            : 'PDF 불러오는 중'
+        }
+        message={
+          isConverting
+            ? selectedFile?.name
+              ? `${selectedFile.name}을 이미지로 변환하고 있습니다...`
+              : 'PDF를 불러오고 있습니다...'
+            : 'PDF를 불러오고 있습니다...'
+        }
+      />
     </>
   )
 }
