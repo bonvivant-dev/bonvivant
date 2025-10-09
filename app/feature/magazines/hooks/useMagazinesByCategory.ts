@@ -2,16 +2,10 @@ import { useState, useEffect } from 'react'
 
 import { supabase } from '@/feature/shared'
 
-import { Magazine } from '../types'
-
-export interface Category {
-  id: string
-  name: string
-  magazines: Magazine[]
-}
+import { Magazine, Category } from '../types'
 
 export interface MagazinesByCategory {
-  categories: Category[]
+  categories: Array<Category & { magazines: Magazine[] }>
 }
 
 export const useMagazinesByCategory = () => {
@@ -28,7 +22,7 @@ export const useMagazinesByCategory = () => {
       // Fetch all categories
       const { data: categories, error: categoriesError } = await supabase
         .from('categories')
-        .select('id, name')
+        .select('id, name, created_at, updated_at')
         .order('created_at', { ascending: false })
 
       if (categoriesError) {
@@ -69,7 +63,7 @@ export const useMagazinesByCategory = () => {
       }))
 
       // Group magazines by category
-      const categoriesWithMagazines: Category[] = []
+      const categoriesWithMagazines: Array<Category & { magazines: Magazine[] }> = []
 
       // Initialize categories and add magazines
       sortedCategories.forEach(category => {
@@ -81,6 +75,8 @@ export const useMagazinesByCategory = () => {
           categoriesWithMagazines.push({
             id: category.id,
             name: category.name,
+            created_at: category.created_at || '',
+            updated_at: category.updated_at || null,
             magazines: categoryMagazines,
           })
         }

@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Modal,
   View,
@@ -10,11 +10,14 @@ import {
   ScrollView,
   Dimensions,
   FlatList,
+  Alert,
+  ActivityIndicator,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { supabase } from '@/feature/shared'
 
+import { usePurchase } from '../hooks'
 import { Magazine } from '../types'
 
 import { MagazinePreviewModal } from './MagazinePreviewModal'
@@ -35,6 +38,26 @@ export function MagazinePreviewBottomSheet({
   const router = useRouter()
   const [isImageViewerVisible, setIsImageViewerVisible] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const [isPurchased, setIsPurchased] = useState(false)
+  const [isCheckingPurchase, setIsCheckingPurchase] = useState(false)
+
+  const { isPurchasing, purchase, checkPurchased } = usePurchase()
+
+  // 구매 여부 확인
+  useEffect(() => {
+    if (magazine && visible) {
+      checkPurchaseStatus()
+    }
+  }, [magazine, visible])
+
+  const checkPurchaseStatus = async () => {
+    if (!magazine) return
+
+    setIsCheckingPurchase(true)
+    const purchased = await checkPurchased(magazine.id)
+    setIsPurchased(purchased)
+    setIsCheckingPurchase(false)
+  }
 
   if (!magazine) return null
 
@@ -54,11 +77,40 @@ export function MagazinePreviewBottomSheet({
       .getPublicUrl(`${magazine.storage_key}/${imagePath}`).data.publicUrl
   }
 
-  // TODO: 구매 기능 구현
-  const handlePurchase = () => {
-    // 구매 후 이동
-    onClose()
-    router.push(`/magazine/${magazine.id}/view`)
+  const handlePurchase = async () => {
+    if (!magazine) return
+
+    // 이미 구매한 경우 바로 이동
+    if (isPurchased) {
+      onClose()
+      router.push(`/magazine/${magazine.id}/view`)
+      return
+    }
+
+    // 구매 가능 여부 확인
+    console.log(magazine.is_purchasable, magazine.product_id)
+    if (!magazine.is_purchasable || !magazine.product_id) {
+      Alert.alert('알림', '현재 구매할 수 없는 매거진입니다.')
+      return
+    }
+
+    // 구매 진행
+    const result = await purchase(magazine.product_id, magazine.id)
+
+    if (result.success) {
+      Alert.alert('구매 완료', '매거진을 구매했습니다!', [
+        {
+          text: '확인',
+          onPress: () => {
+            onClose()
+            router.push(`/magazine/${magazine.id}/view`)
+          },
+        },
+      ])
+      setIsPurchased(true)
+    } else if (result.error !== 'cancelled') {
+      Alert.alert('구매 실패', result.error || '구매에 실패했습니다.')
+    }
   }
 
   const handleImagePress = (index: number) => {
@@ -113,11 +165,23 @@ export function MagazinePreviewBottomSheet({
           {/* Purchase Button */}
           <View style={styles.purchaseContainer}>
             <TouchableOpacity
-              style={styles.purchaseButton}
+              style={[
+                styles.purchaseButton,
+                (isPurchasing || isCheckingPurchase) &&
+                  styles.purchaseButtonDisabled,
+                isPurchased && styles.purchaseButtonPurchased,
+              ]}
               onPress={handlePurchase}
               activeOpacity={0.8}
+              disabled={isPurchasing || isCheckingPurchase}
             >
-              <Text style={styles.purchaseButtonText}>구매하기</Text>
+              {isPurchasing || isCheckingPurchase ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.purchaseButtonText}>
+                  {isPurchased ? '전체 보기' : '구매하기'}
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -254,6 +318,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  purchaseButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  purchaseButtonPurchased: {
+    backgroundColor: '#34C759',
   },
   purchaseButtonText: {
     fontSize: 16,
