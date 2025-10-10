@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import { useRouter } from 'expo-router'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Modal,
   View,
@@ -8,10 +9,12 @@ import {
   StyleSheet,
   Dimensions,
   FlatList,
+  Alert,
 } from 'react-native'
 
 import { supabase } from '@/feature/shared'
 
+import { usePurchase } from '../hooks'
 import { Magazine } from '../types'
 
 const { width } = Dimensions.get('window')
@@ -29,8 +32,19 @@ export function MagazinePreviewModal({
   initialImageIndex = 0,
   onClose,
 }: MagazinePreviewModalProps) {
+  const router = useRouter()
   const [selectedImageIndex, setSelectedImageIndex] =
     useState(initialImageIndex)
+  const hasShownPurchaseAlert = useRef(false)
+
+  const { isPurchasing, purchase, checkPurchased } = usePurchase()
+
+  // 모달이 열릴 때마다 alert 표시 상태 초기화
+  useEffect(() => {
+    if (visible) {
+      hasShownPurchaseAlert.current = false
+    }
+  }, [visible])
 
   if (
     !magazine ||
@@ -44,6 +58,73 @@ export function MagazinePreviewModal({
     return supabase.storage
       .from('covers')
       .getPublicUrl(`${magazine.storage_key}/${imagePath}`).data.publicUrl
+  }
+
+  const handlePurchase = async () => {
+    if (!magazine) return
+
+    // 이미 구매한 경우 확인
+    const isPurchased = await checkPurchased(magazine.id)
+    if (isPurchased) {
+      Alert.alert('알림', '이미 구매한 매거진입니다.', [
+        {
+          text: '전체 보기',
+          onPress: () => {
+            onClose()
+            router.push(`/magazine/${magazine.id}/view`)
+          },
+        },
+        {
+          text: '취소',
+          style: 'cancel',
+        },
+      ])
+      return
+    }
+
+    // 구매 가능 여부 확인
+    if (!magazine.is_purchasable || !magazine.product_id) {
+      Alert.alert('알림', '현재 구매할 수 없는 매거진입니다.')
+      return
+    }
+
+    // 구매 진행
+    const result = await purchase(magazine.product_id, magazine.id)
+
+    if (result.success) {
+      Alert.alert('구매 완료', '매거진을 구매했습니다!', [
+        {
+          text: '확인',
+          onPress: () => {
+            onClose()
+            router.push(`/magazine/${magazine.id}/view`)
+          },
+        },
+      ])
+    } else if (result.error !== 'cancelled') {
+      Alert.alert('구매 실패', result.error || '구매에 실패했습니다.')
+    }
+  }
+
+  const showPurchaseAlert = () => {
+    if (hasShownPurchaseAlert.current) return
+    hasShownPurchaseAlert.current = true
+
+    Alert.alert(
+      '매거진 구매',
+      '매거진의 전체 내용을 보시겠어요?',
+      [
+        {
+          text: '구매하기',
+          onPress: handlePurchase,
+        },
+        {
+          text: '나중에',
+          style: 'cancel',
+        },
+      ],
+      { cancelable: true }
+    )
   }
 
   return (
@@ -98,6 +179,17 @@ export function MagazinePreviewModal({
                 event.nativeEvent.contentOffset.x / width
               )
               setSelectedImageIndex(pageIndex)
+
+              // 마지막 페이지 도달 시 구매 알림 표시
+              if (
+                pageIndex === magazine.preview_images!.length - 1 &&
+                !hasShownPurchaseAlert.current
+              ) {
+                // alert가 즉시 표시되지 않도록 약간의 딜레이 추가
+                setTimeout(() => {
+                  showPurchaseAlert()
+                }, 300)
+              }
             }}
           />
           {/* Page Counter - Below Images */}
