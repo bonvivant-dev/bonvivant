@@ -10,7 +10,8 @@
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.bonvivant.app",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "buildNumber": "5"
     },
     "android": {
       "package": "com.bonvivant.app",
