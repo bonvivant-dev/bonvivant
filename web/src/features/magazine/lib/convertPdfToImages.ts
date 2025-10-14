@@ -1,8 +1,4 @@
-export interface PDFPageImage {
-  blob: Blob
-  dataUrl: string
-  pageNumber: number
-}
+import { PDFPageImage } from '@/features/magazine/types'
 
 async function convertPdfArrayBufferToImages(
   arrayBuffer: ArrayBuffer,

@@ -12,10 +12,9 @@ import { Swiper, SwiperSlide } from 'swiper/react'
 import 'swiper/css'
 import 'swiper/css/navigation'
 
-import { MultiCategoryChip } from '@/features/category'
-import { SeasonChip } from '@/features/season'
-
-import { PDFPageImage } from '../lib/convertPdfToImages'
+import { MultiCategoryChip } from '@/features/category/components'
+import { PDFPageImage } from '@/features/magazine/types'
+import { SeasonChip } from '@/features/season/components'
 
 const ITEM_TYPE = 'image'
 

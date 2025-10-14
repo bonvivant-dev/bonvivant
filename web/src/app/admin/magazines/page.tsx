@@ -25,14 +25,16 @@ const swiperStyles = `
   }
 `
 
+import { PDFPreviewModal } from '@/features/magazine/components'
+import {
+  convertPdfToImages,
+  convertPdfFromStorage,
+} from '@/features/magazine/lib'
 import {
   Magazine,
   MagazinesByCategory,
-  convertPdfToImages,
-  convertPdfFromStorage,
   PDFPageImage,
-  PDFPreviewModal,
-} from '@/features/magazine'
+} from '@/features/magazine/types'
 import { Header, LoadingOverlay } from '@/shared/components'
 
 export default function MagazinesPage() {

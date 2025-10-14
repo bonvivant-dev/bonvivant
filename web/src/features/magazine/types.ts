@@ -42,3 +42,9 @@ export interface MagazinesByCategory {
   }>
   uncategorized: Magazine[]
 }
+
+export interface PDFPageImage {
+  blob: Blob
+  dataUrl: string
+  pageNumber: number
+}
