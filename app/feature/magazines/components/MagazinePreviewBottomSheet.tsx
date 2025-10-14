@@ -63,15 +63,17 @@ export function MagazinePreviewBottomSheet({
 
   const getCoverImageUrl = (magazine: Magazine) => {
     if (!magazine.cover_image) return null
-    return supabase.storage.from('images').getPublicUrl(magazine.cover_image)
-      .data.publicUrl
+    // cover_image에서 "images/" 접두사 제거 (이미 포함되어 있음)
+    const path = magazine.cover_image.replace(/^images\//, '')
+    return supabase.storage.from('images').getPublicUrl(path).data.publicUrl
   }
 
   const coverImageUrl = getCoverImageUrl(magazine)
 
   const getPreviewImageUrl = (imagePath: string) => {
-    return supabase.storage.from('images').getPublicUrl(imagePath).data
-      .publicUrl
+    // imagePath에서 "images/" 접두사 제거 (이미 포함되어 있음)
+    const path = imagePath.replace(/^images\//, '')
+    return supabase.storage.from('images').getPublicUrl(path).data.publicUrl
   }
 
   const handlePurchase = async () => {
