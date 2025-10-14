@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { supabase } from '@/feature/shared'
 
-import { usePurchase } from '../hooks'
+// import { usePurchase } from '../hooks'
 import { Magazine } from '../types'
 
 import { MagazinePreviewModal } from './MagazinePreviewModal'
@@ -41,40 +41,37 @@ export function MagazinePreviewBottomSheet({
   const [isPurchased, setIsPurchased] = useState(false)
   const [isCheckingPurchase, setIsCheckingPurchase] = useState(false)
 
-  const { isPurchasing, purchase, checkPurchased } = usePurchase()
+  // const { isPurchasing, purchase, checkPurchased } = usePurchase()
 
   // 구매 여부 확인
   useEffect(() => {
     if (magazine && visible) {
-      checkPurchaseStatus()
+      // checkPurchaseStatus()
     }
   }, [magazine, visible])
 
-  const checkPurchaseStatus = async () => {
-    if (!magazine) return
+  // const checkPurchaseStatus = async () => {
+  //   if (!magazine) return
 
-    setIsCheckingPurchase(true)
-    const purchased = await checkPurchased(magazine.id)
-    setIsPurchased(purchased)
-    setIsCheckingPurchase(false)
-  }
+  //   setIsCheckingPurchase(true)
+  //   const purchased = await checkPurchased(magazine.id)
+  //   setIsPurchased(purchased)
+  //   setIsCheckingPurchase(false)
+  // }
 
   if (!magazine) return null
 
   const getCoverImageUrl = (magazine: Magazine) => {
     if (!magazine.cover_image) return null
-    return supabase.storage
-      .from('covers')
-      .getPublicUrl(`${magazine.storage_key}/${magazine.cover_image}`).data
-      .publicUrl
+    return supabase.storage.from('images').getPublicUrl(magazine.cover_image)
+      .data.publicUrl
   }
 
   const coverImageUrl = getCoverImageUrl(magazine)
 
   const getPreviewImageUrl = (imagePath: string) => {
-    return supabase.storage
-      .from('covers')
-      .getPublicUrl(`${magazine.storage_key}/${imagePath}`).data.publicUrl
+    return supabase.storage.from('images').getPublicUrl(imagePath).data
+      .publicUrl
   }
 
   const handlePurchase = async () => {
@@ -94,22 +91,22 @@ export function MagazinePreviewBottomSheet({
     }
 
     // 구매 진행
-    const result = await purchase(magazine.product_id, magazine.id)
+    // const result = await purchase(magazine.product_id, magazine.id)
 
-    if (result.success) {
-      Alert.alert('구매 완료', '매거진을 구매했습니다!', [
-        {
-          text: '확인',
-          onPress: () => {
-            onClose()
-            router.push(`/magazine/${magazine.id}/view`)
-          },
-        },
-      ])
-      setIsPurchased(true)
-    } else if (result.error !== 'cancelled') {
-      Alert.alert('구매 실패', result.error || '구매에 실패했습니다.')
-    }
+    // if (result.success) {
+    //   Alert.alert('구매 완료', '매거진을 구매했습니다!', [
+    //     {
+    //       text: '확인',
+    //       onPress: () => {
+    //         onClose()
+    //         router.push(`/magazine/${magazine.id}/view`)
+    //       },
+    //     },
+    //   ])
+    //   setIsPurchased(true)
+    // } else if (result.error !== 'cancelled') {
+    //   Alert.alert('구매 실패', result.error || '구매에 실패했습니다.')
+    // }
   }
 
   const handleImagePress = (index: number) => {
@@ -166,15 +163,15 @@ export function MagazinePreviewBottomSheet({
             <TouchableOpacity
               style={[
                 styles.purchaseButton,
-                (isPurchasing || isCheckingPurchase) &&
-                  styles.purchaseButtonDisabled,
+                // (isPurchasing || isCheckingPurchase) &&
+                styles.purchaseButtonDisabled,
                 isPurchased && styles.purchaseButtonPurchased,
               ]}
               onPress={handlePurchase}
               activeOpacity={0.8}
-              disabled={isPurchasing || isCheckingPurchase}
+              disabled={isCheckingPurchase} // TODO : isPurchasing 추가 필요
             >
-              {isPurchasing || isCheckingPurchase ? (
+              {isCheckingPurchase ? ( // TODO : isPurchasing 추가 필요
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.purchaseButtonText}>
