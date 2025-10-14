@@ -181,6 +181,20 @@ export function MagazinePreviewBottomSheet({
                 </Text>
               )}
             </TouchableOpacity>
+
+            {/* Development Only - Full View Button */}
+            {__DEV__ && (
+              <TouchableOpacity
+                style={styles.devButton}
+                onPress={() => {
+                  onClose()
+                  router.push(`/magazine/${magazine.id}/view`)
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.devButtonText}>(개발용) 전체보기</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Introduction */}
@@ -325,6 +339,19 @@ const styles = StyleSheet.create({
   },
   purchaseButtonText: {
     fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  devButton: {
+    backgroundColor: '#FF9500',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+  devButtonText: {
+    fontSize: 14,
     fontWeight: '600',
     color: '#fff',
   },
