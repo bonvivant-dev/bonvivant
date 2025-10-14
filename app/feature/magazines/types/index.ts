@@ -19,4 +19,14 @@ export interface Magazine {
   categories?: Category[]
   created_at: string
   updated_at: string | null
+  // IAP 관련
+  product_id: string | null
+  price: number | null
+  is_purchasable: boolean
+}
+
+export interface PurchaseResult {
+  success: boolean
+  transactionId?: string
+  error?: string
 }

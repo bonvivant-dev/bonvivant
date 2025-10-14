@@ -10,7 +10,8 @@
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "com.bonvivant.app",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "buildNumber": "8"
     },
     "android": {
       "package": "com.bonvivant.app",
@@ -46,6 +47,6 @@
         "projectId": "f8aa4906-9f3f-4185-ba7d-05fad9da9fad"
       }
     },
-    "owner": "bonvivant"
+    "owner": "team-bonvivant"
   }
 }
