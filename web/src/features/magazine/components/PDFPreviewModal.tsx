@@ -166,6 +166,7 @@ interface PDFEditPreviewModalProps extends BasePDFPreviewModalProps {
     season_id: string | null
     selectedPages?: number[]
   }
+  onDelete?: (id: string, title: string) => Promise<void>
 }
 
 const initialFormData: MagazineFormData = {
@@ -184,7 +185,7 @@ export function PDFPreviewModal({
   title,
   ...props
 }: BasePDFPreviewModalProps | PDFEditPreviewModalProps) {
-  const { editMode, magazine } = props as PDFEditPreviewModalProps
+  const { editMode, magazine, onDelete } = props as PDFEditPreviewModalProps
   const [selectedPageOrder, setSelectedPageOrder] = useState<number[]>([])
   const [formData, setFormData] = useState<MagazineFormData>(initialFormData)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -263,6 +264,23 @@ export function PDFPreviewModal({
     } catch (error) {
       // 에러가 발생한 경우 모달을 열어둠
       console.error('Failed to confirm:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!editMode || !magazine || !onDelete) return
+
+    if (!confirm(`[${magazine.title}] 매거진을 삭제할까요?`)) return
+
+    try {
+      setIsSubmitting(true)
+      await onDelete(magazine.id, magazine.title)
+      onClose()
+    } catch (error) {
+      console.error('Failed to delete:', error)
+      alert(`${magazine.title} 삭제에 실패했어요`)
     } finally {
       setIsSubmitting(false)
     }
@@ -490,7 +508,25 @@ export function PDFPreviewModal({
           </div>
 
           {/* Footer */}
-          <div className="items-center justify-between p-2 bg-gray-50 border-t border-gray-300">
+          <div className="flex items-center justify-between p-2 bg-gray-50 border-t border-gray-300">
+            {/* Delete button on the left (only in edit mode) */}
+            <div className="flex justify-start">
+              {editMode && onDelete && (
+                <button
+                  onClick={handleDelete}
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-red-600 w-[100px] h-[48px] text-white rounded hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer text-lg"
+                >
+                  {isSubmitting ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white m-auto"></div>
+                  ) : (
+                    '삭제'
+                  )}
+                </button>
+              )}
+            </div>
+
+            {/* Cancel and Confirm buttons on the right */}
             <div className="flex gap-3 justify-end">
               <button
                 onClick={onClose}

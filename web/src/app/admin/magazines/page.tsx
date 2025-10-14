@@ -238,6 +238,7 @@ export default function MagazinesPage() {
               magazine.id,
             )
           }}
+          onDelete={handleDelete}
         />
       ))
     } catch (err) {
@@ -300,7 +301,7 @@ export default function MagazinesPage() {
             <div className="bg-white shadow overflow-hidden sm:rounded-md mt-6">
               <div className="flex items-center justify-between px-6 py-5">
                 <h1 className="text-2xl leading-6 font-medium text-gray-900">
-                  서재
+                  매거진 관리
                 </h1>
                 <label className="cursor-pointer">
                   <input
@@ -366,12 +367,12 @@ export default function MagazinesPage() {
                           >
                             {category.magazines.map(magazine => (
                               <SwiperSlide key={magazine.id}>
-                                <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                                <div
+                                  className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer"
+                                  onClick={() => handleEdit(magazine)}
+                                >
                                   {magazine.cover_image && (
-                                    <div
-                                      className="aspect-[3/4] mb-3 cursor-pointer"
-                                      onClick={() => handleEdit(magazine)}
-                                    >
+                                    <div className="aspect-[3/4] mb-3 ">
                                       <Image
                                         src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${magazine.cover_image}`}
                                         alt={magazine.title || 'Cover'}
@@ -392,25 +393,6 @@ export default function MagazinesPage() {
                                       magazine.created_at,
                                     ).toLocaleDateString('ko-KR')}
                                   </p>
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => handleEdit(magazine)}
-                                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs font-medium"
-                                    >
-                                      편집
-                                    </button>
-                                    <button
-                                      onClick={() =>
-                                        handleDelete(
-                                          magazine.id,
-                                          magazine.title || '',
-                                        )
-                                      }
-                                      className="flex-1 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-medium"
-                                    >
-                                      삭제
-                                    </button>
-                                  </div>
                                 </div>
                               </SwiperSlide>
                             ))}
@@ -470,25 +452,6 @@ export default function MagazinesPage() {
                                     magazine.created_at,
                                   ).toLocaleDateString('ko-KR')}
                                 </p>
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => handleEdit(magazine)}
-                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs font-medium"
-                                  >
-                                    편집
-                                  </button>
-                                  <button
-                                    onClick={() =>
-                                      handleDelete(
-                                        magazine.id,
-                                        magazine.title || '',
-                                      )
-                                    }
-                                    className="flex-1 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-medium"
-                                  >
-                                    삭제
-                                  </button>
-                                </div>
                               </div>
                             </SwiperSlide>
                           ))}
