@@ -88,7 +88,6 @@ export function MagazinePreviewBottomSheet({
     }
 
     // 구매 가능 여부 확인
-    console.log(magazine.is_purchasable, magazine.product_id)
     if (!magazine.is_purchasable || !magazine.product_id) {
       Alert.alert('알림', '현재 구매할 수 없는 매거진입니다.')
       return
