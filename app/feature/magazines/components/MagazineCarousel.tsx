@@ -28,7 +28,7 @@ interface MagazineCardProps {
 
 function MagazineCard({ magazine, onPress }: MagazineCardProps) {
   const coverImageUrl = magazine.cover_image
-    ? `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${magazine.cover_image}`
+    ? `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${magazine.cover_image}`
     : null
 
   return (

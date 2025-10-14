@@ -99,11 +99,12 @@ export async function POST(request: NextRequest) {
           continue
         }
 
-        const fileName = `${storageKey}/${metadata.originalPageNumber}.jpg`
+        const storagePath = `preview/${storageKey}/${metadata.originalPageNumber}.jpg`
+        const fullPath = `images/${storagePath}`
 
         const { error: imageUploadError } = await supabase.storage
-          .from('covers')
-          .upload(fileName, imageBlob, {
+          .from('images')
+          .upload(storagePath, imageBlob, {
             contentType: 'image/jpeg',
             upsert: true,
           })
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
         if (imageUploadError) {
           console.error(`Error uploading image ${index}:`, imageUploadError)
         } else {
-          previewImages.push(`${metadata.originalPageNumber}.jpg`)
+          previewImages.push(fullPath)
         }
       }
 

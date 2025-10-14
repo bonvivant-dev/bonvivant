@@ -209,8 +209,10 @@ export default function MagazinesPage() {
 
       // 현재 선택된 미리보기 이미지 순서 추출
       const selectedPages =
-        magazine.preview_images?.map(imageName => {
-          const pageNumber = parseInt(imageName.replace('.jpg', ''))
+        magazine.preview_images?.map(imagePath => {
+          // 경로에서 파일명만 추출 (예: "images/preview/uuid/1.jpg" -> "1.jpg")
+          const fileName = imagePath.split('/').pop() || ''
+          const pageNumber = parseInt(fileName.replace('.jpg', ''))
           return pageNumber
         }) || []
 
@@ -374,7 +376,7 @@ export default function MagazinesPage() {
                                   {magazine.cover_image && (
                                     <div className="aspect-[3/4] mb-3 ">
                                       <Image
-                                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${magazine.cover_image}`}
+                                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${magazine.cover_image}`}
                                         alt={magazine.title || 'Cover'}
                                         className="w-full h-full object-cover rounded-md shadow-sm"
                                         width={150}
@@ -433,7 +435,7 @@ export default function MagazinesPage() {
                                 {magazine.cover_image && (
                                   <div className="aspect-[3/4] mb-3">
                                     <Image
-                                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${magazine.cover_image}`}
+                                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${magazine.cover_image}`}
                                       alt={magazine.title || 'Cover'}
                                       className="w-full h-full object-cover rounded-md shadow-sm"
                                       width={150}

@@ -302,7 +302,7 @@ export function PDFPreviewModal({
           <div className="flex items-center justify-between p-4 border-b border-gray-400">
             <div>
               <h2 className="text-xl font-semibold">
-                {editMode ? `매거진 편집 - ${title}` : title}
+                {editMode ? `[매거진 편집] ${title}` : title}
               </h2>
             </div>
             <button

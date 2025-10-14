@@ -92,23 +92,21 @@ export async function PUT(
             const imageFile = formData.get(`image-${i}`) as File
             if (imageFile) {
               const fileName = metadata[i].fileName
+              const storagePath = `preview/${currentMagazine.storage_key}/${fileName}`
+              const fullPath = `images/${storagePath}`
 
-              // Upload to covers bucket
+              // Upload to images bucket
               const { error: uploadError } = await supabase.storage
-                .from('covers')
-                .upload(
-                  `${currentMagazine.storage_key}/${fileName}`,
-                  imageFile,
-                  {
-                    contentType: 'image/jpeg',
-                    upsert: true,
-                  },
-                )
+                .from('images')
+                .upload(storagePath, imageFile, {
+                  contentType: 'image/jpeg',
+                  upsert: true,
+                })
 
               if (uploadError) {
                 console.error('Preview image upload error:', uploadError)
               } else {
-                previewImages.push(fileName)
+                previewImages.push(fullPath)
               }
             }
           }
@@ -268,9 +266,20 @@ export async function DELETE(
     }
 
     try {
+      // Remove PDF from magazines storage
       await supabase.storage.from('magazines').remove([magazine.storage_key])
 
-      await supabase.storage.from('covers').remove([magazine.storage_key])
+      // Remove preview images from images storage
+      const { data: previewFiles } = await supabase.storage
+        .from('images')
+        .list(`preview/${magazine.storage_key}`)
+
+      if (previewFiles && previewFiles.length > 0) {
+        const filePaths = previewFiles.map(
+          file => `preview/${magazine.storage_key}/${file.name}`,
+        )
+        await supabase.storage.from('images').remove(filePaths)
+      }
     } catch (storageError) {
       console.error('Storage cleanup error:', storageError)
     }
