@@ -6,7 +6,7 @@ import { supabaseBrowserClient } from '@/shared/utils/supabase/client'
  * 이미지를 압축하고 WebP로 변환하여 Supabase Storage에 업로드합니다.
  * @param file - 업로드할 이미지 파일
  * @param storagePath - images 버킷 내 저장할 경로 (예: 'cover', 'magazine/thumbnails')
- * @returns 업로드된 이미지의 public URL
+ * @returns 업로드된 이미지의 상대 경로 (예: 'images/cover/20251017_005501_831000.webp')
  */
 export async function uploadImage(
   file: File,
@@ -53,12 +53,8 @@ export async function uploadImage(
       throw new Error(`이미지 업로드 실패: ${error.message}`)
     }
 
-    // 6. Public URL 생성
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from('images').getPublicUrl(data.path)
-
-    return publicUrl
+    // 6. 상대 경로 반환 (images/cover/filename.webp 형식)
+    return `images/${fullPath}`
   } catch (error) {
     console.error('이미지 업로드 중 오류 발생:', error)
     throw error

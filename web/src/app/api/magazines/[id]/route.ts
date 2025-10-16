@@ -67,7 +67,7 @@ export async function PUT(
 
     // Check if request has FormData (for image updates) or JSON (for simple updates)
     const contentType = request.headers.get('content-type') || ''
-    let title, summary, introduction, season_id, category_ids, pageMetadata
+    let title, summary, introduction, season_id, category_ids, pageMetadata, coverImageUrl
 
     if (contentType.includes('multipart/form-data')) {
       // Handle FormData (image updates included)
@@ -80,6 +80,7 @@ export async function PUT(
       const categoryIdsStr = formData.get('category_ids') as string
       category_ids = categoryIdsStr ? JSON.parse(categoryIdsStr) : []
       pageMetadata = formData.get('pageMetadata') as string
+      coverImageUrl = formData.get('cover_image_url') as string
 
       // Handle preview image updates if pageMetadata exists
       if (pageMetadata) {
@@ -113,11 +114,12 @@ export async function PUT(
 
           // Update preview_images and cover_image in database
           if (previewImages.length > 0) {
+            const coverImage = coverImageUrl
             await supabase
               .from('magazines')
               .update({
                 preview_images: previewImages,
-                cover_image: previewImages[0],
+                cover_image: coverImage,
               })
               .eq('id', id)
           }

@@ -13,9 +13,9 @@ import 'swiper/css'
 import 'swiper/css/navigation'
 
 import { MultiCategoryChip } from '@/features/category/components'
-import { uploadImage } from '@/features/magazine/lib'
 import { PDFPageImage } from '@/features/magazine/types'
 import { SeasonChip } from '@/features/season/components'
+import { thumbnail, uploadImage } from '@/shared/utils'
 
 const ITEM_TYPE = 'image'
 
@@ -218,15 +218,18 @@ export function PDFPreviewModal({
           introduction: magazine.introduction,
           category_ids: magazine.category_ids,
           season_id: magazine.season_id,
+          cover_image: null,
+          cover_image_url: null,
         })
         setSelectedPageOrder(magazine.selectedPages || [])
       } else {
-        // 신규 생성 모드: 기본값으로 초기화
+        // 신규 생성 모드: 기본값으로 초기화 (단, 모달이 처음 열릴 때만)
         setFormData(initialFormData)
         setSelectedPageOrder([])
       }
     }
-  }, [isOpen, title, editMode, magazine])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, editMode])
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -395,7 +398,7 @@ export function PDFPreviewModal({
                     {formData.cover_image_url ? (
                       <div className="relative w-full aspect-[3/4] border-2 border-solid border-gray-300 rounded overflow-hidden">
                         <img
-                          src={formData.cover_image_url}
+                          src={thumbnail(formData.cover_image_url)}
                           alt="커버 이미지"
                           className="w-full h-full object-cover"
                         />

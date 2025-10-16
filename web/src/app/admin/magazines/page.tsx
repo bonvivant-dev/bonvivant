@@ -36,6 +36,7 @@ import {
   PDFPageImage,
 } from '@/features/magazine/types'
 import { Header, LoadingOverlay } from '@/shared/components'
+import { thumbnail } from '@/shared/utils'
 
 export default function MagazinesPage() {
   const [magazinesByCategory, setMagazinesByCategory] =
@@ -94,6 +95,10 @@ export default function MagazinesPage() {
             JSON.stringify(magazineFormData.category_ids),
           )
           formData.append('season_id', magazineFormData.season_id)
+          // Add cover image URL if provided
+          if (magazineFormData.cover_image_url) {
+            formData.append('cover_image_url', magazineFormData.cover_image_url)
+          }
         }
 
         // 선택된 페이지들을 순서와 메타데이터와 함께 FormData에 추가
@@ -376,7 +381,7 @@ export default function MagazinesPage() {
                                   {magazine.cover_image && (
                                     <div className="aspect-[3/4] mb-3 ">
                                       <Image
-                                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${magazine.cover_image}`}
+                                        src={thumbnail(magazine.cover_image)}
                                         alt={magazine.title || 'Cover'}
                                         className="w-full h-full object-cover rounded-md shadow-sm"
                                         width={150}
@@ -435,7 +440,7 @@ export default function MagazinesPage() {
                                 {magazine.cover_image && (
                                   <div className="aspect-[3/4] mb-3">
                                     <Image
-                                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${magazine.cover_image}`}
+                                      src={thumbnail(magazine.cover_image)}
                                       alt={magazine.title || 'Cover'}
                                       className="w-full h-full object-cover rounded-md shadow-sm"
                                       width={150}
