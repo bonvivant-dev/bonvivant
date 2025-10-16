@@ -168,6 +168,7 @@ interface PDFEditPreviewModalProps extends BasePDFPreviewModalProps {
     category_ids: string[]
     season_id: string | null
     selectedPages?: number[]
+    cover_image?: string | null
   }
   onDelete?: (id: string, title: string) => Promise<void>
 }
@@ -219,7 +220,7 @@ export function PDFPreviewModal({
           category_ids: magazine.category_ids,
           season_id: magazine.season_id,
           cover_image: null,
-          cover_image_url: null,
+          cover_image_url: magazine.cover_image || null,
         })
         setSelectedPageOrder(magazine.selectedPages || [])
       } else {

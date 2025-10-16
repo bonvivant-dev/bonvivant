@@ -236,6 +236,7 @@ export default function MagazinesPage() {
             category_ids: magazine.category_ids || [],
             season_id: magazine.season_id || '',
             selectedPages,
+            cover_image: magazine.cover_image || null,
           }}
           onConfirm={async (selectedPages, formData) => {
             await handleConfirmUpload(
