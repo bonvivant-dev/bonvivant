@@ -13,6 +13,7 @@ import 'swiper/css'
 import 'swiper/css/navigation'
 
 import { MultiCategoryChip } from '@/features/category/components'
+import { uploadImage } from '@/features/magazine/lib'
 import { PDFPageImage } from '@/features/magazine/types'
 import { SeasonChip } from '@/features/season/components'
 
@@ -142,6 +143,8 @@ interface MagazineFormData {
   introduction: string
   category_ids: string[]
   season_id: string | null
+  cover_image?: File | null
+  cover_image_url?: string | null
 }
 
 interface BasePDFPreviewModalProps {
@@ -175,6 +178,8 @@ const initialFormData: MagazineFormData = {
   introduction: '',
   category_ids: [],
   season_id: '',
+  cover_image: null,
+  cover_image_url: null,
 }
 
 export function PDFPreviewModal({
@@ -189,6 +194,7 @@ export function PDFPreviewModal({
   const [selectedPageOrder, setSelectedPageOrder] = useState<number[]>([])
   const [formData, setFormData] = useState<MagazineFormData>(initialFormData)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
 
   // Move function for drag and drop
   const moveCard = useCallback((dragIndex: number, hoverIndex: number) => {
@@ -235,6 +241,50 @@ export function PDFPreviewModal({
 
   const handleCategoryUpdate = (categoryIds: string[]) => {
     setFormData(prev => ({ ...prev, category_ids: categoryIds }))
+  }
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // 이미지 파일 검증
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 업로드할 수 있습니다.')
+      return
+    }
+
+    try {
+      setIsUploading(true)
+
+      // Supabase Storage에 업로드
+      const uploadedUrl = await uploadImage(file, 'cover')
+
+      // 업로드된 URL로 formData 업데이트
+      setFormData(prev => ({
+        ...prev,
+        cover_image: file,
+        cover_image_url: uploadedUrl,
+      }))
+    } catch (error) {
+      console.error('이미지 업로드 실패:', error)
+      alert('이미지 업로드에 실패했습니다. 다시 시도해주세요.')
+    } finally {
+      setIsUploading(false)
+      // input 초기화 (같은 파일 재선택 가능하도록)
+      e.target.value = ''
+    }
+  }
+
+  const handleImageRemove = () => {
+    // URL 해제
+    if (formData.cover_image_url) {
+      URL.revokeObjectURL(formData.cover_image_url)
+    }
+    setFormData(prev => ({
+      ...prev,
+      cover_image: null,
+      cover_image_url: null,
+    }))
   }
 
   const togglePageSelection = (pageNumber: number) => {
@@ -297,6 +347,18 @@ export function PDFPreviewModal({
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        {/* Upload Loading Overlay */}
+        {isUploading && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70">
+            <div className="bg-white rounded-lg p-8 flex flex-col items-center space-y-4">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-500"></div>
+              <p className="text-lg font-medium text-gray-700">
+                업로드 중입니다...
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="w-[1400px] min-w-[1200px] h-90vh bg-white rounded-lg shadow-xl overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-400">
@@ -316,8 +378,60 @@ export function PDFPreviewModal({
           <div className="flex h-full">
             {/* Left Column - Magazine Information Form */}
             <div className="w-1/4 p-4 border-r border-gray-300 overflow-y-auto">
-              <p className="text-m text-gray-600 mb-3">매거진 정보</p>
               <div className="space-y-4">
+                {/* Cover Image Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    커버 이미지
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      id="cover-image-input"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                    {formData.cover_image_url ? (
+                      <div className="relative w-full aspect-[3/4] border-2 border-solid border-gray-300 rounded overflow-hidden">
+                        <img
+                          src={formData.cover_image_url}
+                          alt="커버 이미지"
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          onClick={handleImageRemove}
+                          className="absolute top-2 right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 cursor-pointer"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ) : (
+                      <label
+                        htmlFor="cover-image-input"
+                        className="w-full aspect-[3/4] border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors"
+                      >
+                        <svg
+                          className="w-12 h-12 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 4v16m8-8H4"
+                          />
+                        </svg>
+                        <span className="mt-2 text-sm text-gray-500">
+                          이미지 선택
+                        </span>
+                      </label>
+                    )}
+                  </div>
+                </div>
+
                 {/* Category and Season Chips */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -365,12 +479,12 @@ export function PDFPreviewModal({
                     onChange={handleInputChange}
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="매거진 제목을 입력하세요"
+                    placeholder="제목을 입력하세요"
                   />
                 </div>
 
                 {/* Summary */}
-                <div>
+                {/* <div>
                   <label
                     htmlFor="summary"
                     className="block text-sm font-medium text-gray-700 mb-1"
@@ -386,7 +500,7 @@ export function PDFPreviewModal({
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="매거진의 간단한 요약을 입력하세요..."
                   />
-                </div>
+                </div> */}
 
                 {/* Introduction */}
                 <div>
@@ -403,7 +517,7 @@ export function PDFPreviewModal({
                     value={formData.introduction}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="매거진에 대한 자세한 소개글을 입력하세요..."
+                    placeholder="구매 전 독자가 읽을 수 있는 간단한 소개글을 입력해주세요"
                   />
                 </div>
               </div>
@@ -498,7 +612,7 @@ export function PDFPreviewModal({
                       <p className="text-center">
                         선택된 페이지가
                         <br />
-                        없습니다.
+                        없어요.
                       </p>
                     </div>
                   )}
