@@ -21,6 +21,7 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [pdfUrl, setPdfUrl] = useState<string>('')
+  const [pdfLoaded, setPdfLoaded] = useState(false)
 
   const fetchMagazine = useCallback(async () => {
     try {
@@ -79,6 +80,18 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
     ])
   }
 
+  const handleWebViewMessage = (event: any) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data)
+      if (data.type === 'pdfLoaded') {
+        console.log('PDF 로딩 완료:', data.totalPages, '페이지')
+        setPdfLoaded(true)
+      }
+    } catch (error) {
+      console.error('WebView 메시지 파싱 에러:', error)
+    }
+  }
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -116,9 +129,10 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
       {/* PDF Content */}
       <View style={styles.contentContainer}>
         {pdfUrl ? (
-          <WebView
-            source={{
-              html: `
+          <>
+            <WebView
+              source={{
+                html: `
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -226,7 +240,10 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
                       container.innerHTML = '';
                       pageIndicator.textContent = '1 / ' + pdf.numPages;
 
-                      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                      let renderedPages = 0;
+                      const totalPages = pdf.numPages;
+
+                      for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
                         const pageDiv = document.createElement('div');
                         pageDiv.className = 'pdf-page';
                         pageDiv.setAttribute('data-page', pageNum);
@@ -250,6 +267,15 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
 
                           page.render(renderContext).promise.then(function() {
                             console.log('Page ' + pageNum + ' rendered');
+                            renderedPages++;
+
+                            // 모든 페이지 렌더링 완료 시 React Native에 알림
+                            if (renderedPages === totalPages) {
+                              window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({
+                                type: 'pdfLoaded',
+                                totalPages: totalPages
+                              }));
+                            }
                           });
                         });
                       }
@@ -277,18 +303,13 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
               `,
             }}
             style={styles.pdf}
+            onMessage={handleWebViewMessage}
             onLoadStart={() => console.log('PDF 로딩 시작')}
             onLoadEnd={() => console.log('PDF 로딩 완료')}
             onError={syntheticEvent => {
-              const { nativeEvent } = syntheticEvent
+              const { nativeEvent} = syntheticEvent
               handleError(nativeEvent)
             }}
-            startInLoadingState={true}
-            renderLoading={() => (
-              <View style={styles.pdfLoading}>
-                <ActivityIndicator size="large" color="#007AFF" />
-              </View>
-            )}
             scalesPageToFit={true}
             javaScriptEnabled={true}
             domStorageEnabled={true}
@@ -296,6 +317,14 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
             mixedContentMode="compatibility"
             scrollEnabled={true}
           />
+            {/* Unified Loading Overlay */}
+            {!pdfLoaded && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="large" color="#007AFF" />
+                <Text style={styles.loadingText}>매거진을 불러오는 중...</Text>
+              </View>
+            )}
+          </>
         ) : (
           <View style={styles.centered}>
             <ActivityIndicator size="large" color="#007AFF" />
@@ -359,6 +388,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#000',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
+    zIndex: 1000,
   },
   centered: {
     flex: 1,
