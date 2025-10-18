@@ -42,7 +42,7 @@ export async function uploadImage(
 
     // 5. Supabase Storage에 업로드
     const supabase = supabaseBrowserClient
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('images') // 버킷 이름
       .upload(fullPath, compressedFile, {
         contentType: 'image/webp',
