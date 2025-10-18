@@ -111,6 +111,68 @@ export function MagazinePreviewBottomSheet({
     // }
   }
 
+  // 개발용 모의 구매 함수
+  const handleMockPurchase = async () => {
+    if (!magazine) return
+
+    // 구매 가능 여부 확인
+    if (
+      !magazine.product_id ||
+      !magazine.is_purchasable ||
+      magazine.price === null ||
+      magazine.price === undefined
+    ) {
+      Alert.alert('알림', '현재 구매할 수 없는 매거진입니다.')
+      return
+    }
+
+    try {
+      setIsCheckingPurchase(true)
+
+      // 현재 로그인한 사용자 가져오기
+      const { data: userData } = await supabase.auth.getUser()
+      if (!userData.user) {
+        Alert.alert('오류', '로그인이 필요합니다.')
+        return
+      }
+
+      // purchases 테이블에 구매 데이터 삽입
+      const { error } = await supabase.from('purchases').insert({
+        user_id: userData.user.id,
+        magazine_id: magazine.id,
+        transaction_id: `mock_${Date.now()}`,
+        platform: 'ios', // 개발용은 기본 ios
+        product_id: magazine.product_id,
+        price: magazine.price,
+        currency: 'KRW',
+        status: 'verified',
+        verified_at: new Date().toISOString(),
+      })
+
+      if (error) {
+        console.error('모의 구매 실패:', error)
+        Alert.alert('오류', '구매 데이터 삽입에 실패했습니다.')
+        return
+      }
+
+      setIsPurchased(true)
+      Alert.alert('구매 완료', '(개발용) 매거진을 구매했습니다!', [
+        {
+          text: '확인',
+          onPress: () => {
+            onClose()
+            router.push(`/magazine/${magazine.id}/view`)
+          },
+        },
+      ])
+    } catch (error) {
+      console.error('모의 구매 에러:', error)
+      Alert.alert('오류', '구매에 실패했습니다.')
+    } finally {
+      setIsCheckingPurchase(false)
+    }
+  }
+
   const handleImagePress = (index: number) => {
     setSelectedImageIndex(index)
     setIsImageViewerVisible(true)
@@ -182,10 +244,26 @@ export function MagazinePreviewBottomSheet({
               )}
             </TouchableOpacity>
 
-            {/* Development Only - Full View Button */}
-            {__DEV__ && (
+            {/* Development Only - Mock Purchase Button */}
+            {__DEV__ && !isPurchased && (
               <TouchableOpacity
                 style={styles.devButton}
+                onPress={handleMockPurchase}
+                activeOpacity={0.8}
+                disabled={isCheckingPurchase}
+              >
+                {isCheckingPurchase ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.devButtonText}>(개발용) 구매하기</Text>
+                )}
+              </TouchableOpacity>
+            )}
+
+            {/* Development Only - Full View Button (after purchase) */}
+            {__DEV__ && isPurchased && (
+              <TouchableOpacity
+                style={[styles.devButton, { backgroundColor: '#34C759' }]}
                 onPress={() => {
                   onClose()
                   router.push(`/magazine/${magazine.id}/view`)
