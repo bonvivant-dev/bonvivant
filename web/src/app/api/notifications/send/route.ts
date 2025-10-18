@@ -90,6 +90,14 @@ export async function POST(request: NextRequest) {
     const result = await response.json()
     console.log('Expo Push 결과:', result)
 
+    // 히스토리에 저장
+    await supabase.from('notification_history').insert({
+      title,
+      body,
+      sent_by: user.id,
+      sent_count: tokens.length,
+    })
+
     return NextResponse.json({
       message: '알림이 성공적으로 전송되었습니다.',
       sentCount: tokens.length,

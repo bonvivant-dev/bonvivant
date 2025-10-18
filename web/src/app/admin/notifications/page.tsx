@@ -1,8 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { Header } from '@/shared/components'
+
+interface NotificationHistory {
+  id: string
+  title: string
+  body: string
+  sent_count: number
+  created_at: string
+}
 
 export default function NotificationsPage() {
   const [title, setTitle] = useState('')
@@ -12,6 +20,28 @@ export default function NotificationsPage() {
     type: 'success' | 'error'
     text: string
   } | null>(null)
+  const [history, setHistory] = useState<NotificationHistory[]>([])
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true)
+
+  // 히스토리 불러오기
+  const loadHistory = async () => {
+    try {
+      const response = await fetch('/api/notifications/history')
+      const data = await response.json()
+
+      if (response.ok) {
+        setHistory(data.history || [])
+      }
+    } catch (error) {
+      console.error('히스토리 조회 오류:', error)
+    } finally {
+      setIsLoadingHistory(false)
+    }
+  }
+
+  useEffect(() => {
+    loadHistory()
+  }, [])
 
   const handleSendNotification = async () => {
     if (!title.trim() || !body.trim()) {
@@ -43,6 +73,8 @@ export default function NotificationsPage() {
       })
       setTitle('')
       setBody('')
+      // 히스토리 새로고침
+      loadHistory()
     } catch (error) {
       setMessage({
         type: 'error',
@@ -163,6 +195,66 @@ export default function NotificationsPage() {
                     </li>
                   </ul>
                 </div>
+              </div>
+            </div>
+
+            {/* 전송 히스토리 */}
+            <div className="bg-white overflow-hidden shadow rounded-lg mt-6">
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                  전송 히스토리
+                </h3>
+
+                {isLoadingHistory ? (
+                  <div className="text-center py-8 text-gray-500">
+                    히스토리를 불러오는 중...
+                  </div>
+                ) : history.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    아직 전송된 알림이 없습니다.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {history.map(item => (
+                      <div
+                        key={item.id}
+                        className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-medium text-gray-900">
+                            {item.title}
+                          </h4>
+                          <span className="text-xs text-gray-500 whitespace-nowrap ml-4">
+                            {new Date(item.created_at).toLocaleString('ko-KR', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">{item.body}</p>
+                        <div className="flex items-center text-xs text-gray-500">
+                          <svg
+                            className="w-4 h-4 mr-1"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
+                            />
+                          </svg>
+                          {item.sent_count}명에게 전송됨
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
