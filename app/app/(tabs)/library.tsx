@@ -265,7 +265,6 @@ const styles = StyleSheet.create({
   coverImage: {
     width: ITEM_WIDTH,
     height: ITEM_WIDTH * 1.4,
-    borderRadius: 8,
     backgroundColor: '#E5E5E5',
   },
   placeholderImage: {
