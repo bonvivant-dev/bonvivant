@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
     const categoryIdsStr = formData.get('category_ids') as string
     const categoryIds = categoryIdsStr ? JSON.parse(categoryIdsStr) : []
     const seasonId = formData.get('season_id') as string
+    const coverImageUrl = formData.get('cover_image_url') as string
 
     const storageKey = uuidv4()
     const originalFileName = file.name
@@ -99,11 +100,12 @@ export async function POST(request: NextRequest) {
           continue
         }
 
-        const fileName = `${storageKey}/${metadata.originalPageNumber}.jpg`
+        const storagePath = `preview/${storageKey}/${metadata.originalPageNumber}.jpg`
+        const fullPath = `images/${storagePath}`
 
         const { error: imageUploadError } = await supabase.storage
-          .from('covers')
-          .upload(fileName, imageBlob, {
+          .from('images')
+          .upload(storagePath, imageBlob, {
             contentType: 'image/jpeg',
             upsert: true,
           })
@@ -111,7 +113,7 @@ export async function POST(request: NextRequest) {
         if (imageUploadError) {
           console.error(`Error uploading image ${index}:`, imageUploadError)
         } else {
-          previewImages.push(`${metadata.originalPageNumber}.jpg`)
+          previewImages.push(fullPath)
         }
       }
 
@@ -128,7 +130,7 @@ export async function POST(request: NextRequest) {
           storage_key: storageKey,
           original_filename: originalFileName,
           safe_filename: safeFileName,
-          cover_image: finalPreviewImages[0] || null,
+          cover_image: coverImageUrl || null,
           preview_images: finalPreviewImages,
         })
         .select()

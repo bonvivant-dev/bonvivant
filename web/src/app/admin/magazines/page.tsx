@@ -25,15 +25,18 @@ const swiperStyles = `
   }
 `
 
+import { PDFPreviewModal } from '@/features/magazine/components'
+import {
+  convertPdfToImages,
+  convertPdfFromStorage,
+} from '@/features/magazine/lib'
 import {
   Magazine,
   MagazinesByCategory,
-  convertPdfToImages,
-  convertPdfFromStorage,
   PDFPageImage,
-  PDFPreviewModal,
-} from '@/features/magazine'
+} from '@/features/magazine/types'
 import { Header, LoadingOverlay } from '@/shared/components'
+import { thumbnail } from '@/shared/utils'
 
 export default function MagazinesPage() {
   const [magazinesByCategory, setMagazinesByCategory] =
@@ -92,6 +95,10 @@ export default function MagazinesPage() {
             JSON.stringify(magazineFormData.category_ids),
           )
           formData.append('season_id', magazineFormData.season_id)
+          // Add cover image URL if provided
+          if (magazineFormData.cover_image_url) {
+            formData.append('cover_image_url', magazineFormData.cover_image_url)
+          }
         }
 
         // 선택된 페이지들을 순서와 메타데이터와 함께 FormData에 추가
@@ -207,8 +214,10 @@ export default function MagazinesPage() {
 
       // 현재 선택된 미리보기 이미지 순서 추출
       const selectedPages =
-        magazine.preview_images?.map(imageName => {
-          const pageNumber = parseInt(imageName.replace('.jpg', ''))
+        magazine.preview_images?.map(imagePath => {
+          // 경로에서 파일명만 추출 (예: "images/preview/uuid/1.jpg" -> "1.jpg")
+          const fileName = imagePath.split('/').pop() || ''
+          const pageNumber = parseInt(fileName.replace('.jpg', ''))
           return pageNumber
         }) || []
 
@@ -227,6 +236,7 @@ export default function MagazinesPage() {
             category_ids: magazine.category_ids || [],
             season_id: magazine.season_id || '',
             selectedPages,
+            cover_image: magazine.cover_image || null,
           }}
           onConfirm={async (selectedPages, formData) => {
             await handleConfirmUpload(
@@ -236,6 +246,7 @@ export default function MagazinesPage() {
               magazine.id,
             )
           }}
+          onDelete={handleDelete}
         />
       ))
     } catch (err) {
@@ -298,7 +309,7 @@ export default function MagazinesPage() {
             <div className="bg-white shadow overflow-hidden sm:rounded-md mt-6">
               <div className="flex items-center justify-between px-6 py-5">
                 <h1 className="text-2xl leading-6 font-medium text-gray-900">
-                  서재
+                  매거진 관리
                 </h1>
                 <label className="cursor-pointer">
                   <input
@@ -364,14 +375,14 @@ export default function MagazinesPage() {
                           >
                             {category.magazines.map(magazine => (
                               <SwiperSlide key={magazine.id}>
-                                <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                                <div
+                                  className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer"
+                                  onClick={() => handleEdit(magazine)}
+                                >
                                   {magazine.cover_image && (
-                                    <div
-                                      className="aspect-[3/4] mb-3 cursor-pointer"
-                                      onClick={() => handleEdit(magazine)}
-                                    >
+                                    <div className="aspect-[3/4] mb-3 ">
                                       <Image
-                                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${magazine.cover_image}`}
+                                        src={thumbnail(magazine.cover_image)}
                                         alt={magazine.title || 'Cover'}
                                         className="w-full h-full object-cover rounded-md shadow-sm"
                                         width={150}
@@ -390,25 +401,6 @@ export default function MagazinesPage() {
                                       magazine.created_at,
                                     ).toLocaleDateString('ko-KR')}
                                   </p>
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => handleEdit(magazine)}
-                                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs font-medium"
-                                    >
-                                      편집
-                                    </button>
-                                    <button
-                                      onClick={() =>
-                                        handleDelete(
-                                          magazine.id,
-                                          magazine.title || '',
-                                        )
-                                      }
-                                      className="flex-1 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-medium"
-                                    >
-                                      삭제
-                                    </button>
-                                  </div>
                                 </div>
                               </SwiperSlide>
                             ))}
@@ -449,7 +441,7 @@ export default function MagazinesPage() {
                                 {magazine.cover_image && (
                                   <div className="aspect-[3/4] mb-3">
                                     <Image
-                                      src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/covers/${magazine.storage_key}/${magazine.cover_image}`}
+                                      src={thumbnail(magazine.cover_image)}
                                       alt={magazine.title || 'Cover'}
                                       className="w-full h-full object-cover rounded-md shadow-sm"
                                       width={150}
@@ -468,25 +460,6 @@ export default function MagazinesPage() {
                                     magazine.created_at,
                                   ).toLocaleDateString('ko-KR')}
                                 </p>
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => handleEdit(magazine)}
-                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs font-medium"
-                                  >
-                                    편집
-                                  </button>
-                                  <button
-                                    onClick={() =>
-                                      handleDelete(
-                                        magazine.id,
-                                        magazine.title || '',
-                                      )
-                                    }
-                                    className="flex-1 bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-medium"
-                                  >
-                                    삭제
-                                  </button>
-                                </div>
                               </div>
                             </SwiperSlide>
                           ))}

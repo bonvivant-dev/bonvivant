@@ -67,7 +67,7 @@ export async function PUT(
 
     // Check if request has FormData (for image updates) or JSON (for simple updates)
     const contentType = request.headers.get('content-type') || ''
-    let title, summary, introduction, season_id, category_ids, pageMetadata
+    let title, summary, introduction, season_id, category_ids, pageMetadata, coverImageUrl
 
     if (contentType.includes('multipart/form-data')) {
       // Handle FormData (image updates included)
@@ -80,6 +80,7 @@ export async function PUT(
       const categoryIdsStr = formData.get('category_ids') as string
       category_ids = categoryIdsStr ? JSON.parse(categoryIdsStr) : []
       pageMetadata = formData.get('pageMetadata') as string
+      coverImageUrl = formData.get('cover_image_url') as string
 
       // Handle preview image updates if pageMetadata exists
       if (pageMetadata) {
@@ -92,34 +93,33 @@ export async function PUT(
             const imageFile = formData.get(`image-${i}`) as File
             if (imageFile) {
               const fileName = metadata[i].fileName
+              const storagePath = `preview/${currentMagazine.storage_key}/${fileName}`
+              const fullPath = `images/${storagePath}`
 
-              // Upload to covers bucket
+              // Upload to images bucket
               const { error: uploadError } = await supabase.storage
-                .from('covers')
-                .upload(
-                  `${currentMagazine.storage_key}/${fileName}`,
-                  imageFile,
-                  {
-                    contentType: 'image/jpeg',
-                    upsert: true,
-                  },
-                )
+                .from('images')
+                .upload(storagePath, imageFile, {
+                  contentType: 'image/jpeg',
+                  upsert: true,
+                })
 
               if (uploadError) {
                 console.error('Preview image upload error:', uploadError)
               } else {
-                previewImages.push(fileName)
+                previewImages.push(fullPath)
               }
             }
           }
 
           // Update preview_images and cover_image in database
           if (previewImages.length > 0) {
+            const coverImage = coverImageUrl
             await supabase
               .from('magazines')
               .update({
                 preview_images: previewImages,
-                cover_image: previewImages[0],
+                cover_image: coverImage,
               })
               .eq('id', id)
           }
@@ -268,9 +268,20 @@ export async function DELETE(
     }
 
     try {
+      // Remove PDF from magazines storage
       await supabase.storage.from('magazines').remove([magazine.storage_key])
 
-      await supabase.storage.from('covers').remove([magazine.storage_key])
+      // Remove preview images from images storage
+      const { data: previewFiles } = await supabase.storage
+        .from('images')
+        .list(`preview/${magazine.storage_key}`)
+
+      if (previewFiles && previewFiles.length > 0) {
+        const filePaths = previewFiles.map(
+          file => `preview/${magazine.storage_key}/${file.name}`,
+        )
+        await supabase.storage.from('images').remove(filePaths)
+      }
     } catch (storageError) {
       console.error('Storage cleanup error:', storageError)
     }
