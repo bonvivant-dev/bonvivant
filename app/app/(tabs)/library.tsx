@@ -15,6 +15,7 @@ import {
 
 import { usePurchasedMagazines } from '@/feature/magazines'
 import { Button } from '@/feature/shared'
+import { thumbnail } from '@/feature/shared/utils'
 
 import { useAuth, NameInputBottomSheet } from '../../feature/auth/components'
 
@@ -132,7 +133,7 @@ export default function Library() {
               >
                 {item.cover_image ? (
                   <Image
-                    source={{ uri: item.cover_image }}
+                    source={{ uri: thumbnail(item.cover_image) }}
                     style={styles.coverImage}
                     resizeMode="cover"
                   />
