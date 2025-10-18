@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router'
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import {
   Modal,
   View,
@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { supabase } from '@/feature/shared'
 
+import { useMagazinePurchaseStatus } from '../hooks'
 // import { usePurchase } from '../hooks'
 import { Magazine } from '../types'
 
@@ -38,26 +39,14 @@ export function MagazinePreviewBottomSheet({
   const router = useRouter()
   const [isImageViewerVisible, setIsImageViewerVisible] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
-  const [isPurchased, setIsPurchased] = useState(false)
-  const [isCheckingPurchase, setIsCheckingPurchase] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  // 구매 여부 확인 hook
+  const { isPurchased, isChecking, refetch } = useMagazinePurchaseStatus(
+    magazine?.id || null
+  )
 
   // const { isPurchasing, purchase, checkPurchased } = usePurchase()
-
-  // 구매 여부 확인
-  useEffect(() => {
-    if (magazine && visible) {
-      // checkPurchaseStatus()
-    }
-  }, [magazine, visible])
-
-  // const checkPurchaseStatus = async () => {
-  //   if (!magazine) return
-
-  //   setIsCheckingPurchase(true)
-  //   const purchased = await checkPurchased(magazine.id)
-  //   setIsPurchased(purchased)
-  //   setIsCheckingPurchase(false)
-  // }
 
   if (!magazine) return null
 
@@ -127,7 +116,7 @@ export function MagazinePreviewBottomSheet({
     }
 
     try {
-      setIsCheckingPurchase(true)
+      setIsProcessing(true)
 
       // 현재 로그인한 사용자 가져오기
       const { data: userData } = await supabase.auth.getUser()
@@ -155,7 +144,9 @@ export function MagazinePreviewBottomSheet({
         return
       }
 
-      setIsPurchased(true)
+      // 구매 상태 갱신
+      await refetch()
+
       Alert.alert('구매 완료', '(개발용) 매거진을 구매했습니다!', [
         {
           text: '확인',
@@ -169,7 +160,7 @@ export function MagazinePreviewBottomSheet({
       console.error('모의 구매 에러:', error)
       Alert.alert('오류', '구매에 실패했습니다.')
     } finally {
-      setIsCheckingPurchase(false)
+      setIsProcessing(false)
     }
   }
 
@@ -227,19 +218,18 @@ export function MagazinePreviewBottomSheet({
             <TouchableOpacity
               style={[
                 styles.purchaseButton,
-                // (isPurchasing || isCheckingPurchase) &&
-                styles.purchaseButtonDisabled,
+                (isChecking || isProcessing) && styles.purchaseButtonDisabled,
                 isPurchased && styles.purchaseButtonPurchased,
               ]}
               onPress={handlePurchase}
               activeOpacity={0.8}
-              disabled={isCheckingPurchase} // TODO : isPurchasing 추가 필요
+              disabled={isChecking || isProcessing}
             >
-              {isCheckingPurchase ? ( // TODO : isPurchasing 추가 필요
+              {isChecking || isProcessing ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.purchaseButtonText}>
-                  {isPurchased ? '전체 보기' : '구매하기'}
+                  {isPurchased ? '읽기' : '구매하기'}
                 </Text>
               )}
             </TouchableOpacity>
@@ -250,9 +240,9 @@ export function MagazinePreviewBottomSheet({
                 style={styles.devButton}
                 onPress={handleMockPurchase}
                 activeOpacity={0.8}
-                disabled={isCheckingPurchase}
+                disabled={isChecking || isProcessing}
               >
-                {isCheckingPurchase ? (
+                {isChecking || isProcessing ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <Text style={styles.devButtonText}>(개발용) 구매하기</Text>
@@ -260,7 +250,7 @@ export function MagazinePreviewBottomSheet({
               </TouchableOpacity>
             )}
 
-            {/* Development Only - Full View Button (after purchase) */}
+            {/* Development Only - Read Button (after purchase) */}
             {__DEV__ && isPurchased && (
               <TouchableOpacity
                 style={[styles.devButton, { backgroundColor: '#34C759' }]}
@@ -270,7 +260,7 @@ export function MagazinePreviewBottomSheet({
                 }}
                 activeOpacity={0.8}
               >
-                <Text style={styles.devButtonText}>(개발용) 전체보기</Text>
+                <Text style={styles.devButtonText}>(개발용) 읽기</Text>
               </TouchableOpacity>
             )}
           </View>
