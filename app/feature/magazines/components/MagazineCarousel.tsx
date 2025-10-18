@@ -9,6 +9,8 @@ import {
   TouchableOpacity,
 } from 'react-native'
 
+import { thumbnail } from '@/feature/shared/utils'
+
 import { Magazine } from '../types'
 
 const { width: screenWidth } = Dimensions.get('window')
@@ -27,10 +29,6 @@ interface MagazineCardProps {
 }
 
 function MagazineCard({ magazine, onPress }: MagazineCardProps) {
-  const coverImageUrl = magazine.cover_image
-    ? `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${magazine.cover_image}`
-    : null
-
   return (
     <TouchableOpacity
       style={styles.card}
@@ -38,9 +36,9 @@ function MagazineCard({ magazine, onPress }: MagazineCardProps) {
       activeOpacity={0.8}
     >
       <View style={styles.imageContainer}>
-        {coverImageUrl ? (
+        {magazine.cover_image ? (
           <Image
-            source={{ uri: coverImageUrl }}
+            source={{ uri: thumbnail(magazine.cover_image) }}
             style={styles.coverImage}
             contentFit="cover"
           />

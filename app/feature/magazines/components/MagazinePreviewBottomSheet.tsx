@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router'
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import {
   Modal,
   View,
@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { supabase } from '@/feature/shared'
 
+import { useMagazinePurchaseStatus } from '../hooks'
 // import { usePurchase } from '../hooks'
 import { Magazine } from '../types'
 
@@ -38,26 +39,14 @@ export function MagazinePreviewBottomSheet({
   const router = useRouter()
   const [isImageViewerVisible, setIsImageViewerVisible] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
-  const [isPurchased, setIsPurchased] = useState(false)
-  const [isCheckingPurchase, setIsCheckingPurchase] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+
+  // 구매 여부 확인 hook
+  const { isPurchased, isChecking, refetch } = useMagazinePurchaseStatus(
+    magazine?.id || null
+  )
 
   // const { isPurchasing, purchase, checkPurchased } = usePurchase()
-
-  // 구매 여부 확인
-  useEffect(() => {
-    if (magazine && visible) {
-      // checkPurchaseStatus()
-    }
-  }, [magazine, visible])
-
-  // const checkPurchaseStatus = async () => {
-  //   if (!magazine) return
-
-  //   setIsCheckingPurchase(true)
-  //   const purchased = await checkPurchased(magazine.id)
-  //   setIsPurchased(purchased)
-  //   setIsCheckingPurchase(false)
-  // }
 
   if (!magazine) return null
 
@@ -109,6 +98,70 @@ export function MagazinePreviewBottomSheet({
     // } else if (result.error !== 'cancelled') {
     //   Alert.alert('구매 실패', result.error || '구매에 실패했습니다.')
     // }
+  }
+
+  // 개발용 모의 구매 함수
+  const handleMockPurchase = async () => {
+    if (!magazine) return
+
+    // 구매 가능 여부 확인
+    if (
+      !magazine.product_id ||
+      !magazine.is_purchasable ||
+      magazine.price === null ||
+      magazine.price === undefined
+    ) {
+      Alert.alert('알림', '현재 구매할 수 없는 매거진입니다.')
+      return
+    }
+
+    try {
+      setIsProcessing(true)
+
+      // 현재 로그인한 사용자 가져오기
+      const { data: userData } = await supabase.auth.getUser()
+      if (!userData.user) {
+        Alert.alert('오류', '로그인이 필요합니다.')
+        return
+      }
+
+      // purchases 테이블에 구매 데이터 삽입
+      const { error } = await supabase.from('purchases').insert({
+        user_id: userData.user.id,
+        magazine_id: magazine.id,
+        transaction_id: `mock_${Date.now()}`,
+        platform: 'ios', // 개발용은 기본 ios
+        product_id: magazine.product_id,
+        price: magazine.price,
+        currency: 'KRW',
+        status: 'verified',
+        verified_at: new Date().toISOString(),
+      })
+
+      if (error) {
+        console.error('모의 구매 실패:', error)
+        Alert.alert('오류', '구매 데이터 삽입에 실패했습니다.')
+        return
+      }
+
+      // 구매 상태 갱신
+      await refetch()
+
+      Alert.alert('구매 완료', '(개발용) 매거진을 구매했습니다!', [
+        {
+          text: '확인',
+          onPress: () => {
+            onClose()
+            router.push(`/magazine/${magazine.id}/view`)
+          },
+        },
+      ])
+    } catch (error) {
+      console.error('모의 구매 에러:', error)
+      Alert.alert('오류', '구매에 실패했습니다.')
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   const handleImagePress = (index: number) => {
@@ -165,34 +218,49 @@ export function MagazinePreviewBottomSheet({
             <TouchableOpacity
               style={[
                 styles.purchaseButton,
-                // (isPurchasing || isCheckingPurchase) &&
-                styles.purchaseButtonDisabled,
+                (isChecking || isProcessing) && styles.purchaseButtonDisabled,
                 isPurchased && styles.purchaseButtonPurchased,
               ]}
               onPress={handlePurchase}
               activeOpacity={0.8}
-              disabled={isCheckingPurchase} // TODO : isPurchasing 추가 필요
+              disabled={isChecking || isProcessing}
             >
-              {isCheckingPurchase ? ( // TODO : isPurchasing 추가 필요
+              {isChecking || isProcessing ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.purchaseButtonText}>
-                  {isPurchased ? '전체 보기' : '구매하기'}
+                  {isPurchased ? '읽기' : '구매하기'}
                 </Text>
               )}
             </TouchableOpacity>
 
-            {/* Development Only - Full View Button */}
-            {__DEV__ && (
+            {/* Development Only - Mock Purchase Button */}
+            {__DEV__ && !isPurchased && (
               <TouchableOpacity
                 style={styles.devButton}
+                onPress={handleMockPurchase}
+                activeOpacity={0.8}
+                disabled={isChecking || isProcessing}
+              >
+                {isChecking || isProcessing ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.devButtonText}>(개발용) 구매하기</Text>
+                )}
+              </TouchableOpacity>
+            )}
+
+            {/* Development Only - Read Button (after purchase) */}
+            {__DEV__ && isPurchased && (
+              <TouchableOpacity
+                style={[styles.devButton, { backgroundColor: '#34C759' }]}
                 onPress={() => {
                   onClose()
                   router.push(`/magazine/${magazine.id}/view`)
                 }}
                 activeOpacity={0.8}
               >
-                <Text style={styles.devButtonText}>(개발용) 전체보기</Text>
+                <Text style={styles.devButtonText}>(개발용) 읽기</Text>
               </TouchableOpacity>
             )}
           </View>
