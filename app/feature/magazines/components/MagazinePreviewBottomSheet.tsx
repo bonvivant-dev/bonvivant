@@ -17,8 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { supabase } from '@/feature/shared'
 
-import { useMagazinePurchaseStatus } from '../hooks'
-// import { usePurchase } from '../hooks'
+import { useMagazinePurchaseStatus, usePurchase } from '../hooks'
 import { Magazine } from '../types'
 
 import { MagazinePreviewModal } from './MagazinePreviewModal'
@@ -46,7 +45,7 @@ export function MagazinePreviewBottomSheet({
     magazine?.id || null
   )
 
-  // const { isPurchasing, purchase, checkPurchased } = usePurchase()
+  const { isPurchasing, purchase } = usePurchase()
 
   if (!magazine) return null
 
@@ -82,22 +81,24 @@ export function MagazinePreviewBottomSheet({
     }
 
     // 구매 진행
-    // const result = await purchase(magazine.product_id, magazine.id)
+    const result = await purchase(magazine.product_id, magazine.id)
 
-    // if (result.success) {
-    //   Alert.alert('구매 완료', '매거진을 구매했습니다!', [
-    //     {
-    //       text: '확인',
-    //       onPress: () => {
-    //         onClose()
-    //         router.push(`/magazine/${magazine.id}/view`)
-    //       },
-    //     },
-    //   ])
-    //   setIsPurchased(true)
-    // } else if (result.error !== 'cancelled') {
-    //   Alert.alert('구매 실패', result.error || '구매에 실패했습니다.')
-    // }
+    if (result.success) {
+      // 구매 상태 갱신
+      await refetch()
+
+      Alert.alert('구매 완료', '매거진을 구매했습니다!', [
+        {
+          text: '확인',
+          onPress: () => {
+            onClose()
+            router.push(`/magazine/${magazine.id}/view`)
+          },
+        },
+      ])
+    } else if (result.error !== 'cancelled') {
+      Alert.alert('구매 실패', result.error || '구매에 실패했습니다.')
+    }
   }
 
   // 개발용 모의 구매 함수
@@ -218,14 +219,14 @@ export function MagazinePreviewBottomSheet({
             <TouchableOpacity
               style={[
                 styles.purchaseButton,
-                (isChecking || isProcessing) && styles.purchaseButtonDisabled,
+                (isChecking || isProcessing || isPurchasing) && styles.purchaseButtonDisabled,
                 isPurchased && styles.purchaseButtonPurchased,
               ]}
               onPress={handlePurchase}
               activeOpacity={0.8}
-              disabled={isChecking || isProcessing}
+              disabled={isChecking || isProcessing || isPurchasing}
             >
-              {isChecking || isProcessing ? (
+              {isChecking || isProcessing || isPurchasing ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.purchaseButtonText}>

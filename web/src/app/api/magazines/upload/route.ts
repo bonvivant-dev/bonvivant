@@ -58,6 +58,11 @@ export async function POST(request: NextRequest) {
     const categoryIds = categoryIdsStr ? JSON.parse(categoryIdsStr) : []
     const seasonId = formData.get('season_id') as string
     const coverImageUrl = formData.get('cover_image_url') as string
+    const priceStr = formData.get('price') as string
+    const price = priceStr && priceStr !== '' ? parseInt(priceStr, 10) : null
+    const isPurchasableStr = formData.get('is_purchasable') as string
+    const isPurchasable = isPurchasableStr === 'true'
+    const productId = formData.get('product_id') as string | null
 
     const storageKey = uuidv4()
     const originalFileName = file.name
@@ -132,6 +137,9 @@ export async function POST(request: NextRequest) {
           safe_filename: safeFileName,
           cover_image: coverImageUrl || null,
           preview_images: finalPreviewImages,
+          price: price,
+          is_purchasable: isPurchasable,
+          product_id: productId || null,
         })
         .select()
         .single()
