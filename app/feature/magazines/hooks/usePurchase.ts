@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { Platform } from 'react-native'
 import {
   initConnection,
   endConnection,
@@ -18,10 +19,63 @@ import { supabase } from '@/feature/shared'
 
 import type { PurchaseResult } from '../types'
 
+// API 베이스 URL (환경에 따라 변경)
+const API_BASE_URL = __DEV__
+  ? 'http://localhost:3030'
+  : 'https://bonvivant-web.vercel.app'
+
 export function usePurchase() {
   const [isInitialized, setIsInitialized] = useState(false)
   const [isPurchasing, setIsPurchasing] = useState(false)
   const [products, setProducts] = useState<Product[]>([])
+  const [currentMagazineId, setCurrentMagazineId] = useState<string | null>(
+    null
+  )
+
+  // 구매 검증 함수
+  const verifyPurchase = async (purchase: Purchase, magazineId: string) => {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session) {
+        throw new Error('로그인이 필요합니다')
+      }
+
+      // iOS와 Android에서 다른 속성 사용
+      const purchaseToken =
+        Platform.OS === 'ios'
+          ? (purchase as any).transactionReceipt || purchase.transactionId
+          : purchase.purchaseToken || purchase.transactionId
+
+      const response = await fetch(`${API_BASE_URL}/api/purchases/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          magazineId,
+          productId: purchase.productId,
+          transactionId: purchase.transactionId,
+          purchaseToken,
+          platform: Platform.OS as 'ios' | 'android',
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || '구매 검증에 실패했습니다')
+      }
+
+      return data
+    } catch (error) {
+      console.error('구매 검증 실패:', error)
+      throw error
+    }
+  }
 
   // IAP 초기화
   useEffect(() => {
@@ -36,23 +90,30 @@ export function usePurchase() {
         // 구매 성공 리스너
         purchaseUpdateSubscription = purchaseUpdatedListener(
           async (purchase: Purchase) => {
-            const receipt = purchase.purchaseToken
+            const receipt =
+              Platform.OS === 'ios'
+                ? (purchase as any).transactionReceipt || purchase.transactionId
+                : purchase.purchaseToken || purchase.transactionId
 
-            if (receipt) {
+            if (receipt && currentMagazineId) {
               try {
-                // TODO: 백엔드 검증 API 호출 (나중에 구현)
-                // await verifyPurchase(purchase)
+                // 백엔드 검증 API 호출
+                await verifyPurchase(purchase, currentMagazineId)
 
                 // 트랜잭션 완료 처리
                 await finishTransaction({ purchase, isConsumable: false })
+
+                console.log('구매 처리 완료:', purchase.productId)
               } catch (error) {
                 console.error('구매 처리 실패:', error)
+                // 트랜잭션은 완료하되, 에러 로그 기록
+                await finishTransaction({ purchase, isConsumable: false })
               }
             }
           }
         )
 
-        // 구매 실패 리스너 - Alert 제거하고 로그만
+        // 구매 실패 리스너
         purchaseErrorSubscription = purchaseErrorListener(
           (error: PurchaseError) => {
             console.error('구매 에러 리스너:', error)
@@ -75,7 +136,7 @@ export function usePurchase() {
       }
       endConnection()
     }
-  }, [])
+  }, [currentMagazineId])
 
   // 상품 정보 조회
   const getProductList = useCallback(
@@ -99,7 +160,7 @@ export function usePurchase() {
 
   // 구매 시작
   const purchase = useCallback(
-    async (productId: string, _magazineId: string): Promise<PurchaseResult> => {
+    async (productId: string, magazineId: string): Promise<PurchaseResult> => {
       if (!isInitialized) {
         return {
           success: false,
@@ -115,10 +176,10 @@ export function usePurchase() {
       }
 
       setIsPurchasing(true)
+      setCurrentMagazineId(magazineId) // magazineId 저장
 
       try {
         // 먼저 상품 조회
-
         const availableProducts = await fetchProducts({ skus: [productId] })
 
         if (!availableProducts || availableProducts.length === 0) {
@@ -148,6 +209,7 @@ export function usePurchase() {
         console.error('=== 구매 실패 ===')
         console.error('에러:', error)
         setIsPurchasing(false)
+        setCurrentMagazineId(null) // 실패 시 초기화
 
         // 사용자 취소는 에러로 처리하지 않음
         if (
