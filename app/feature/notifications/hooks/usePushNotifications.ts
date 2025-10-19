@@ -23,12 +23,13 @@ Notifications.setNotificationHandler({
 export function usePushNotifications() {
   const router = useRouter()
   const [expoPushToken, setExpoPushToken] = useState<string>('')
-  const [notification, setNotification] =
-    useState<Notifications.Notification>()
-  const notificationListener =
-    useRef<Notifications.EventSubscription | undefined>(undefined)
-  const responseListener =
-    useRef<Notifications.EventSubscription | undefined>(undefined)
+  const [notification, setNotification] = useState<Notifications.Notification>()
+  const notificationListener = useRef<
+    Notifications.EventSubscription | undefined
+  >(undefined)
+  const responseListener = useRef<Notifications.EventSubscription | undefined>(
+    undefined
+  )
 
   useEffect(() => {
     registerForPushNotificationsAsync().then(token => {
@@ -42,7 +43,6 @@ export function usePushNotifications() {
     // 알림이 수신되었을 때 (앱이 포그라운드일 때)
     notificationListener.current =
       Notifications.addNotificationReceivedListener(notification => {
-        console.log('알림 수신:', notification)
         setNotification(notification)
       })
 
@@ -50,7 +50,6 @@ export function usePushNotifications() {
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener(response => {
         console.log('알림 탭:', response)
-        // 테스트: 메인 페이지(홈 탭)로 이동
         router.push('/(tabs)')
       })
 
@@ -83,8 +82,7 @@ async function registerForPushNotificationsAsync() {
   }
 
   if (Device.isDevice) {
-    const { status: existingStatus } =
-      await Notifications.getPermissionsAsync()
+    const { status: existingStatus } = await Notifications.getPermissionsAsync()
     let finalStatus = existingStatus
 
     if (existingStatus !== 'granted') {
@@ -117,10 +115,7 @@ async function savePushToken(token: string) {
     const cachedToken = await AsyncStorage.getItem(PUSH_TOKEN_STORAGE_KEY)
 
     // 토큰이 변경되지 않았으면 DB 업데이트 스킵
-    if (cachedToken === token) {
-      console.log('푸시 토큰이 이미 등록되어 있습니다 (캐시됨)')
-      return
-    }
+    if (cachedToken === token) return
 
     const { data: userData } = await supabase.auth.getUser()
     const userId = userData.user?.id || null
@@ -133,7 +128,6 @@ async function savePushToken(token: string) {
       .maybeSingle()
 
     if (existing) {
-      console.log('이미 등록된 푸시 토큰입니다.')
       // 로컬 캐시 업데이트
       await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token)
       return
@@ -149,7 +143,6 @@ async function savePushToken(token: string) {
     if (error) {
       console.error('푸시 토큰 저장 실패:', error)
     } else {
-      console.log('푸시 토큰 저장 성공')
       // 로컬 캐시에 저장
       await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token)
     }
