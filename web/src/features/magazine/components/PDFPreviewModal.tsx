@@ -173,7 +173,7 @@ interface PDFEditPreviewModalProps extends BasePDFPreviewModalProps {
     season_id: string | null
     previewPageNumbers?: number[]
     cover_image?: string | null
-    price?: number
+    price: number | null
     is_purchasable?: boolean
     product_id?: string | null
   }
