@@ -16,6 +16,7 @@ import 'swiper/css/navigation'
 import { MultiCategoryChip } from '@/features/category/components'
 import { PDFPageImage } from '@/features/magazine/types'
 import { SeasonChip } from '@/features/season/components'
+import { Toggle } from '@/shared/components'
 import { thumbnail, uploadImage } from '@/shared/utils'
 
 const ITEM_TYPE = 'image'
@@ -146,6 +147,9 @@ interface MagazineFormData {
   season_id: string | null
   cover_image?: File | null
   cover_image_url?: string | null
+  price: number | null
+  is_purchasable: boolean
+  product_id: string | null
 }
 
 interface BasePDFPreviewModalProps {
@@ -169,6 +173,9 @@ interface PDFEditPreviewModalProps extends BasePDFPreviewModalProps {
     season_id: string | null
     previewPageNumbers?: number[]
     cover_image?: string | null
+    price?: number
+    is_purchasable?: boolean
+    product_id?: string | null
   }
   onDelete?: (id: string, title: string) => Promise<void>
 }
@@ -181,6 +188,9 @@ const initialFormData: MagazineFormData = {
   season_id: '',
   cover_image: null,
   cover_image_url: null,
+  price: null,
+  is_purchasable: false,
+  product_id: null,
 }
 
 export function PDFPreviewModal({
@@ -213,6 +223,7 @@ export function PDFPreviewModal({
   const coverImageUrl = watch('cover_image_url')
   const seasonId = watch('season_id')
   const categoryIds = watch('category_ids')
+  const isPurchasable = watch('is_purchasable')
 
   const previewImages = selectedPageOrder
     .map(pageNumber => pages.find(page => page.pageNumber === pageNumber))
@@ -244,6 +255,9 @@ export function PDFPreviewModal({
           season_id: magazine.season_id,
           cover_image: null,
           cover_image_url: magazine.cover_image || null,
+          price: magazine.price ?? null,
+          is_purchasable: magazine.is_purchasable || false,
+          product_id: magazine.product_id ?? null,
         })
         setSelectedPageOrder(magazine.previewPageNumbers || [])
       } else {
@@ -384,16 +398,20 @@ export function PDFPreviewModal({
           </div>
 
           <div className="flex h-full">
-            {/* Left Column - Magazine Information Form */}
+            {/* Left Column - Basic Information */}
             <div className="w-1/4 p-4 border-r border-gray-300 overflow-y-auto">
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-gray-900">
+                  기본 정보
+                </h3>
+              </div>
               <div className="space-y-4">
                 {/* Cover Image Upload */}
                 <div>
-                  기본 정보
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     커버 이미지
                   </label>
-                  <div className="relative">
+                  <div className="relative flex items-center justify-center">
                     <input
                       type="file"
                       id="cover-image-input"
@@ -402,7 +420,7 @@ export function PDFPreviewModal({
                       className="hidden"
                     />
                     {coverImageUrl ? (
-                      <div className="relative w-full aspect-[157/210] border-2 border-solid border-gray-300 rounded overflow-hidden">
+                      <div className="relative w-[200px] aspect-[2/3] border-2 border-solid border-gray-300 rounded overflow-hidden">
                         <img
                           src={thumbnail(coverImageUrl)}
                           alt="커버 이미지"
@@ -418,10 +436,10 @@ export function PDFPreviewModal({
                     ) : (
                       <label
                         htmlFor="cover-image-input"
-                        className="w-full aspect-[3/4] border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors"
+                        className="w-[200px] aspect-[2/3] border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors"
                       >
                         <svg
-                          className="w-12 h-12 text-gray-400"
+                          className="w-8 h-8 text-gray-400"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -433,7 +451,7 @@ export function PDFPreviewModal({
                             d="M12 4v16m8-8H4"
                           />
                         </svg>
-                        <span className="mt-2 text-sm text-gray-500">
+                        <span className="mt-2 text-xs text-gray-500">
                           이미지 선택
                         </span>
                       </label>
@@ -528,7 +546,7 @@ export function PDFPreviewModal({
                   <textarea
                     id="introduction"
                     {...register('introduction')}
-                    rows={8}
+                    rows={4}
                     className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
                       errors.introduction ? 'border-red-300' : 'border-gray-300'
                     }`}
@@ -543,8 +561,97 @@ export function PDFPreviewModal({
               </div>
             </div>
 
+            {/* Middle Column - Sales Information */}
+            <div className="w-1/5 p-4 border-r border-gray-300 overflow-y-auto">
+              <div className="mb-4">
+                <h3 className="text-sm font-semibold text-gray-900">
+                  판매 정보
+                </h3>
+              </div>
+              <div className="space-y-4">
+                {/* Is Purchasable Toggle */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    판매 가능 여부
+                  </label>
+                  <Toggle
+                    enabled={isPurchasable}
+                    onChange={value =>
+                      setValue('is_purchasable', value, {
+                        shouldValidate: true,
+                      })
+                    }
+                    label={isPurchasable ? '판매 가능' : '판매 불가'}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    {isPurchasable
+                      ? '앱에서 구매할 수 있습니다'
+                      : '앱에서 구매할 수 없습니다'}
+                  </p>
+                </div>
+
+                {/* Price Input */}
+                <div>
+                  <label
+                    htmlFor="price"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    가격 (원)
+                  </label>
+                  <input
+                    type="number"
+                    id="price"
+                    {...register('price', {
+                      setValueAs: (value) => value === '' || value === null ? null : Number(value),
+                      validate: (value) => {
+                        if (value !== null && value < 0) {
+                          return '가격은 0원 이상이어야 합니다.'
+                        }
+                        return true
+                      },
+                    })}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                      errors.price ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="가격을 입력하세요 (선택사항)"
+                    min="0"
+                    step="100"
+                  />
+                  {errors.price && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.price.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Product ID Input */}
+                <div>
+                  <label
+                    htmlFor="product_id"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    상품 ID
+                  </label>
+                  <input
+                    type="text"
+                    id="product_id"
+                    {...register('product_id')}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                      errors.product_id ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="인앱 결제 상품 ID를 입력하세요 (선택사항)"
+                  />
+                  {errors.product_id && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.product_id.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Right Column - PDF Page Selection */}
-            <div className="w-3/4 flex flex-col">
+            <div className="w-[55%] flex flex-col">
               {/* Swiper Section */}
               <div className="p-4 flex-1 content-center">
                 <p className="text-m text-gray-600 mb-3">

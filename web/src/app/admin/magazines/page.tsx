@@ -96,6 +96,9 @@ export default function MagazinesPage() {
             JSON.stringify(magazineFormData.category_ids),
           )
           formData.append('season_id', magazineFormData.season_id)
+          formData.append('price', magazineFormData.price !== null ? magazineFormData.price.toString() : '')
+          formData.append('is_purchasable', magazineFormData.is_purchasable.toString())
+          formData.append('product_id', magazineFormData.product_id || '')
           // Add cover image URL if provided
           if (magazineFormData.cover_image_url) {
             formData.append('cover_image_url', magazineFormData.cover_image_url)
@@ -237,6 +240,9 @@ export default function MagazinesPage() {
             season_id: magazine.season_id || '',
             previewPageNumbers,
             cover_image: magazine.cover_image || null,
+            price: magazine.price ?? null,
+            is_purchasable: magazine.is_purchasable || false,
+            product_id: magazine.product_id ?? null,
           }}
           onConfirm={async (selectedPages, formData) => {
             await handleConfirmUpload(

@@ -67,7 +67,7 @@ export async function PUT(
 
     // Check if request has FormData (for image updates) or JSON (for simple updates)
     const contentType = request.headers.get('content-type') || ''
-    let title, summary, introduction, season_id, category_ids, pageMetadata, coverImageUrl
+    let title, summary, introduction, season_id, category_ids, pageMetadata, coverImageUrl, price, is_purchasable, product_id
 
     if (contentType.includes('multipart/form-data')) {
       // Handle FormData (image updates included)
@@ -81,6 +81,11 @@ export async function PUT(
       category_ids = categoryIdsStr ? JSON.parse(categoryIdsStr) : []
       pageMetadata = formData.get('pageMetadata') as string
       coverImageUrl = formData.get('cover_image_url') as string
+      const priceStr = formData.get('price') as string
+      price = priceStr && priceStr !== '' ? parseInt(priceStr, 10) : null
+      const isPurchasableStr = formData.get('is_purchasable') as string
+      is_purchasable = isPurchasableStr === 'true'
+      product_id = formData.get('product_id') as string | null
 
       // Handle preview image updates if pageMetadata exists
       if (pageMetadata) {
@@ -135,6 +140,9 @@ export async function PUT(
       introduction = body.introduction
       season_id = body.season_id
       category_ids = body.category_ids
+      price = body.price
+      is_purchasable = body.is_purchasable
+      product_id = body.product_id
     }
 
     const updateData: any = {
@@ -147,6 +155,9 @@ export async function PUT(
     if (season_id !== undefined) {
       updateData.season_id = season_id || null
     }
+    if (price !== undefined) updateData.price = price
+    if (is_purchasable !== undefined) updateData.is_purchasable = is_purchasable
+    if (product_id !== undefined) updateData.product_id = product_id || null
 
     // Handle PDF file rename if title changed
     if (title && title !== currentMagazine.title) {
