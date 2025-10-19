@@ -1,9 +1,14 @@
 'use client'
 
+import dayjs from 'dayjs'
+import 'dayjs/locale/ko'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 import { Header } from '@/shared/components'
+
+// dayjs 한국어 로케일 설정
+dayjs.locale('ko')
 
 interface NotificationHistory {
   id: string
@@ -241,9 +246,12 @@ export default function NotificationsPage() {
                 </h3>
 
                 {isLoadingHistory ? (
-                  <div className="text-center py-8 text-gray-500">
-                    히스토리를 불러오는 중...
-                  </div>
+                  <>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <div className="text-center py-8 text-gray-500">
+                      히스토리를 불러오는 중...
+                    </div>
+                  </>
                 ) : history.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     아직 전송된 알림이 없습니다.
@@ -260,13 +268,7 @@ export default function NotificationsPage() {
                             {item.title}
                           </h4>
                           <span className="text-xs text-gray-500 whitespace-nowrap ml-4">
-                            {new Date(item.created_at).toLocaleString('ko-KR', {
-                              year: 'numeric',
-                              month: '2-digit',
-                              day: '2-digit',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
+                            {dayjs(item.created_at).format('YYYY.MM.DD A hh:mm')}
                           </span>
                         </div>
                         <p className="text-sm text-gray-600 mb-2">

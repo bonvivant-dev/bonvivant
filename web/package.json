@@ -15,6 +15,7 @@
     "@tailwindcss/postcss": "^4.1.13",
     "browser-image-compression": "^2.0.2",
     "canvas": "^3.2.0",
+    "dayjs": "^1.11.18",
     "next": "15.5.2",
     "overlay-kit": "^1.8.5",
     "pdfjs-dist": "^5.4.149",
