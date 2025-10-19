@@ -84,7 +84,6 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
     try {
       const data = JSON.parse(event.nativeEvent.data)
       if (data.type === 'pdfLoaded') {
-        console.log('PDF 로딩 완료:', data.totalPages, '페이지')
         setPdfLoaded(true)
       }
     } catch (error) {
@@ -225,12 +224,9 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
                       for (let i = 0; i < corsProxies.length; i++) {
                         try {
                           const proxyUrl = corsProxies[i] + (corsProxies[i] ? encodeURIComponent(url) : url);
-                          console.log('Trying proxy:', proxyUrl);
-
                           const pdf = await pdfjsLib.getDocument(proxyUrl).promise;
                           return pdf;
                         } catch (error) {
-                          console.log('Proxy failed:', corsProxies[i], error);
                           if (i === corsProxies.length - 1) throw error;
                         }
                       }
@@ -266,7 +262,6 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
                           };
 
                           page.render(renderContext).promise.then(function() {
-                            console.log('Page ' + pageNum + ' rendered');
                             renderedPages++;
 
                             // 모든 페이지 렌더링 완료 시 React Native에 알림
@@ -301,22 +296,22 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
                 </body>
                 </html>
               `,
-            }}
-            style={styles.pdf}
-            onMessage={handleWebViewMessage}
-            onLoadStart={() => console.log('PDF 로딩 시작')}
-            onLoadEnd={() => console.log('PDF 로딩 완료')}
-            onError={syntheticEvent => {
-              const { nativeEvent} = syntheticEvent
-              handleError(nativeEvent)
-            }}
-            scalesPageToFit={true}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-            allowsInlineMediaPlayback={true}
-            mixedContentMode="compatibility"
-            scrollEnabled={true}
-          />
+              }}
+              style={styles.pdf}
+              onMessage={handleWebViewMessage}
+              onLoadStart={() => console.log('PDF 로딩 시작')}
+              onLoadEnd={() => console.log('PDF 로딩 완료')}
+              onError={syntheticEvent => {
+                const { nativeEvent } = syntheticEvent
+                handleError(nativeEvent)
+              }}
+              scalesPageToFit={true}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+              allowsInlineMediaPlayback={true}
+              mixedContentMode="compatibility"
+              scrollEnabled={true}
+            />
             {/* Unified Loading Overlay */}
             {!pdfLoaded && (
               <View style={styles.loadingOverlay}>

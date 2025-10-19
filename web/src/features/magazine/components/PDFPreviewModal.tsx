@@ -4,6 +4,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useDrag, useDrop, DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
+import { useForm } from 'react-hook-form'
 import { IoMdClose } from 'react-icons/io'
 import { Navigation } from 'swiper/modules'
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -159,7 +160,6 @@ interface BasePDFPreviewModalProps {
 }
 
 interface PDFEditPreviewModalProps extends BasePDFPreviewModalProps {
-  editMode: true
   magazine: {
     id: string
     title: string
@@ -167,7 +167,7 @@ interface PDFEditPreviewModalProps extends BasePDFPreviewModalProps {
     introduction: string
     category_ids: string[]
     season_id: string | null
-    selectedPages?: number[]
+    previewPageNumbers?: number[]
     cover_image?: string | null
   }
   onDelete?: (id: string, title: string) => Promise<void>
@@ -191,11 +191,34 @@ export function PDFPreviewModal({
   title,
   ...props
 }: BasePDFPreviewModalProps | PDFEditPreviewModalProps) {
-  const { editMode, magazine, onDelete } = props as PDFEditPreviewModalProps
-  const [selectedPageOrder, setSelectedPageOrder] = useState<number[]>([])
-  const [formData, setFormData] = useState<MagazineFormData>(initialFormData)
+  const { magazine, onDelete } = props as PDFEditPreviewModalProps
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors, isValid },
+  } = useForm<MagazineFormData>({
+    mode: 'onChange',
+    defaultValues: initialFormData,
+  })
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [selectedPageOrder, setSelectedPageOrder] = useState<number[]>([])
+
+  // Watch form values for conditional rendering
+  const coverImageUrl = watch('cover_image_url')
+  const seasonId = watch('season_id')
+  const categoryIds = watch('category_ids')
+
+  const previewImages = selectedPageOrder
+    .map(pageNumber => pages.find(page => page.pageNumber === pageNumber))
+    .filter(Boolean) as PDFPageImage[]
+
+  const selectedPageNumbers = new Set(selectedPageOrder)
 
   // Move function for drag and drop
   const moveCard = useCallback((dragIndex: number, hoverIndex: number) => {
@@ -211,9 +234,9 @@ export function PDFPreviewModal({
   // Initialize form data when modal opens
   useEffect(() => {
     if (isOpen) {
-      if (editMode && magazine) {
+      if (magazine) {
         // 편집 모드: 기존 데이터로 초기화
-        setFormData({
+        reset({
           title: magazine.title,
           summary: magazine.summary,
           introduction: magazine.introduction,
@@ -222,29 +245,22 @@ export function PDFPreviewModal({
           cover_image: null,
           cover_image_url: magazine.cover_image || null,
         })
-        setSelectedPageOrder(magazine.selectedPages || [])
+        setSelectedPageOrder(magazine.previewPageNumbers || [])
       } else {
         // 신규 생성 모드: 기본값으로 초기화 (단, 모달이 처음 열릴 때만)
-        setFormData(initialFormData)
+        reset(initialFormData)
         setSelectedPageOrder([])
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, editMode])
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
+  }, [isOpen, magazine])
 
   const handleSeasonUpdate = (seasonId: string | null) => {
-    setFormData(prev => ({ ...prev, season_id: seasonId || '' }))
+    setValue('season_id', seasonId || '', { shouldValidate: true })
   }
 
   const handleCategoryUpdate = (categoryIds: string[]) => {
-    setFormData(prev => ({ ...prev, category_ids: categoryIds }))
+    setValue('category_ids', categoryIds, { shouldValidate: true })
   }
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -263,12 +279,9 @@ export function PDFPreviewModal({
       // Supabase Storage에 업로드
       const uploadedUrl = await uploadImage(file, 'cover')
 
-      // 업로드된 URL로 formData 업데이트
-      setFormData(prev => ({
-        ...prev,
-        cover_image: file,
-        cover_image_url: uploadedUrl,
-      }))
+      // 업로드된 URL로 폼 데이터 업데이트
+      setValue('cover_image', file, { shouldValidate: true })
+      setValue('cover_image_url', uploadedUrl, { shouldValidate: true })
     } catch (error) {
       console.error('이미지 업로드 실패:', error)
       alert('이미지 업로드에 실패했습니다. 다시 시도해주세요.')
@@ -281,14 +294,11 @@ export function PDFPreviewModal({
 
   const handleImageRemove = () => {
     // URL 해제
-    if (formData.cover_image_url) {
-      URL.revokeObjectURL(formData.cover_image_url)
+    if (coverImageUrl) {
+      URL.revokeObjectURL(coverImageUrl)
     }
-    setFormData(prev => ({
-      ...prev,
-      cover_image: null,
-      cover_image_url: null,
-    }))
+    setValue('cover_image', null, { shouldValidate: true })
+    setValue('cover_image_url', null, { shouldValidate: true })
   }
 
   const togglePageSelection = (pageNumber: number) => {
@@ -302,7 +312,7 @@ export function PDFPreviewModal({
     })
   }
 
-  const handleConfirm = async () => {
+  const onSubmit = async (data: MagazineFormData) => {
     try {
       setIsSubmitting(true)
 
@@ -311,7 +321,7 @@ export function PDFPreviewModal({
         .map(pageNumber => pages.find(page => page.pageNumber === pageNumber))
         .filter(Boolean) as PDFPageImage[]
 
-      await onConfirm(selectedPages, formData)
+      await onConfirm(selectedPages, data)
 
       // onConfirm 성공 후 모달 닫기
       onClose()
@@ -324,7 +334,7 @@ export function PDFPreviewModal({
   }
 
   const handleDelete = async () => {
-    if (!editMode || !magazine || !onDelete) return
+    if (!magazine || !onDelete) return
 
     if (!confirm(`[${magazine.title}] 매거진을 삭제할까요?`)) return
 
@@ -339,12 +349,6 @@ export function PDFPreviewModal({
       setIsSubmitting(false)
     }
   }
-
-  const selectedPages = selectedPageOrder
-    .map(pageNumber => pages.find(page => page.pageNumber === pageNumber))
-    .filter(Boolean) as PDFPageImage[]
-
-  const selectedPageNumbers = new Set(selectedPageOrder)
 
   if (!isOpen) return null
 
@@ -368,7 +372,7 @@ export function PDFPreviewModal({
           <div className="flex items-center justify-between p-4 border-b border-gray-400">
             <div>
               <h2 className="text-xl font-semibold">
-                {editMode ? `[매거진 편집] ${title}` : title}
+                {magazine ? `[매거진 편집] ${title}` : title}
               </h2>
             </div>
             <button
@@ -396,10 +400,10 @@ export function PDFPreviewModal({
                       onChange={handleImageChange}
                       className="hidden"
                     />
-                    {formData.cover_image_url ? (
+                    {coverImageUrl ? (
                       <div className="relative w-full aspect-[3/4] border-2 border-solid border-gray-300 rounded overflow-hidden">
                         <img
-                          src={thumbnail(formData.cover_image_url)}
+                          src={thumbnail(coverImageUrl)}
                           alt="커버 이미지"
                           className="w-full h-full object-cover"
                         />
@@ -444,23 +448,21 @@ export function PDFPreviewModal({
                   <div className="flex items-center space-x-2">
                     <SeasonChip
                       magazineId={magazine?.id}
-                      currentSeasonId={formData.season_id || null}
+                      currentSeasonId={seasonId || null}
                       setCurrentSeasonId={(seasonId: string | null) =>
-                        setFormData(prev => ({
-                          ...prev,
-                          season_id: seasonId || '',
-                        }))
+                        setValue('season_id', seasonId || '', {
+                          shouldValidate: true,
+                        })
                       }
                       onUpdate={handleSeasonUpdate}
                     />
                     <MultiCategoryChip
                       magazineId={magazine?.id}
-                      currentCategoryIds={formData.category_ids}
+                      currentCategoryIds={categoryIds}
                       setCurrentCategoryIds={(categoryIds: string[]) =>
-                        setFormData(prev => ({
-                          ...prev,
-                          category_ids: categoryIds,
-                        }))
+                        setValue('category_ids', categoryIds, {
+                          shouldValidate: true,
+                        })
                       }
                       onUpdate={handleCategoryUpdate}
                     />
@@ -478,13 +480,21 @@ export function PDFPreviewModal({
                   <input
                     type="text"
                     id="title"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    {...register('title', {
+                      required: '제목을 입력해주세요.',
+                      validate: value =>
+                        value.trim().length > 0 || '제목을 입력해주세요.',
+                    })}
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                      errors.title ? 'border-red-300' : 'border-gray-300'
+                    }`}
                     placeholder="제목을 입력하세요"
                   />
+                  {errors.title && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.title.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* Summary */}
@@ -516,13 +526,18 @@ export function PDFPreviewModal({
                   </label>
                   <textarea
                     id="introduction"
-                    name="introduction"
+                    {...register('introduction')}
                     rows={8}
-                    value={formData.introduction}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                      errors.introduction ? 'border-red-300' : 'border-gray-300'
+                    }`}
                     placeholder="구매 전 독자가 읽을 수 있는 간단한 소개글을 입력해주세요"
                   />
+                  {errors.introduction && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {errors.introduction.message}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -530,7 +545,7 @@ export function PDFPreviewModal({
             {/* Right Column - PDF Page Selection */}
             <div className="w-3/4 flex flex-col">
               {/* Swiper Section */}
-              <div className="p-4 flex-1">
+              <div className="p-4 flex-1 content-center">
                 <p className="text-m text-gray-600 mb-3">
                   미리보기로 사용할 페이지를 선택하세요 (총 {pages.length}
                   페이지)
@@ -594,15 +609,15 @@ export function PDFPreviewModal({
                 <div className="flex items-center mb-3">
                   <h3 className="text-m text-gray-600">
                     선택한 순서대로 미리보기에 사용됩니다 - 총{' '}
-                    {selectedPages.length}개
+                    {previewImages.length}개
                   </h3>
                   <span className="text-xs text-gray-500 ml-2">
                     (드래그하여 순서를 변경할 수 있습니다)
                   </span>
                 </div>
                 <div className="flex gap-2 overflow-x-auto h-full">
-                  {selectedPages.length > 0 ? (
-                    selectedPages.map((page, index) => (
+                  {previewImages.length > 0 ? (
+                    previewImages.map((page, index) => (
                       <DraggableImageItem
                         key={page.pageNumber}
                         index={index}
@@ -629,7 +644,7 @@ export function PDFPreviewModal({
           <div className="flex items-center justify-between p-2 bg-gray-50 border-t border-gray-300">
             {/* Delete button on the left (only in edit mode) */}
             <div className="flex justify-start">
-              {editMode && onDelete && (
+              {magazine && onDelete && (
                 <button
                   onClick={handleDelete}
                   disabled={isSubmitting}
@@ -658,17 +673,16 @@ export function PDFPreviewModal({
                 )}
               </button>
               <button
-                onClick={handleConfirm}
+                type="button"
+                onClick={handleSubmit(onSubmit)}
                 disabled={
-                  selectedPageOrder.length === 0 ||
-                  !formData.title.trim() ||
-                  isSubmitting
+                  selectedPageOrder.length === 0 || !isValid || isSubmitting
                 }
                 className="px-4 py-2 bg-blue-500 w-[100px] h-[48px] text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed cursor-pointer text-lg flex items-center justify-center"
               >
                 {isSubmitting ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white m-auto"></div>
-                ) : editMode ? (
+                ) : magazine ? (
                   '수정'
                 ) : (
                   '확인'

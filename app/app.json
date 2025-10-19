@@ -11,7 +11,12 @@
     "ios": {
       "bundleIdentifier": "com.bonvivant.app",
       "supportsTablet": true,
-      "buildNumber": "10"
+      "buildNumber": "11",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
+      }
     },
     "android": {
       "package": "com.bonvivant.app",
@@ -19,7 +24,10 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -28,6 +36,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-notifications",
       [
         "expo-splash-screen",
         {

@@ -6,9 +6,11 @@ import { Alert } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 import { AuthProvider, useAuth } from '../feature/auth'
+import { usePushNotifications } from '../feature/notifications'
 
 function RootLayoutNav() {
   const { supabase } = useAuth()
+  const { expoPushToken } = usePushNotifications()
 
   useEffect(() => {
     // Handle deep links for email confirmation

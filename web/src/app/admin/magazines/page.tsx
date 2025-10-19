@@ -213,7 +213,7 @@ export default function MagazinesPage() {
       )
 
       // 현재 선택된 미리보기 이미지 순서 추출
-      const selectedPages =
+      const previewPageNumbers =
         magazine.preview_images?.map(imagePath => {
           // 경로에서 파일명만 추출 (예: "images/preview/uuid/1.jpg" -> "1.jpg")
           const fileName = imagePath.split('/').pop() || ''
@@ -223,7 +223,6 @@ export default function MagazinesPage() {
 
       overlay.open(({ isOpen, close }) => (
         <PDFPreviewModal
-          editMode={true}
           title={magazine.title || 'PDF 편집'}
           pages={pages}
           isOpen={isOpen}
@@ -235,7 +234,7 @@ export default function MagazinesPage() {
             introduction: magazine.introduction || '',
             category_ids: magazine.category_ids || [],
             season_id: magazine.season_id || '',
-            selectedPages,
+            previewPageNumbers,
             cover_image: magazine.cover_image || null,
           }}
           onConfirm={async (selectedPages, formData) => {
