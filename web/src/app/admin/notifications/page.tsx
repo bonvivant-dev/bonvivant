@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
 
 import { Header } from '@/shared/components'
 
@@ -12,9 +13,25 @@ interface NotificationHistory {
   created_at: string
 }
 
+interface NotificationFormData {
+  title: string
+  body: string
+}
+
 export default function NotificationsPage() {
-  const [title, setTitle] = useState('')
-  const [body, setBody] = useState('')
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isValid },
+  } = useForm<NotificationFormData>({
+    mode: 'onChange',
+    defaultValues: {
+      title: '',
+      body: '',
+    },
+  })
+
   const [isSending, setIsSending] = useState(false)
   const [message, setMessage] = useState<{
     type: 'success' | 'error'
@@ -43,12 +60,7 @@ export default function NotificationsPage() {
     loadHistory()
   }, [])
 
-  const handleSendNotification = async () => {
-    if (!title.trim() || !body.trim()) {
-      setMessage({ type: 'error', text: '제목과 내용을 모두 입력해주세요.' })
-      return
-    }
-
+  const sendNotification = async (data: NotificationFormData) => {
     setIsSending(true)
     setMessage(null)
 
@@ -58,21 +70,20 @@ export default function NotificationsPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ title, body }),
+        body: JSON.stringify({ title: data.title, body: data.body }),
       })
 
-      const data = await response.json()
+      const responseData = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || '알림 전송에 실패했습니다.')
+        throw new Error(responseData.error || '알림 전송에 실패했습니다.')
       }
 
       setMessage({
         type: 'success',
-        text: `${data.sentCount}명에게 알림을 전송했습니다.`,
+        text: `${responseData.sentCount}명에게 알림을 전송했습니다.`,
       })
-      setTitle('')
-      setBody('')
+      reset()
       // 히스토리 새로고침
       loadHistory()
     } catch (error) {
@@ -110,7 +121,10 @@ export default function NotificationsPage() {
                   </div>
                 )}
 
-                <div className="space-y-4">
+                <form
+                  onSubmit={handleSubmit(sendNotification)}
+                  className="space-y-4"
+                >
                   <div>
                     <label
                       htmlFor="title"
@@ -121,12 +135,22 @@ export default function NotificationsPage() {
                     <input
                       type="text"
                       id="title"
-                      value={title}
-                      onChange={e => setTitle(e.target.value)}
+                      {...register('title', {
+                        required: '제목을 입력해주세요.',
+                        validate: value =>
+                          value.trim().length > 0 || '제목을 입력해주세요.',
+                      })}
                       placeholder="예: 새 매거진이 출간되었습니다!"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
+                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 ${
+                        errors.title ? 'border-red-300' : 'border-gray-300'
+                      }`}
                       disabled={isSending}
                     />
+                    {errors.title && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.title.message}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -138,19 +162,29 @@ export default function NotificationsPage() {
                     </label>
                     <textarea
                       id="body"
-                      value={body}
-                      onChange={e => setBody(e.target.value)}
+                      {...register('body', {
+                        required: '내용을 입력해주세요.',
+                        validate: value =>
+                          value.trim().length > 0 || '내용을 입력해주세요.',
+                      })}
                       placeholder="예: 이번 주 매거진을 확인해보세요."
                       rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
+                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 ${
+                        errors.body ? 'border-red-300' : 'border-gray-300'
+                      }`}
                       disabled={isSending}
                     />
+                    {errors.body && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.body.message}
+                      </p>
+                    )}
                   </div>
 
                   <div className="pt-4">
                     <button
-                      onClick={handleSendNotification}
-                      disabled={isSending || !title.trim() || !body.trim()}
+                      type="submit"
+                      disabled={isSending || !isValid}
                       className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSending ? (
@@ -182,7 +216,7 @@ export default function NotificationsPage() {
                       )}
                     </button>
                   </div>
-                </div>
+                </form>
 
                 <div className="mt-6 pt-6 border-t border-gray-200">
                   <h4 className="text-sm font-medium text-gray-900 mb-2">
