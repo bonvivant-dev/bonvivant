@@ -159,7 +159,6 @@ interface BasePDFPreviewModalProps {
 }
 
 interface PDFEditPreviewModalProps extends BasePDFPreviewModalProps {
-  editMode: true
   magazine: {
     id: string
     title: string
@@ -167,7 +166,7 @@ interface PDFEditPreviewModalProps extends BasePDFPreviewModalProps {
     introduction: string
     category_ids: string[]
     season_id: string | null
-    selectedPages?: number[]
+    previewPageNumbers?: number[]
     cover_image?: string | null
   }
   onDelete?: (id: string, title: string) => Promise<void>
@@ -191,11 +190,17 @@ export function PDFPreviewModal({
   title,
   ...props
 }: BasePDFPreviewModalProps | PDFEditPreviewModalProps) {
-  const { editMode, magazine, onDelete } = props as PDFEditPreviewModalProps
-  const [selectedPageOrder, setSelectedPageOrder] = useState<number[]>([])
+  const { magazine, onDelete } = props as PDFEditPreviewModalProps
   const [formData, setFormData] = useState<MagazineFormData>(initialFormData)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [selectedPageOrder, setSelectedPageOrder] = useState<number[]>([])
+
+  const previewImages = selectedPageOrder
+    .map(pageNumber => pages.find(page => page.pageNumber === pageNumber))
+    .filter(Boolean) as PDFPageImage[]
+
+  const selectedPageNumbers = new Set(selectedPageOrder)
 
   // Move function for drag and drop
   const moveCard = useCallback((dragIndex: number, hoverIndex: number) => {
@@ -211,7 +216,7 @@ export function PDFPreviewModal({
   // Initialize form data when modal opens
   useEffect(() => {
     if (isOpen) {
-      if (editMode && magazine) {
+      if (magazine) {
         // 편집 모드: 기존 데이터로 초기화
         setFormData({
           title: magazine.title,
@@ -222,7 +227,7 @@ export function PDFPreviewModal({
           cover_image: null,
           cover_image_url: magazine.cover_image || null,
         })
-        setSelectedPageOrder(magazine.selectedPages || [])
+        setSelectedPageOrder(magazine.previewPageNumbers || [])
       } else {
         // 신규 생성 모드: 기본값으로 초기화 (단, 모달이 처음 열릴 때만)
         setFormData(initialFormData)
@@ -230,7 +235,7 @@ export function PDFPreviewModal({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, editMode])
+  }, [isOpen, magazine])
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -324,7 +329,7 @@ export function PDFPreviewModal({
   }
 
   const handleDelete = async () => {
-    if (!editMode || !magazine || !onDelete) return
+    if (!magazine || !onDelete) return
 
     if (!confirm(`[${magazine.title}] 매거진을 삭제할까요?`)) return
 
@@ -339,12 +344,6 @@ export function PDFPreviewModal({
       setIsSubmitting(false)
     }
   }
-
-  const selectedPages = selectedPageOrder
-    .map(pageNumber => pages.find(page => page.pageNumber === pageNumber))
-    .filter(Boolean) as PDFPageImage[]
-
-  const selectedPageNumbers = new Set(selectedPageOrder)
 
   if (!isOpen) return null
 
@@ -368,7 +367,7 @@ export function PDFPreviewModal({
           <div className="flex items-center justify-between p-4 border-b border-gray-400">
             <div>
               <h2 className="text-xl font-semibold">
-                {editMode ? `[매거진 편집] ${title}` : title}
+                {magazine ? `[매거진 편집] ${title}` : title}
               </h2>
             </div>
             <button
@@ -594,15 +593,15 @@ export function PDFPreviewModal({
                 <div className="flex items-center mb-3">
                   <h3 className="text-m text-gray-600">
                     선택한 순서대로 미리보기에 사용됩니다 - 총{' '}
-                    {selectedPages.length}개
+                    {previewImages.length}개
                   </h3>
                   <span className="text-xs text-gray-500 ml-2">
                     (드래그하여 순서를 변경할 수 있습니다)
                   </span>
                 </div>
                 <div className="flex gap-2 overflow-x-auto h-full">
-                  {selectedPages.length > 0 ? (
-                    selectedPages.map((page, index) => (
+                  {previewImages.length > 0 ? (
+                    previewImages.map((page, index) => (
                       <DraggableImageItem
                         key={page.pageNumber}
                         index={index}
@@ -629,7 +628,7 @@ export function PDFPreviewModal({
           <div className="flex items-center justify-between p-2 bg-gray-50 border-t border-gray-300">
             {/* Delete button on the left (only in edit mode) */}
             <div className="flex justify-start">
-              {editMode && onDelete && (
+              {magazine && onDelete && (
                 <button
                   onClick={handleDelete}
                   disabled={isSubmitting}
@@ -668,7 +667,7 @@ export function PDFPreviewModal({
               >
                 {isSubmitting ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white m-auto"></div>
-                ) : editMode ? (
+                ) : magazine ? (
                   '수정'
                 ) : (
                   '확인'
