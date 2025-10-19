@@ -88,7 +88,6 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await response.json()
-    console.log('Expo Push 결과:', result)
 
     // 히스토리에 저장
     await supabase.from('notification_history').insert({
@@ -104,7 +103,6 @@ export async function POST(request: NextRequest) {
       result,
     })
   } catch (error) {
-    console.error('알림 전송 오류:', error)
     return NextResponse.json(
       {
         error:

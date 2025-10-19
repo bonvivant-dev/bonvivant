@@ -78,7 +78,8 @@ export default function NotificationsPage() {
     } catch (error) {
       setMessage({
         type: 'error',
-        text: error instanceof Error ? error.message : '알림 전송에 실패했습니다.',
+        text:
+          error instanceof Error ? error.message : '알림 전송에 실패했습니다.',
       })
     } finally {
       setIsSending(false)
@@ -177,7 +178,7 @@ export default function NotificationsPage() {
                           전송 중...
                         </>
                       ) : (
-                        '전체 사용자에게 알림 전송'
+                        '알림 전송하기'
                       )}
                     </button>
                   </div>
@@ -234,7 +235,9 @@ export default function NotificationsPage() {
                             })}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">{item.body}</p>
+                        <p className="text-sm text-gray-600 mb-2">
+                          {item.body}
+                        </p>
                         <div className="flex items-center text-xs text-gray-500">
                           <svg
                             className="w-4 h-4 mr-1"

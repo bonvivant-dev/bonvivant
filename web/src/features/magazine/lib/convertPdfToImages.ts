@@ -82,8 +82,6 @@ export async function convertPdfFromStorage(
       throw new Error('Failed to get public URL from Supabase')
     }
 
-    console.log('Fetching PDF from URL:', data.signedUrl)
-
     const response = await fetch(data.signedUrl)
 
     if (!response.ok) {
