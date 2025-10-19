@@ -1,5 +1,6 @@
 'use client'
 
+import dayjs from 'dayjs'
 import Image from 'next/image'
 import { overlay } from 'overlay-kit'
 import { useState, useEffect, useCallback } from 'react'
@@ -389,16 +390,26 @@ export default function MagazinesPage() {
                                       />
                                     </div>
                                   )}
+                                  <div className="mb-2">
+                                    <span
+                                      className={`inline-block px-2 py-1 text-xs font-medium rounded ${
+                                        magazine.is_purchasable
+                                          ? 'bg-green-100 text-green-800'
+                                          : 'bg-amber-100 text-amber-800'
+                                      }`}
+                                    >
+                                      {magazine.is_purchasable
+                                        ? '판매중'
+                                        : '판매 정보 필요'}
+                                    </span>
+                                  </div>
                                   <h3 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
                                     {magazine.title || '제목 없음'}
                                   </h3>
-                                  <p className="text-xs text-gray-500 mb-2 line-clamp-1">
-                                    {magazine.summary || '요약 없음'}
-                                  </p>
                                   <p className="text-xs text-gray-400 mb-3">
-                                    {new Date(
-                                      magazine.created_at,
-                                    ).toLocaleDateString('ko-KR')}
+                                    {dayjs(magazine.created_at).format(
+                                      'YYYY.MM.DD',
+                                    )}
                                   </p>
                                 </div>
                               </SwiperSlide>

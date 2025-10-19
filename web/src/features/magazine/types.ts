@@ -16,6 +16,7 @@ export interface Magazine {
   season_id: string | null
   category_ids: string[]
   categories?: Category[]
+  is_purchasable: boolean
   created_at: string
   updated_at: string | null
 }

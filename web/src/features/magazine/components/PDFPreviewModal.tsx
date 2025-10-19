@@ -389,6 +389,7 @@ export function PDFPreviewModal({
               <div className="space-y-4">
                 {/* Cover Image Upload */}
                 <div>
+                  기본 정보
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     커버 이미지
                   </label>
@@ -401,7 +402,7 @@ export function PDFPreviewModal({
                       className="hidden"
                     />
                     {coverImageUrl ? (
-                      <div className="relative w-full aspect-[3/4] border-2 border-solid border-gray-300 rounded overflow-hidden">
+                      <div className="relative w-full aspect-[157/210] border-2 border-solid border-gray-300 rounded overflow-hidden">
                         <img
                           src={thumbnail(coverImageUrl)}
                           alt="커버 이미지"
