@@ -49,8 +49,15 @@ export function usePushNotifications() {
     // 사용자가 알림을 탭했을 때
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener(response => {
-        console.log('알림 탭:', response)
-        router.push('/(tabs)')
+        // data.url이 있으면 해당 화면으로, 없으면 메인 탭으로
+        const url = response.notification.request.content.data?.url
+        if (url && typeof url === 'string') {
+          // bonvivant:// 스킴 제거하고 경로만 추출
+          const path = url.replace('bonvivant://', '')
+          router.push(path as any)
+        } else {
+          router.push('/(tabs)')
+        }
       })
 
     return () => {

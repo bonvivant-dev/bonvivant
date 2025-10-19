@@ -68,6 +68,9 @@ export async function POST(request: NextRequest) {
       title,
       body,
       sound: 'default',
+      data: {
+        url: 'bonvivant://(tabs)',
+      },
     }))
 
     // Expo Push Notification API 호출
