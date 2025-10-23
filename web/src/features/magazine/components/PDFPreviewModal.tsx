@@ -583,11 +583,6 @@ export function PDFPreviewModal({
                     }
                     label={isPurchasable ? '판매 가능' : '판매 불가'}
                   />
-                  <p className="mt-1 text-xs text-gray-500">
-                    {isPurchasable
-                      ? '앱에서 구매할 수 있습니다'
-                      : '앱에서 구매할 수 없습니다'}
-                  </p>
                 </div>
 
                 {/* Price Input */}
@@ -602,8 +597,9 @@ export function PDFPreviewModal({
                     type="number"
                     id="price"
                     {...register('price', {
-                      setValueAs: (value) => value === '' || value === null ? null : Number(value),
-                      validate: (value) => {
+                      setValueAs: value =>
+                        value === '' || value === null ? null : Number(value),
+                      validate: value => {
                         if (value !== null && value < 0) {
                           return '가격은 0원 이상이어야 합니다.'
                         }
