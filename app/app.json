@@ -11,11 +11,9 @@
     "ios": {
       "bundleIdentifier": "com.bonvivant.app",
       "supportsTablet": true,
-      "buildNumber": "11",
+      "buildNumber": "12",
       "infoPlist": {
-        "UIBackgroundModes": [
-          "remote-notification"
-        ]
+        "UIBackgroundModes": ["remote-notification"]
       }
     },
     "android": {
@@ -25,9 +23,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "permissions": [
-        "RECEIVE_BOOT_COMPLETED"
-      ]
+      "permissions": ["RECEIVE_BOOT_COMPLETED"]
     },
     "web": {
       "bundler": "metro",
@@ -44,6 +40,15 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      "react-native-iap",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "2.1.20"
+          }
         }
       ]
     ],

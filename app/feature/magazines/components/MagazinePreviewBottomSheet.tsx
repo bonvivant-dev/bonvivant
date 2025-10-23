@@ -45,7 +45,15 @@ export function MagazinePreviewBottomSheet({
     magazine?.id || null
   )
 
-  const { isPurchasing, purchase } = usePurchase()
+  const { isLoading, buyMagazine, connected } = usePurchase({
+    magazineProductId: magazine?.product_id || '',
+    onSuccess: async () => {
+      // 구매 상태 갱신
+      await refetch()
+      onClose()
+      router.push(`/magazine/${magazine?.id}/view`)
+    },
+  })
 
   if (!magazine) return null
 
@@ -80,25 +88,8 @@ export function MagazinePreviewBottomSheet({
       return
     }
 
-    // 구매 진행
-    const result = await purchase(magazine.product_id, magazine.id)
-
-    if (result.success) {
-      // 구매 상태 갱신
-      await refetch()
-
-      Alert.alert('구매 완료', '매거진을 구매했습니다!', [
-        {
-          text: '확인',
-          onPress: () => {
-            onClose()
-            router.push(`/magazine/${magazine.id}/view`)
-          },
-        },
-      ])
-    } else if (result.error !== 'cancelled') {
-      Alert.alert('구매 실패', result.error || '구매에 실패했습니다.')
-    }
+    // 구매 진행 (실제 완료는 onSuccess 콜백에서 처리됨)
+    await buyMagazine()
   }
 
   // 개발용 모의 구매 함수
@@ -219,14 +210,15 @@ export function MagazinePreviewBottomSheet({
             <TouchableOpacity
               style={[
                 styles.purchaseButton,
-                (isChecking || isProcessing || isPurchasing) && styles.purchaseButtonDisabled,
+                (isChecking || isProcessing || isLoading || !connected) &&
+                  styles.purchaseButtonDisabled,
                 isPurchased && styles.purchaseButtonPurchased,
               ]}
               onPress={handlePurchase}
               activeOpacity={0.8}
-              disabled={isChecking || isProcessing || isPurchasing}
+              disabled={isChecking || isProcessing || isLoading || !connected}
             >
-              {isChecking || isProcessing || isPurchasing ? (
+              {isChecking || isProcessing || isLoading || !connected ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.purchaseButtonText}>
