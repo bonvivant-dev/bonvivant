@@ -12,6 +12,7 @@ import {
   FlatList,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -45,7 +46,7 @@ export function MagazinePreviewBottomSheet({
     magazine?.id || null
   )
 
-  const { isLoading, buyMagazine, connected } = usePurchase({
+  const { isLoading, buyMagazine, connected, products } = usePurchase({
     magazineProductId: magazine?.product_id || '',
     onSuccess: async () => {
       // 구매 상태 갱신
@@ -256,6 +257,33 @@ export function MagazinePreviewBottomSheet({
                 <Text style={styles.devButtonText}>(개발용) 읽기</Text>
               </TouchableOpacity>
             )}
+
+            {/* Development Only - Debug Info */}
+            {__DEV__ && (
+              <View style={styles.debugContainer}>
+                <Text style={styles.debugTitle}>🔍 디버그 정보</Text>
+                <Text style={styles.debugText}>
+                  연결 상태: {connected ? '✅ 연결됨' : '❌ 연결 안됨'}
+                </Text>
+                <Text style={styles.debugText}>
+                  상품 ID: {magazine.product_id || '없음'}
+                </Text>
+                <Text style={styles.debugText}>
+                  상품 로드: {products && products.length > 0 ? '✅ 성공' : '❌ 실패'}
+                </Text>
+                {products && products.length > 0 && (
+                  <Text style={styles.debugText}>
+                    상품 개수: {products.length}
+                  </Text>
+                )}
+                {products && products.length > 0 && (
+                  <Text style={styles.debugText}>
+                    가격:{' '}
+                    {'price' in products[0] ? products[0].price || 'N/A' : 'N/A'}
+                  </Text>
+                )}
+              </View>
+            )}
           </View>
 
           {/* Introduction */}
@@ -446,5 +474,25 @@ const styles = StyleSheet.create({
   previewImage: {
     width: '100%',
     height: '100%',
+  },
+  debugContainer: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  debugTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#495057',
+    marginBottom: 8,
+  },
+  debugText: {
+    fontSize: 12,
+    color: '#6c757d',
+    marginBottom: 4,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
 })

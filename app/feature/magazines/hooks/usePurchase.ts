@@ -23,28 +23,35 @@ export function usePurchase({
   onSuccess?: () => void
 }) {
   const [isLoading, setIsLoading] = useState(false)
-  const { connected, fetchProducts, requestPurchase, validateReceipt } = useIAP(
-    {
-      onPurchaseSuccess: async (purchase: Purchase) => {
-        const result = await validatePurchase(purchase)
+  const {
+    connected,
+    fetchProducts,
+    requestPurchase,
+    validateReceipt,
+    products,
+  } = useIAP({
+    onPurchaseSuccess: async (purchase: Purchase) => {
+      const result = await validatePurchase(purchase)
 
-        if (result) {
-          await finishTransaction({
-            purchase,
-          })
-          onSuccess?.()
-        }
-        setIsLoading(false)
-      },
-      onPurchaseError: error => {
-        // 사용자 취소는 알림 표시 안 함
-        if (error.code !== ErrorCode.UserCancelled) {
-          Alert.alert('구매 실패', error.message)
-        }
-        setIsLoading(false)
-      },
-    }
-  )
+      if (result) {
+        await finishTransaction({
+          purchase,
+        })
+        onSuccess?.()
+      }
+      setIsLoading(false)
+    },
+    onPurchaseError: error => {
+      // 사용자 취소는 알림 표시 안 함
+      if (error.code !== ErrorCode.UserCancelled) {
+        Alert.alert(
+          '구매 실패',
+          `onPurchaseError: ${error.message} ${error.code}`
+        )
+      }
+      setIsLoading(false)
+    },
+  })
 
   // 상품 정보 가져오기
   useEffect(() => {
@@ -66,6 +73,16 @@ export function usePurchase({
         Alert.alert('구매 실패', '매거진을 찾을 수 없습니다.')
         return
       }
+
+      // 상품이 로드되었는지 확인
+      if (!products || products.length === 0) {
+        setIsLoading(false)
+        Alert.alert(
+          'SKU not found',
+          `상품 ID "${magazineProductId}"를 찾을 수 없습니다.\n\n확인사항:\n- App Store Connect에서 상품이 "Ready to Submit" 상태인지\n- 번들 ID가 일치하는지\n- 상품 동기화 시간이 충분한지 (수 시간 소요)`
+        )
+        return
+      }
       await requestPurchase({
         request: {
           ios: { sku: magazineProductId },
@@ -80,7 +97,9 @@ export function usePurchase({
     } catch (error) {
       Alert.alert(
         '구매 실패',
-        error instanceof Error ? error.message : '구매에 실패했습니다.'
+        error instanceof Error
+          ? error.message
+          : 'buyMagazine 구매에 실패했습니다.'
       )
       setIsLoading(false)
       return {
@@ -88,7 +107,7 @@ export function usePurchase({
         error: error instanceof Error ? error.message : '구매에 실패했습니다.',
       }
     }
-  }, [magazineProductId, requestPurchase])
+  }, [magazineProductId, requestPurchase, products])
 
   // 영수증 검증
   const validatePurchase = async (purchase: Purchase) => {
@@ -175,5 +194,6 @@ export function usePurchase({
     isLoading,
     buyMagazine,
     connected,
+    products, // 디버깅용 추가
   }
 }
