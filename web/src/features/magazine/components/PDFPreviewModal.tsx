@@ -626,7 +626,7 @@ export function PDFPreviewModal({
                     htmlFor="product_id"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    상품 ID
+                    상품 ID {magazine?.product_id ? '(수정 불가)' : ''}
                   </label>
                   <input
                     type="text"
@@ -634,8 +634,9 @@ export function PDFPreviewModal({
                     {...register('product_id')}
                     className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
                       errors.product_id ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    placeholder="인앱 결제 상품 ID를 입력하세요 (선택사항)"
+                    } ${magazine?.product_id ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
+                    placeholder="인앱 결제 상품 ID를 입력하세요"
+                    disabled={magazine?.product_id ? true : false}
                   />
                   {errors.product_id && (
                     <p className="mt-1 text-sm text-red-600">
