@@ -14,7 +14,7 @@ import {
 
 import { supabase } from '@/feature/shared'
 
-// import { usePurchase } from '../hooks'
+import { useMagazinePurchaseStatus, usePurchase } from '../hooks'
 import { Magazine } from '../types'
 
 const { width } = Dimensions.get('window')
@@ -37,7 +37,20 @@ export function MagazinePreviewModal({
     useState(initialImageIndex)
   const hasShownPurchaseAlert = useRef(false)
 
-  // const { purchase, checkPurchased } = usePurchase()
+  // 구매 여부 확인 hook
+  const { isPurchased, refetch } = useMagazinePurchaseStatus(
+    magazine?.id || null
+  )
+
+  const { buyMagazine } = usePurchase({
+    magazineProductId: magazine?.product_id || '',
+    onSuccess: async () => {
+      // 구매 상태 갱신
+      await refetch()
+      onClose()
+      router.push(`/magazine/${magazine?.id}/view`)
+    },
+  })
 
   // 모달이 열릴 때마다 alert 표시 상태 초기화
   useEffect(() => {
@@ -61,50 +74,31 @@ export function MagazinePreviewModal({
   }
 
   const handlePurchase = async () => {
-    // if (!magazine) return
-    // // 이미 구매한 경우 확인
-    // const isPurchased = await checkPurchased(magazine.id)
-    // if (isPurchased) {
-    //   Alert.alert('알림', '이미 구매한 매거진입니다.', [
-    //     {
-    //       text: '전체 보기',
-    //       onPress: () => {
-    //         onClose()
-    //         router.push(`/magazine/${magazine.id}/view`)
-    //       },
-    //     },
-    //     {
-    //       text: '취소',
-    //       style: 'cancel',
-    //     },
-    //   ])
-    //   return
-    // }
-    // // 구매 가능 여부 확인
-    // if (!magazine.is_purchasable || !magazine.product_id) {
-    //   Alert.alert('알림', '현재 구매할 수 없는 매거진입니다.')
-    //   return
-    // }
-    // // 구매 진행
-    // const result = await purchase(magazine.product_id, magazine.id)
-    // if (result.success) {
-    //   Alert.alert('구매 완료', '매거진을 구매했습니다!', [
-    //     {
-    //       text: '확인',
-    //       onPress: () => {
-    //         onClose()
-    //         router.push(`/magazine/${magazine.id}/view`)
-    //       },
-    //     },
-    //   ])
-    // } else if (result.error !== 'cancelled') {
-    //   Alert.alert('구매 실패', result.error || '구매에 실패했습니다.')
-    // }
+    if (!magazine) return
+
+    // 이미 구매한 경우 바로 이동
+    if (isPurchased) {
+      onClose()
+      router.push(`/magazine/${magazine.id}/view`)
+      return
+    }
+
+    // 구매 가능 여부 확인
+    if (!magazine.is_purchasable || !magazine.product_id) {
+      Alert.alert('알림', '현재 구매할 수 없는 매거진입니다.')
+      return
+    }
+
+    // 구매 진행 (실제 완료는 onSuccess 콜백에서 처리됨)
+    await buyMagazine()
   }
 
   const showPurchaseAlert = () => {
     if (hasShownPurchaseAlert.current) return
     hasShownPurchaseAlert.current = true
+
+    // 이미 구매한 매거진이면 Alert 미노출
+    if (isPurchased) return
 
     Alert.alert(
       '매거진 구매',
