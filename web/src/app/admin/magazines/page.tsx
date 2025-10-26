@@ -96,8 +96,16 @@ export default function MagazinesPage() {
             JSON.stringify(magazineFormData.category_ids),
           )
           formData.append('season_id', magazineFormData.season_id)
-          formData.append('price', magazineFormData.price !== null ? magazineFormData.price.toString() : '')
-          formData.append('is_purchasable', magazineFormData.is_purchasable.toString())
+          formData.append(
+            'price',
+            magazineFormData.price !== null
+              ? magazineFormData.price.toString()
+              : '',
+          )
+          formData.append(
+            'is_purchasable',
+            magazineFormData.is_purchasable.toString(),
+          )
           formData.append('product_id', magazineFormData.product_id || '')
           // Add cover image URL if provided
           if (magazineFormData.cover_image_url) {
@@ -508,13 +516,6 @@ export default function MagazinesPage() {
               ? 'PDF 업로드 중'
               : 'PDF 불러오는 중'
             : 'PDF 불러오는 중'
-        }
-        message={
-          isConverting
-            ? selectedFile?.name
-              ? `${selectedFile.name}을 이미지로 변환하고 있습니다...`
-              : 'PDF를 불러오고 있습니다...'
-            : 'PDF를 불러오고 있습니다...'
         }
       />
     </>

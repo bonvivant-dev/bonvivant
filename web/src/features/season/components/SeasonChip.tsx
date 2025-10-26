@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, RefObject, useCallback } from 'react'
 import { Portal } from '@/shared/components'
 import { useOutsideClick } from '@/shared/hooks'
 
-import { Season, SeasonListResponse } from '../types'
+import { Season } from '../types'
 
 interface SeasonChipProps {
   magazineId?: string
@@ -60,7 +60,7 @@ export function SeasonChip({
       setIsLoading(true)
       const response = await fetch('/api/seasons')
       if (response.ok) {
-        const data: SeasonListResponse = await response.json()
+        const data: { seasons: Season[] } = await response.json()
         setSeasons(data.seasons)
       }
     } catch (err) {

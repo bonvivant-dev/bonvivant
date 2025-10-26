@@ -1,9 +1,4 @@
-export interface Category {
-  id: string
-  name: string
-  created_at: string
-  updated_at: string | null
-}
+import { Category } from '../category/types'
 
 export interface Magazine {
   id: string
@@ -23,19 +18,6 @@ export interface Magazine {
   updated_at: string | null
 }
 
-export interface MagazineUploadResponse {
-  success: boolean
-  magazine: Magazine
-  message: string
-}
-
-export interface MagazineListResponse {
-  magazines: Magazine[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
-}
 
 export interface MagazinesByCategory {
   categories: Array<{
