@@ -229,61 +229,46 @@ export function MagazinePreviewBottomSheet({
             </TouchableOpacity>
 
             {/* Development Only - Mock Purchase Button */}
-            {__DEV__ && !isPurchased && (
-              <TouchableOpacity
-                style={styles.devButton}
-                onPress={handleMockPurchase}
-                activeOpacity={0.8}
-                disabled={isChecking || isProcessing}
-              >
-                {isChecking || isProcessing ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.devButtonText}>(개발용) 구매하기</Text>
-                )}
-              </TouchableOpacity>
-            )}
-
-            {/* Development Only - Read Button (after purchase) */}
-            {__DEV__ && isPurchased && (
-              <TouchableOpacity
-                style={[styles.devButton, { backgroundColor: '#34C759' }]}
-                onPress={() => {
-                  onClose()
-                  router.push(`/magazine/${magazine.id}/view`)
-                }}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.devButtonText}>(개발용) 읽기</Text>
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              style={styles.devButton}
+              onPress={handleMockPurchase}
+              activeOpacity={0.8}
+              disabled={isChecking || isProcessing}
+            >
+              {isChecking || isProcessing ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.devButtonText}>
+                  (개발용) {isPurchased ? '읽기' : '구매하기'}
+                </Text>
+              )}
+            </TouchableOpacity>
 
             {/* Development Only - Debug Info */}
-            {__DEV__ && (
-              <View style={styles.debugContainer}>
-                <Text style={styles.debugTitle}>🔍 디버그 정보</Text>
+            <View style={styles.debugContainer}>
+              <Text style={styles.debugTitle}>🔍 디버그 정보</Text>
+              <Text style={styles.debugText}>
+                연결 상태: {connected ? '✅ 연결됨' : '❌ 연결 안됨'}
+              </Text>
+              <Text style={styles.debugText}>
+                상품 ID: {magazine.product_id || '없음'}
+              </Text>
+              <Text style={styles.debugText}>
+                상품 로드:{' '}
+                {products && products.length > 0 ? '✅ 성공' : '❌ 실패'}
+              </Text>
+              {products && products.length > 0 && (
                 <Text style={styles.debugText}>
-                  연결 상태: {connected ? '✅ 연결됨' : '❌ 연결 안됨'}
+                  상품 개수: {products.length}
                 </Text>
+              )}
+              {products && products.length > 0 && (
                 <Text style={styles.debugText}>
-                  상품 ID: {magazine.product_id || '없음'}
+                  가격:{' '}
+                  {'price' in products[0] ? products[0].price || 'N/A' : 'N/A'}
                 </Text>
-                <Text style={styles.debugText}>
-                  상품 로드: {products && products.length > 0 ? '✅ 성공' : '❌ 실패'}
-                </Text>
-                {products && products.length > 0 && (
-                  <Text style={styles.debugText}>
-                    상품 개수: {products.length}
-                  </Text>
-                )}
-                {products && products.length > 0 && (
-                  <Text style={styles.debugText}>
-                    가격:{' '}
-                    {'price' in products[0] ? products[0].price || 'N/A' : 'N/A'}
-                  </Text>
-                )}
-              </View>
-            )}
+              )}
+            </View>
           </View>
 
           {/* Introduction */}
