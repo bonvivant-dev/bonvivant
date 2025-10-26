@@ -28,6 +28,7 @@ export default function NotificationsPage() {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isValid },
   } = useForm<NotificationFormData>({
     mode: 'onChange',
@@ -44,6 +45,11 @@ export default function NotificationsPage() {
   } | null>(null)
   const [history, setHistory] = useState<NotificationHistory[]>([])
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
+
+  const title = watch('title')
+  const body = watch('body')
+
+  const isDisabled = isSending || !isValid || !title?.trim() || !body?.trim()
 
   // 히스토리 불러오기
   const loadHistory = async () => {
@@ -189,8 +195,12 @@ export default function NotificationsPage() {
                   <div className="pt-4">
                     <button
                       type="submit"
-                      disabled={isSending || !isValid}
-                      className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isDisabled}
+                      className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                        isDisabled
+                          ? 'bg-purple-300 text-white cursor-not-allowed'
+                          : 'bg-purple-600 text-white hover:bg-purple-700 focus:ring-purple-500'
+                      }`}
                     >
                       {isSending ? (
                         <>
@@ -268,7 +278,9 @@ export default function NotificationsPage() {
                             {item.title}
                           </h4>
                           <span className="text-xs text-gray-500 whitespace-nowrap ml-4">
-                            {dayjs(item.created_at).format('YYYY.MM.DD A hh:mm')}
+                            {dayjs(item.created_at).format(
+                              'YYYY.MM.DD A hh:mm',
+                            )}
                           </span>
                         </div>
                         <p className="text-sm text-gray-600 mb-2">
