@@ -516,32 +516,13 @@ export function PDFPreviewModal({
                   )}
                 </div>
 
-                {/* Summary */}
-                {/* <div>
-                  <label
-                    htmlFor="summary"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    요약
-                  </label>
-                  <textarea
-                    id="summary"
-                    name="summary"
-                    rows={3}
-                    value={formData.summary}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="매거진의 간단한 요약을 입력하세요..."
-                  />
-                </div> */}
-
                 {/* Introduction */}
                 <div>
                   <label
                     htmlFor="introduction"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
-                    소개글
+                    소개글 ({watch('introduction')?.length || 0} 자)
                   </label>
                   <textarea
                     id="introduction"
