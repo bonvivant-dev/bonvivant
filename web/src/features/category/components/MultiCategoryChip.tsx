@@ -183,9 +183,13 @@ export function MultiCategoryChip({
           setCurrentCategoryIds(newCategoryIds)
           await updateMagazineCategories(newCategoryIds)
         }
+      } else {
+        // HTTP 에러 응답 처리
+        const errorData = await response.json()
+        alert(errorData.error || '카테고리 삭제에 실패했습니다')
       }
-    } catch (err) {
-      console.error('Failed to delete category:', err)
+    } catch {
+      alert('카테고리 삭제 중 오류가 발생했습니다')
     }
   }
 
