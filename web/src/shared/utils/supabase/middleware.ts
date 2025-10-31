@@ -53,11 +53,12 @@ export async function updateSession(request: NextRequest) {
 
   // 로그인되지 않은 사용자 처리
   if (!user) {
-    // auth 관련 경로는 접근 허용
+    // auth 관련 경로 및 공개 페이지는 접근 허용
     if (
       pathname.startsWith('/auth') ||
       pathname.startsWith('/error') ||
-      pathname === '/'
+      pathname === '/' ||
+      pathname === '/about'
     ) {
       return supabaseResponse
     }
