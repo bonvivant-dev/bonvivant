@@ -1,4 +1,3 @@
-import { useRouter } from 'expo-router'
 import React, { useState, useEffect, useRef } from 'react'
 import {
   Modal,
@@ -14,7 +13,7 @@ import {
 
 import { supabase } from '@/feature/shared'
 
-import { useMagazinePurchaseStatus, usePurchase } from '../hooks'
+import { useMagazinePurchase } from '../hooks'
 import { Magazine } from '../types'
 
 const { width } = Dimensions.get('window')
@@ -32,24 +31,14 @@ export function MagazinePreviewModal({
   initialImageIndex = 0,
   onClose,
 }: MagazinePreviewModalProps) {
-  const router = useRouter()
   const [selectedImageIndex, setSelectedImageIndex] =
     useState(initialImageIndex)
   const hasShownPurchaseAlert = useRef(false)
 
-  // 구매 여부 확인 hook
-  const { isPurchased, refetch } = useMagazinePurchaseStatus(
-    magazine?.id || null
-  )
-
-  const { buyMagazine } = usePurchase({
-    magazineProductId: magazine?.product_id || '',
-    onSuccess: async () => {
-      // 구매 상태 갱신
-      await refetch()
-      onClose()
-      router.push(`/magazine/${magazine?.id}/view`)
-    },
+  // 통합 구매 처리 hook
+  const { handlePurchase, isPurchased } = useMagazinePurchase({
+    magazine,
+    onClose,
   })
 
   // 모달이 열릴 때마다 alert 표시 상태 초기화
@@ -71,26 +60,6 @@ export function MagazinePreviewModal({
     // imagePath에서 "images/" 접두사 제거 (이미 포함되어 있음)
     const path = imagePath.replace(/^images\//, '')
     return supabase.storage.from('images').getPublicUrl(path).data.publicUrl
-  }
-
-  const handlePurchase = async () => {
-    if (!magazine) return
-
-    // 이미 구매한 경우 바로 이동
-    if (isPurchased) {
-      onClose()
-      router.push(`/magazine/${magazine.id}/view`)
-      return
-    }
-
-    // 구매 가능 여부 확인
-    if (!magazine.is_purchasable || !magazine.product_id) {
-      Alert.alert('알림', '현재 구매할 수 없는 매거진입니다.')
-      return
-    }
-
-    // 구매 진행 (실제 완료는 onSuccess 콜백에서 처리됨)
-    await buyMagazine()
   }
 
   const showPurchaseAlert = () => {
