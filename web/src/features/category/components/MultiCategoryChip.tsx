@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, RefObject, useCallback } from 'react'
 import { Portal } from '@/shared/components'
 import { useOutsideClick } from '@/shared/hooks'
 
-import { Category, CategoryListResponse } from '../types'
+import { Category } from '../types'
 
 interface MultiCategoryChipProps {
   magazineId?: string
@@ -27,7 +27,9 @@ export function MultiCategoryChip({
   const [newCategoryName, setNewCategoryName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
+    null,
+  )
   const [editingCategoryName, setEditingCategoryName] = useState('')
   const [isUpdating, setIsUpdating] = useState(false)
 
@@ -63,7 +65,7 @@ export function MultiCategoryChip({
       setIsLoading(true)
       const response = await fetch('/api/categories')
       if (response.ok) {
-        const data: CategoryListResponse = await response.json()
+        const data: { categories: Category[] } = await response.json()
         setCategories(data.categories)
       }
     } catch (err) {
@@ -181,9 +183,13 @@ export function MultiCategoryChip({
           setCurrentCategoryIds(newCategoryIds)
           await updateMagazineCategories(newCategoryIds)
         }
+      } else {
+        // HTTP 에러 응답 처리
+        const errorData = await response.json()
+        alert(errorData.error || '카테고리 삭제에 실패했습니다')
       }
-    } catch (err) {
-      console.error('Failed to delete category:', err)
+    } catch {
+      alert('카테고리 삭제 중 오류가 발생했습니다')
     }
   }
 
@@ -348,7 +354,9 @@ export function MultiCategoryChip({
                             ref={editInputRef}
                             type="text"
                             value={editingCategoryName}
-                            onChange={e => setEditingCategoryName(e.target.value)}
+                            onChange={e =>
+                              setEditingCategoryName(e.target.value)
+                            }
                             onKeyDown={e => handleEditKeyDown(e, category.id)}
                             className="flex-1 px-1 py-0.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                             disabled={isUpdating}
@@ -356,7 +364,9 @@ export function MultiCategoryChip({
                         </div>
                         <div className="flex space-x-1 ml-2">
                           <button
-                            onClick={() => updateCategory(category.id, editingCategoryName)}
+                            onClick={() =>
+                              updateCategory(category.id, editingCategoryName)
+                            }
                             disabled={isUpdating || !editingCategoryName.trim()}
                             className="text-green-600 hover:text-green-800 p-1 disabled:opacity-50"
                             title="수정 완료"
@@ -413,7 +423,9 @@ export function MultiCategoryChip({
                         </label>
                         <div className="flex space-x-1 ml-2">
                           <button
-                            onClick={() => startEditCategory(category.id, category.name)}
+                            onClick={() =>
+                              startEditCategory(category.id, category.name)
+                            }
                             className="text-blue-500 hover:text-blue-700 p-1"
                             title="카테고리 수정"
                           >

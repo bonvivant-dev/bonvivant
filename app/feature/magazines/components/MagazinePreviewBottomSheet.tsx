@@ -12,12 +12,13 @@ import {
   FlatList,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { supabase } from '@/feature/shared'
 
-import { useMagazinePurchaseStatus, usePurchase } from '../hooks'
+import { useMagazinePurchase } from '../hooks'
 import { Magazine } from '../types'
 
 import { MagazinePreviewModal } from './MagazinePreviewModal'
@@ -40,12 +41,19 @@ export function MagazinePreviewBottomSheet({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isProcessing, setIsProcessing] = useState(false)
 
-  // 구매 여부 확인 hook
-  const { isPurchased, isChecking, refetch } = useMagazinePurchaseStatus(
-    magazine?.id || null
-  )
-
-  const { isPurchasing, purchase } = usePurchase()
+  // 통합 구매 처리 hook
+  const {
+    handlePurchase,
+    isPurchased,
+    isChecking,
+    isLoading,
+    connected,
+    products,
+    refetch,
+  } = useMagazinePurchase({
+    magazine,
+    onClose,
+  })
 
   if (!magazine) return null
 
@@ -62,43 +70,6 @@ export function MagazinePreviewBottomSheet({
     // imagePath에서 "images/" 접두사 제거 (이미 포함되어 있음)
     const path = imagePath.replace(/^images\//, '')
     return supabase.storage.from('images').getPublicUrl(path).data.publicUrl
-  }
-
-  const handlePurchase = async () => {
-    if (!magazine) return
-
-    // 이미 구매한 경우 바로 이동
-    if (isPurchased) {
-      onClose()
-      router.push(`/magazine/${magazine.id}/view`)
-      return
-    }
-
-    // 구매 가능 여부 확인
-    if (!magazine.is_purchasable || !magazine.product_id) {
-      Alert.alert('알림', '현재 구매할 수 없는 매거진입니다.')
-      return
-    }
-
-    // 구매 진행
-    const result = await purchase(magazine.product_id, magazine.id)
-
-    if (result.success) {
-      // 구매 상태 갱신
-      await refetch()
-
-      Alert.alert('구매 완료', '매거진을 구매했습니다!', [
-        {
-          text: '확인',
-          onPress: () => {
-            onClose()
-            router.push(`/magazine/${magazine.id}/view`)
-          },
-        },
-      ])
-    } else if (result.error !== 'cancelled') {
-      Alert.alert('구매 실패', result.error || '구매에 실패했습니다.')
-    }
   }
 
   // 개발용 모의 구매 함수
@@ -219,14 +190,15 @@ export function MagazinePreviewBottomSheet({
             <TouchableOpacity
               style={[
                 styles.purchaseButton,
-                (isChecking || isProcessing || isPurchasing) && styles.purchaseButtonDisabled,
+                (isChecking || isProcessing || isLoading || !connected) &&
+                  styles.purchaseButtonDisabled,
                 isPurchased && styles.purchaseButtonPurchased,
               ]}
               onPress={handlePurchase}
               activeOpacity={0.8}
-              disabled={isChecking || isProcessing || isPurchasing}
+              disabled={isChecking || isProcessing || isLoading || !connected}
             >
-              {isChecking || isProcessing || isPurchasing ? (
+              {isChecking || isProcessing || isLoading || !connected ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.purchaseButtonText}>
@@ -236,34 +208,46 @@ export function MagazinePreviewBottomSheet({
             </TouchableOpacity>
 
             {/* Development Only - Mock Purchase Button */}
-            {__DEV__ && !isPurchased && (
-              <TouchableOpacity
-                style={styles.devButton}
-                onPress={handleMockPurchase}
-                activeOpacity={0.8}
-                disabled={isChecking || isProcessing}
-              >
-                {isChecking || isProcessing ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.devButtonText}>(개발용) 구매하기</Text>
-                )}
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              style={styles.devButton}
+              onPress={handleMockPurchase}
+              activeOpacity={0.8}
+              disabled={isChecking || isProcessing}
+            >
+              {isChecking || isProcessing ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.devButtonText}>
+                  (개발용) {isPurchased ? '읽기' : '구매하기'}
+                </Text>
+              )}
+            </TouchableOpacity>
 
-            {/* Development Only - Read Button (after purchase) */}
-            {__DEV__ && isPurchased && (
-              <TouchableOpacity
-                style={[styles.devButton, { backgroundColor: '#34C759' }]}
-                onPress={() => {
-                  onClose()
-                  router.push(`/magazine/${magazine.id}/view`)
-                }}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.devButtonText}>(개발용) 읽기</Text>
-              </TouchableOpacity>
-            )}
+            {/* Development Only - Debug Info */}
+            <View style={styles.debugContainer}>
+              <Text style={styles.debugTitle}>🔍 디버그 정보</Text>
+              <Text style={styles.debugText}>
+                연결 상태: {connected ? '✅ 연결됨' : '❌ 연결 안됨'}
+              </Text>
+              <Text style={styles.debugText}>
+                상품 ID: {magazine.product_id || '없음'}
+              </Text>
+              <Text style={styles.debugText}>
+                상품 로드:{' '}
+                {products && products.length > 0 ? '✅ 성공' : '❌ 실패'}
+              </Text>
+              {products && products.length > 0 && (
+                <Text style={styles.debugText}>
+                  상품 개수: {products.length}
+                </Text>
+              )}
+              {products && products.length > 0 && (
+                <Text style={styles.debugText}>
+                  가격:{' '}
+                  {'price' in products[0] ? products[0].price || 'N/A' : 'N/A'}
+                </Text>
+              )}
+            </View>
           </View>
 
           {/* Introduction */}
@@ -454,5 +438,25 @@ const styles = StyleSheet.create({
   previewImage: {
     width: '100%',
     height: '100%',
+  },
+  debugContainer: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
+  debugTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#495057',
+    marginBottom: 8,
+  },
+  debugText: {
+    fontSize: 12,
+    color: '#6c757d',
+    marginBottom: 4,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
 })

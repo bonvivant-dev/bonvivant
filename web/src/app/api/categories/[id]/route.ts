@@ -98,14 +98,14 @@ export async function DELETE(
     const { id } = await params
 
     const { data: magazinesWithCategory } = await supabase
-      .from('magazines')
-      .select('id')
+      .from('magazine_categories')
+      .select('magazine_id')
       .eq('category_id', id)
       .limit(1)
 
     if (magazinesWithCategory && magazinesWithCategory.length > 0) {
       return NextResponse.json(
-        { error: 'Cannot delete category that has magazines assigned to it' },
+        { error: '해당 카테고리에 속한 매거진이 있어 삭제할 수 없어요' },
         { status: 400 },
       )
     }

@@ -48,6 +48,10 @@ function MagazineCard({ magazine, onPress }: MagazineCardProps) {
           </View>
         )}
       </View>
+      {/* show magazine title */}
+      <Text style={styles.title} numberOfLines={2}>
+        {magazine.title}
+      </Text>
     </TouchableOpacity>
   )
 }
@@ -107,8 +111,12 @@ const styles = StyleSheet.create({
   },
   card: {
     width: ITEM_WIDTH,
-    backgroundColor: '#f8f9fa',
     overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   imageContainer: {
     width: '100%',
@@ -135,7 +143,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '400',
     color: '#333',
     marginBottom: 4,
     lineHeight: 18,

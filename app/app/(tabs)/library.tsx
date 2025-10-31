@@ -13,7 +13,10 @@ import {
   Dimensions,
 } from 'react-native'
 
-import { usePurchasedMagazines } from '@/feature/magazines'
+import {
+  usePurchasedMagazines,
+  PurchasedMagazinesProvider,
+} from '@/feature/magazines'
 import { Button } from '@/feature/shared'
 import { thumbnail } from '@/feature/shared/utils'
 
@@ -40,7 +43,7 @@ function LoginRequired() {
   )
 }
 
-export default function Library() {
+function LibraryContent() {
   const { user, loading, signOut } = useAuth()
   const {
     magazines,
@@ -157,6 +160,16 @@ export default function Library() {
         username={userName}
       />
     </View>
+  )
+}
+
+export default function Library() {
+  const { refetch } = usePurchasedMagazines()
+
+  return (
+    <PurchasedMagazinesProvider refetch={refetch}>
+      <LibraryContent />
+    </PurchasedMagazinesProvider>
   )
 }
 

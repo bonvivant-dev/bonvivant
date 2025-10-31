@@ -6,15 +6,9 @@ interface LoadingOverlayProps {
   isOpen: boolean
   icon: React.ReactNode
   title: string
-  message: string
 }
 
-export function LoadingOverlay({
-  isOpen,
-  icon,
-  title,
-  message,
-}: LoadingOverlayProps) {
+export function LoadingOverlay({ isOpen, icon, title }: LoadingOverlayProps) {
   return (
     <Portal isOpen={isOpen}>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -29,9 +23,6 @@ export function LoadingOverlay({
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               {title}
             </h3>
-
-            {/* 파일명 */}
-            <p className="text-sm text-gray-600 mb-4">{message}</p>
 
             {/* 스피너 */}
             <div className="flex items-center justify-center mb-4">
