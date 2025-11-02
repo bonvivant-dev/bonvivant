@@ -178,6 +178,9 @@ export default function MagazinesPage() {
   const [isConverting, setIsConverting] = useState(false)
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
   const [tempMagazineOrder, setTempMagazineOrder] = useState<Magazine[]>([])
+  const [showCategoryModal, setShowCategoryModal] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [isCreatingCategory, setIsCreatingCategory] = useState(false)
 
   const fetchMagazines = async () => {
     try {
@@ -476,6 +479,34 @@ export default function MagazinesPage() {
     }
   }
 
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) return
+
+    try {
+      setIsCreatingCategory(true)
+      const response = await fetch('/api/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: newCategoryName.trim() }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to create category')
+      }
+
+      setShowCategoryModal(false)
+      setNewCategoryName('')
+      await fetchMagazines()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create category')
+    } finally {
+      setIsCreatingCategory(false)
+    }
+  }
+
   return (
     <DndProvider backend={HTML5Backend}>
       <style jsx global>
@@ -512,17 +543,25 @@ export default function MagazinesPage() {
                 <h1 className="text-2xl leading-6 font-medium text-gray-900">
                   매거진 관리
                 </h1>
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                  <span className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer">
-                    PDF 업로드
-                  </span>
-                </label>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowCategoryModal(true)}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+                  >
+                    카테고리 추가
+                  </button>
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                    <span className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 cursor-pointer">
+                      PDF 업로드
+                    </span>
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -755,6 +794,53 @@ export default function MagazinesPage() {
             : 'PDF 불러오는 중'
         }
       />
+
+      {/* Category Creation Modal */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-96">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              새 카테고리 추가
+            </h3>
+            <input
+              type="text"
+              value={newCategoryName}
+              onChange={e => setNewCategoryName(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  handleCreateCategory()
+                } else if (e.key === 'Escape') {
+                  setShowCategoryModal(false)
+                  setNewCategoryName('')
+                }
+              }}
+              placeholder="카테고리 이름을 입력하세요"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              autoFocus
+              disabled={isCreatingCategory}
+            />
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowCategoryModal(false)
+                  setNewCategoryName('')
+                }}
+                disabled={isCreatingCategory}
+                className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleCreateCategory}
+                disabled={isCreatingCategory || !newCategoryName.trim()}
+                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isCreatingCategory ? '생성 중...' : '생성'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DndProvider>
   )
 }
