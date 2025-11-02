@@ -176,7 +176,9 @@ export default function MagazinesPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isConverting, setIsConverting] = useState(false)
-  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
+    null,
+  )
   const [tempMagazineOrder, setTempMagazineOrder] = useState<Magazine[]>([])
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
@@ -434,15 +436,18 @@ export default function MagazinesPage() {
     setTempMagazineOrder([])
   }
 
-  const handleMoveCard = useCallback((dragIndex: number, hoverIndex: number) => {
-    setTempMagazineOrder(prevMagazines => {
-      const newMagazines = [...prevMagazines]
-      const draggedItem = newMagazines[dragIndex]
-      newMagazines.splice(dragIndex, 1)
-      newMagazines.splice(hoverIndex, 0, draggedItem)
-      return newMagazines
-    })
-  }, [])
+  const handleMoveCard = useCallback(
+    (dragIndex: number, hoverIndex: number) => {
+      setTempMagazineOrder(prevMagazines => {
+        const newMagazines = [...prevMagazines]
+        const draggedItem = newMagazines[dragIndex]
+        newMagazines.splice(dragIndex, 1)
+        newMagazines.splice(hoverIndex, 0, draggedItem)
+        return newMagazines
+      })
+    },
+    [],
+  )
 
   const handleSaveOrder = async (categoryId: string) => {
     try {
@@ -582,7 +587,9 @@ export default function MagazinesPage() {
                   {/* Categories with Magazines */}
                   {magazinesByCategory.categories.map(category => {
                     const isEditing = editingCategoryId === category.id
-                    const displayMagazines = isEditing ? tempMagazineOrder : category.magazines
+                    const displayMagazines = isEditing
+                      ? tempMagazineOrder
+                      : category.magazines
 
                     return (
                       <div
@@ -600,9 +607,13 @@ export default function MagazinesPage() {
                               </p>
                             </div>
                             {category.magazines.length > 0 && (
-                              <div className="flex gap-2">
+                              <div className="flex gap-2 items-center justify-center">
                                 {isEditing ? (
-                                  <>
+                                  <div className="flex gap-2">
+                                    <span className="text-sm text-gray-500 content-center">
+                                      각 매거진을 드래그하여 순서를 변경할 수
+                                      있어요.
+                                    </span>
                                     <button
                                       onClick={handleCancelEditOrder}
                                       className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-100"
@@ -610,15 +621,22 @@ export default function MagazinesPage() {
                                       취소
                                     </button>
                                     <button
-                                      onClick={() => handleSaveOrder(category.id)}
+                                      onClick={() =>
+                                        handleSaveOrder(category.id)
+                                      }
                                       className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
                                     >
                                       저장
                                     </button>
-                                  </>
+                                  </div>
                                 ) : (
                                   <button
-                                    onClick={() => handleStartEditOrder(category.id, category.magazines)}
+                                    onClick={() =>
+                                      handleStartEditOrder(
+                                        category.id,
+                                        category.magazines,
+                                      )
+                                    }
                                     className="px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-100"
                                   >
                                     순서 편집
@@ -639,7 +657,10 @@ export default function MagazinesPage() {
                           <div className="p-6">
                             <div className="flex gap-4 overflow-x-auto pb-4">
                               {displayMagazines.map((magazine, index) => (
-                                <div key={magazine.id} className="flex-shrink-0 w-[200px]">
+                                <div
+                                  key={magazine.id}
+                                  className="flex-shrink-0 w-[200px]"
+                                >
                                   <DraggableMagazineCard
                                     magazine={magazine}
                                     index={index}
