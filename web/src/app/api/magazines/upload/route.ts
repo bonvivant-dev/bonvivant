@@ -150,10 +150,25 @@ export async function POST(request: NextRequest) {
 
       // 카테고리 관계 저장
       if (categoryIds.length > 0) {
-        const categoryRelations = categoryIds.map((categoryId: string) => ({
-          magazine_id: magazine.id,
-          category_id: categoryId,
-        }))
+        // 각 카테고리의 현재 최대 order 조회
+        const categoryRelations = []
+        for (const categoryId of categoryIds) {
+          const { data: maxOrderData } = await supabase
+            .from('magazine_categories')
+            .select('order')
+            .eq('category_id', categoryId)
+            .order('order', { ascending: false })
+            .limit(1)
+            .single()
+
+          const nextOrder = maxOrderData ? (maxOrderData.order ?? 0) + 1 : 0
+
+          categoryRelations.push({
+            magazine_id: magazine.id,
+            category_id: categoryId,
+            order: nextOrder,
+          })
+        }
 
         const { error: categoryError } = await supabase
           .from('magazine_categories')

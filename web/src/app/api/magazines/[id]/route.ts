@@ -214,6 +214,18 @@ export async function PUT(
 
     // 카테고리 관계 업데이트
     if (category_ids !== undefined) {
+      // 기존 카테고리 관계 조회 (order 포함)
+      const { data: existingRelations } = await supabase
+        .from('magazine_categories')
+        .select('category_id, order')
+        .eq('magazine_id', id)
+
+      // 기존 카테고리별 order를 맵으로 저장
+      const existingOrderMap = new Map<string, number>()
+      existingRelations?.forEach(rel => {
+        existingOrderMap.set(rel.category_id, rel.order ?? 0)
+      })
+
       // 기존 카테고리 관계 삭제
       await supabase
         .from('magazine_categories')
@@ -222,10 +234,33 @@ export async function PUT(
 
       // 새로운 카테고리 관계 추가
       if (category_ids.length > 0) {
-        const categoryRelations = category_ids.map((categoryId: string) => ({
-          magazine_id: id,
-          category_id: categoryId,
-        }))
+        const categoryRelations = []
+
+        for (const categoryId of category_ids) {
+          let order: number
+
+          if (existingOrderMap.has(categoryId)) {
+            // 기존에 있던 카테고리면 기존 order 유지
+            order = existingOrderMap.get(categoryId)!
+          } else {
+            // 새로운 카테고리면 해당 카테고리의 최대 order + 1
+            const { data: maxOrderData } = await supabase
+              .from('magazine_categories')
+              .select('order')
+              .eq('category_id', categoryId)
+              .order('order', { ascending: false })
+              .limit(1)
+              .single()
+
+            order = maxOrderData ? (maxOrderData.order ?? 0) + 1 : 0
+          }
+
+          categoryRelations.push({
+            magazine_id: id,
+            category_id: categoryId,
+            order,
+          })
+        }
 
         const { error: categoryError } = await supabase
           .from('magazine_categories')

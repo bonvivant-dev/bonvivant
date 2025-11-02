@@ -17,6 +17,7 @@ export interface Magazine {
   season_id: string | null
   category_ids: string[]
   categories?: Category[]
+  category_orders?: { [categoryId: string]: number }
   created_at: string
   updated_at: string | null
   // IAP 관련

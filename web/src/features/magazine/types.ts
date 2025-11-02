@@ -11,6 +11,7 @@ export interface Magazine {
   season_id: string | null
   category_ids: string[]
   categories?: Category[]
+  category_orders?: { [categoryId: string]: number }
   is_purchasable: boolean
   price: number | null
   product_id: string | null

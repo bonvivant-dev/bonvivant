@@ -49,6 +49,7 @@ export async function GET() {
         *,
         magazine_categories (
           category_id,
+          order,
           categories (
             id,
             name
@@ -64,12 +65,23 @@ export async function GET() {
       )
     }
 
-    // 매거진 데이터 정리 (category_ids 추가)
-    const processedMagazines = (magazines || []).map(magazine => ({
-      ...magazine,
-      category_ids: magazine.magazine_categories?.map((mc: any) => mc.category_id) || [],
-      categories: magazine.magazine_categories?.map((mc: any) => mc.categories).filter(Boolean) || [],
-    }))
+    // 매거진 데이터 정리 (category_ids와 order 정보 추가)
+    const processedMagazines = (magazines || []).map(magazine => {
+      // 카테고리별 order를 매핑으로 저장
+      const categoryOrders: { [categoryId: string]: number } = {}
+      magazine.magazine_categories?.forEach((mc: any) => {
+        if (mc.category_id) {
+          categoryOrders[mc.category_id] = mc.order ?? 0
+        }
+      })
+
+      return {
+        ...magazine,
+        category_ids: magazine.magazine_categories?.map((mc: any) => mc.category_id) || [],
+        categories: magazine.magazine_categories?.map((mc: any) => mc.categories).filter(Boolean) || [],
+        category_orders: categoryOrders,
+      }
+    })
 
     // 카테고리별로 매거진 그룹핑
     const result: MagazinesByCategory = {
@@ -79,9 +91,13 @@ export async function GET() {
 
     // 카테고리가 있는 매거진들을 카테고리별로 분류
     for (const category of sortedCategories) {
-      const categoryMagazines = processedMagazines.filter(magazine =>
-        magazine.category_ids.includes(category.id)
-      )
+      const categoryMagazines = processedMagazines
+        .filter(magazine => magazine.category_ids.includes(category.id))
+        .sort((a, b) => {
+          const orderA = a.category_orders[category.id] ?? 0
+          const orderB = b.category_orders[category.id] ?? 0
+          return orderA - orderB
+        })
 
       result.categories.push({
         id: category.id,
