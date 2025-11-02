@@ -58,7 +58,7 @@ export async function updateSession(request: NextRequest) {
       pathname.startsWith('/auth') ||
       pathname.startsWith('/error') ||
       pathname === '/' ||
-      pathname === '/about'
+      pathname.startsWith('/about')
     ) {
       return supabaseResponse
     }
