@@ -655,11 +655,11 @@ export default function MagazinesPage() {
                           </div>
                         ) : isEditing ? (
                           <div className="p-6">
-                            <div className="flex gap-4 overflow-x-auto pb-4">
+                            <div className="flex gap-4 overflow-x-auto">
                               {displayMagazines.map((magazine, index) => (
                                 <div
                                   key={magazine.id}
-                                  className="flex-shrink-0 w-[200px]"
+                                  className="flex-shrink-0 w-[220px]"
                                 >
                                   <DraggableMagazineCard
                                     magazine={magazine}
@@ -684,7 +684,7 @@ export default function MagazinesPage() {
                               className="magazine-swiper"
                             >
                               {category.magazines.map(magazine => (
-                                <SwiperSlide key={magazine.id}>
+                                <SwiperSlide key={magazine.id} className='max-w-[220px]'>
                                   <div
                                     className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer"
                                     onClick={() => handleEdit(magazine)}
