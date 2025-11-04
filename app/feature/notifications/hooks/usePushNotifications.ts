@@ -108,7 +108,6 @@ async function registerForPushNotificationsAsync() {
         projectId: 'f8aa4906-9f3f-4185-ba7d-05fad9da9fad',
       })
     ).data
-    console.log('Expo Push Token:', token)
   } else {
     alert('실제 기기에서만 푸시 알림을 사용할 수 있습니다.')
   }

@@ -21,7 +21,7 @@ export function useMagazinePurchase({
   onClose,
 }: UseMagazinePurchaseProps) {
   const router = useRouter()
-  const { refetchPurchasedMagazines } = usePurchasedMagazinesContext()
+  const { refetch: refetchPurchasedMagazines } = usePurchasedMagazinesContext()
 
   // 구매 여부 확인
   const { isPurchased, isChecking, refetch } = useMagazinePurchaseStatus(
