@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { verifyIOSReceipt, verifyAndroidReceipt } from '@/shared/utils/iap'
 import { supabaseServerClient } from '@/shared/utils/supabase/server'
 
 interface VerifyPurchaseRequest {
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
     if (!magazineId || !productId || !transactionId || !purchaseToken) {
       return NextResponse.json(
         { error: 'Missing required fields' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
     if (existingPurchase) {
       return NextResponse.json(
         { error: 'Purchase already exists', purchaseId: existingPurchase.id },
-        { status: 409 }
+        { status: 409 },
       )
     }
 
@@ -65,23 +66,70 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (magazineError || !magazine) {
-      return NextResponse.json(
-        { error: 'Magazine not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Magazine not found' }, { status: 404 })
     }
 
     // 상품 ID 검증
     if (magazine.product_id !== productId) {
       return NextResponse.json(
         { error: 'Product ID mismatch' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
-    // TODO: 실제 Apple/Google 영수증 검증
-    // iOS: https://developer.apple.com/documentation/appstorereceipts/verifyreceipt
-    // Android: https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.products/get
+    // 실제 Apple/Google 영수증 검증
+    let verificationResult
+    if (platform === 'ios') {
+      verificationResult = await verifyIOSReceipt(transactionId)
+      if (!verificationResult.isValid) {
+        return NextResponse.json(
+          {
+            error: 'iOS receipt verification failed',
+            details: verificationResult.error,
+          },
+          { status: 400 },
+        )
+      }
+
+      // 검증된 트랜잭션 정보와 요청 데이터 비교
+      const { transactionInfo } = verificationResult
+      if (transactionInfo && transactionInfo.productId !== productId) {
+        return NextResponse.json(
+          { error: 'Product ID mismatch' },
+          { status: 400 },
+        )
+      }
+    } else if (platform === 'android') {
+      // Android의 경우 packageName이 필요
+      const packageName = process.env.ANDROID_PACKAGE_NAME
+      if (!packageName) {
+        return NextResponse.json(
+          { error: 'Android package name not configured' },
+          { status: 500 },
+        )
+      }
+
+      verificationResult = await verifyAndroidReceipt(
+        packageName,
+        productId,
+        purchaseToken,
+      )
+
+      if (!verificationResult.isValid) {
+        return NextResponse.json(
+          {
+            error: 'Android receipt verification failed',
+            details: verificationResult.error,
+          },
+          { status: 400 },
+        )
+      }
+    } else {
+      return NextResponse.json(
+        { error: 'Unsupported platform' },
+        { status: 400 },
+      )
+    }
 
     // 구매 데이터 저장
     const { data: purchase, error: purchaseError } = await supabase
@@ -104,7 +152,7 @@ export async function POST(request: NextRequest) {
       console.error('Purchase save error:', purchaseError)
       return NextResponse.json(
         { error: 'Failed to save purchase' },
-        { status: 500 }
+        { status: 500 },
       )
     }
 
@@ -137,7 +185,7 @@ export async function POST(request: NextRequest) {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
