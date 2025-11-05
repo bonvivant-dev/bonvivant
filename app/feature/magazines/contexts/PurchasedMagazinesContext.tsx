@@ -1,7 +1,12 @@
 import React, { createContext, useContext, ReactNode } from 'react'
 
+import type { Magazine } from '../types'
+
 interface PurchasedMagazinesContextType {
-  refetchPurchasedMagazines: () => Promise<void>
+  magazines: Magazine[]
+  loading: boolean
+  error: string | null
+  refetch: () => Promise<void>
 }
 
 const PurchasedMagazinesContext = createContext<
@@ -11,9 +16,12 @@ const PurchasedMagazinesContext = createContext<
 export function usePurchasedMagazinesContext() {
   const context = useContext(PurchasedMagazinesContext)
   if (!context) {
-    // Context가 없으면 no-op 함수 반환 (구매 페이지가 library 외부에서도 사용될 수 있음)
+    // Context가 없으면 기본값 반환
     return {
-      refetchPurchasedMagazines: async () => {},
+      magazines: [],
+      loading: false,
+      error: null,
+      refetch: async () => {},
     }
   }
   return context
@@ -21,16 +29,22 @@ export function usePurchasedMagazinesContext() {
 
 interface PurchasedMagazinesProviderProps {
   children: ReactNode
+  magazines: Magazine[]
+  loading: boolean
+  error: string | null
   refetch: () => Promise<void>
 }
 
 export function PurchasedMagazinesProvider({
   children,
+  magazines,
+  loading,
+  error,
   refetch,
 }: PurchasedMagazinesProviderProps) {
   return (
     <PurchasedMagazinesContext.Provider
-      value={{ refetchPurchasedMagazines: refetch }}
+      value={{ magazines, loading, error, refetch }}
     >
       {children}
     </PurchasedMagazinesContext.Provider>

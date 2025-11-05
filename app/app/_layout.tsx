@@ -6,11 +6,13 @@ import { Alert } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 import { AuthProvider, useAuth } from '../feature/auth'
-import { usePushNotifications } from '../feature/notifications'
+import {
+  PurchasedMagazinesProvider,
+  usePurchasedMagazines,
+} from '../feature/magazines'
 
 function RootLayoutNav() {
   const { supabase } = useAuth()
-  const { expoPushToken } = usePushNotifications()
 
   useEffect(() => {
     // Handle deep links for email confirmation
@@ -78,13 +80,30 @@ function RootLayoutNav() {
   )
 }
 
+function AppProviders({ children }: { children: React.ReactNode }) {
+  const { magazines, loading, error, refetch } = usePurchasedMagazines()
+
+  return (
+    <PurchasedMagazinesProvider
+      magazines={magazines}
+      loading={loading}
+      error={error}
+      refetch={refetch}
+    >
+      {children}
+    </PurchasedMagazinesProvider>
+  )
+}
+
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
-        <OverlayProvider>
-          <RootLayoutNav />
-        </OverlayProvider>
+        <AppProviders>
+          <OverlayProvider>
+            <RootLayoutNav />
+          </OverlayProvider>
+        </AppProviders>
       </AuthProvider>
     </GestureHandlerRootView>
   )

@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { supabase } from '@/feature/shared'
 
+import { usePurchasedMagazinesContext } from '../contexts'
 import { useMagazinePurchase } from '../hooks'
 import { Magazine } from '../types'
 
@@ -54,6 +55,9 @@ export function MagazinePreviewBottomSheet({
     magazine,
     onClose,
   })
+
+  // 내 서재 데이터 refetch를 위한 context
+  const { refetch: refetchPurchasedMagazines } = usePurchasedMagazinesContext()
 
   if (!magazine) return null
 
@@ -118,6 +122,8 @@ export function MagazinePreviewBottomSheet({
 
       // 구매 상태 갱신
       await refetch()
+      // 내 서재 목록 갱신
+      await refetchPurchasedMagazines()
 
       Alert.alert('구매 완료', '(개발용) 매거진을 구매했습니다!', [
         {

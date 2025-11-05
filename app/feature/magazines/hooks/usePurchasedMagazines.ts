@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 
+import { useAuth } from '@/feature/auth/components'
 import { supabase } from '@/feature/shared'
 
 import type { Magazine } from '../types'
 
 export function usePurchasedMagazines() {
+  const { user } = useAuth()
   const [magazines, setMagazines] = useState<Magazine[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -68,7 +70,7 @@ export function usePurchasedMagazines() {
 
   useEffect(() => {
     fetchPurchasedMagazines()
-  }, [fetchPurchasedMagazines])
+  }, [fetchPurchasedMagazines, user])
 
   return {
     magazines,

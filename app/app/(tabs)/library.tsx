@@ -13,10 +13,7 @@ import {
   Dimensions,
 } from 'react-native'
 
-import {
-  usePurchasedMagazines,
-  PurchasedMagazinesProvider,
-} from '@/feature/magazines'
+import { usePurchasedMagazinesContext } from '@/feature/magazines'
 import { Button } from '@/feature/shared'
 import { thumbnail } from '@/feature/shared/utils'
 
@@ -49,7 +46,8 @@ function LibraryContent() {
     magazines,
     loading: magazinesLoading,
     error: magazinesError,
-  } = usePurchasedMagazines()
+    refetch,
+  } = usePurchasedMagazinesContext()
   const userName = user?.user_metadata?.full_name || ''
   const [showNameInputBottomSheet, setShowNameInputBottomSheet] =
     useState(false)
@@ -66,6 +64,10 @@ function LibraryContent() {
 
   const handleMagazinePress = (magazineId: string) => {
     router.push(`/magazine/${magazineId}/view`)
+  }
+
+  const handleRefresh = async () => {
+    await refetch()
   }
 
   if (loading) {
@@ -102,7 +104,12 @@ function LibraryContent() {
 
       {/* Purchased Magazines Grid */}
       <View style={styles.librarySection}>
-        <Text style={styles.libraryTitle}>내 서재</Text>
+        <View style={styles.libraryHeader}>
+          <Text style={styles.libraryTitle}>내 서재</Text>
+          <TouchableOpacity onPress={handleRefresh} style={styles.refreshButton}>
+            <Ionicons name="refresh" size={24} color="#007AFF" />
+          </TouchableOpacity>
+        </View>
 
         {magazinesLoading ? (
           <View style={styles.centered}>
@@ -164,13 +171,7 @@ function LibraryContent() {
 }
 
 export default function Library() {
-  const { refetch } = usePurchasedMagazines()
-
-  return (
-    <PurchasedMagazinesProvider refetch={refetch}>
-      <LibraryContent />
-    </PurchasedMagazinesProvider>
-  )
+  return <LibraryContent />
 }
 
 const styles = StyleSheet.create({
@@ -224,11 +225,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
   },
+  libraryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   libraryTitle: {
     fontSize: 22,
     fontWeight: '700',
     color: '#333',
-    marginBottom: 16,
+  },
+  refreshButton: {
+    padding: 8,
   },
   centered: {
     flex: 1,
