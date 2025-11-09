@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import React, { useState } from 'react'
 import {
@@ -19,7 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { supabase } from '@/feature/shared'
 
 import { usePurchasedMagazinesContext } from '../contexts'
-import { useMagazinePurchase } from '../hooks'
+import { useMagazinePurchase, useBookmarkStatus, useBookmarkToggle } from '../hooks'
 import { Magazine } from '../types'
 
 import { MagazinePreviewModal } from './MagazinePreviewModal'
@@ -47,9 +48,9 @@ export function MagazinePreviewBottomSheet({
     handlePurchase,
     isPurchased,
     isChecking,
-    isLoading,
-    connected,
-    products,
+    // isLoading,
+    // connected,
+    // products,
     refetch,
   } = useMagazinePurchase({
     magazine,
@@ -59,7 +60,30 @@ export function MagazinePreviewBottomSheet({
   // 내 서재 데이터 refetch를 위한 context
   const { refetch: refetchPurchasedMagazines } = usePurchasedMagazinesContext()
 
+  // 북마크 관련 hooks
+  const { isBookmarked, refetch: refetchBookmarkStatus } = useBookmarkStatus(
+    magazine?.id || ''
+  )
+  const { toggleBookmark, loading: bookmarkLoading } = useBookmarkToggle()
+
   if (!magazine) return null
+
+  const handleBookmarkPress = async () => {
+    try {
+      const result = await toggleBookmark(magazine.id)
+      await refetchBookmarkStatus()
+
+      // 찜 상태 변경 피드백
+      if (result.isBookmarked) {
+        Alert.alert('찜 완료', '매거진을 찜 목록에 추가했습니다.')
+      } else {
+        Alert.alert('찜 해제', '매거진을 찜 목록에서 제거했습니다.')
+      }
+    } catch (error) {
+      console.error('북마크 토글 실패:', error)
+      Alert.alert('오류', '찜 처리 중 오류가 발생했습니다.')
+    }
+  }
 
   const getCoverImageUrl = (magazine: Magazine) => {
     if (!magazine.cover_image) return null
@@ -161,6 +185,21 @@ export function MagazinePreviewBottomSheet({
       <SafeAreaView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
+          <TouchableOpacity
+            onPress={handleBookmarkPress}
+            style={styles.bookmarkButton}
+            disabled={bookmarkLoading}
+          >
+            {bookmarkLoading ? (
+              <ActivityIndicator size="small" color="#FF3B30" />
+            ) : (
+              <Ionicons
+                name={isBookmarked ? 'heart' : 'heart-outline'}
+                size={28}
+                color="#FF3B30"
+              />
+            )}
+          </TouchableOpacity>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Text style={styles.closeButtonText}>✕</Text>
           </TouchableOpacity>
@@ -196,15 +235,14 @@ export function MagazinePreviewBottomSheet({
             <TouchableOpacity
               style={[
                 styles.purchaseButton,
-                (isChecking || isProcessing || isLoading || !connected) &&
-                  styles.purchaseButtonDisabled,
+                (isChecking || isProcessing) && styles.purchaseButtonDisabled,
                 isPurchased && styles.purchaseButtonPurchased,
               ]}
               onPress={handlePurchase}
               activeOpacity={0.8}
-              disabled={isChecking || isProcessing || isLoading || !connected}
+              disabled={isChecking || isProcessing}
             >
-              {isChecking || isProcessing || isLoading || !connected ? (
+              {isChecking || isProcessing ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.purchaseButtonText}>
@@ -230,7 +268,7 @@ export function MagazinePreviewBottomSheet({
             </TouchableOpacity>
 
             {/* Development Only - Debug Info */}
-            <View style={styles.debugContainer}>
+            {/* <View style={styles.debugContainer}>
               <Text style={styles.debugTitle}>🔍 디버그 정보</Text>
               <Text style={styles.debugText}>
                 연결 상태: {connected ? '✅ 연결됨' : '❌ 연결 안됨'}
@@ -253,7 +291,7 @@ export function MagazinePreviewBottomSheet({
                   {'price' in products[0] ? products[0].price || 'N/A' : 'N/A'}
                 </Text>
               )}
-            </View>
+            </View> */}
           </View>
 
           {/* Introduction */}
@@ -314,11 +352,18 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
+  },
+  bookmarkButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   closeButton: {
     width: 32,

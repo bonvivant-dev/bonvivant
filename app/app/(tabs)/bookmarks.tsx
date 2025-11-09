@@ -17,6 +17,7 @@ import { useAuth } from '@/feature/auth/components'
 import {
   MagazinePreviewBottomSheet,
   Magazine,
+  useBookmarks,
 } from '@/feature/magazines'
 import { Button } from '@/feature/shared'
 import { thumbnail } from '@/feature/shared/utils'
@@ -44,11 +45,12 @@ function LoginRequired() {
 
 function BookmarksContent() {
   const { user, loading } = useAuth()
-
-  // TODO: 북마크 데이터를 가져오는 hook 추가 예정
-  const bookmarks: Magazine[] = []
-  const bookmarksLoading = false
-  const bookmarksError = null
+  const {
+    magazines: bookmarks,
+    loading: bookmarksLoading,
+    error: bookmarksError,
+    refetch,
+  } = useBookmarks()
 
   const handleMagazinePress = (magazine: Magazine) => {
     overlay.open(({ isOpen, close }) => (
@@ -73,11 +75,18 @@ function BookmarksContent() {
     return <LoginRequired />
   }
 
+  const handleRefresh = async () => {
+    await refetch()
+  }
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>찜한 매거진</Text>
+        <TouchableOpacity onPress={handleRefresh} style={styles.refreshButton}>
+          <Ionicons name="refresh" size={24} color="#007AFF" />
+        </TouchableOpacity>
       </View>
 
       {/* Bookmarked Magazines Grid */}
@@ -152,6 +161,9 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
@@ -161,6 +173,9 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
+  },
+  refreshButton: {
+    padding: 8,
   },
   loadingText: {
     marginTop: 10,
