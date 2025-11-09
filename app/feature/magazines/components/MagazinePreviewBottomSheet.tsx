@@ -17,6 +17,7 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
+import { useAuth } from '@/feature/auth/components'
 import { supabase } from '@/feature/shared'
 
 import { usePurchasedMagazinesContext } from '../contexts'
@@ -39,6 +40,7 @@ export function MagazinePreviewBottomSheet({
   onClose,
 }: MagazinePreviewBottomSheetProps) {
   const router = useRouter()
+  const { user } = useAuth()
   const [isImageViewerVisible, setIsImageViewerVisible] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -69,6 +71,24 @@ export function MagazinePreviewBottomSheet({
   if (!magazine) return null
 
   const handleBookmarkPress = async () => {
+    // 로그인 체크
+    if (!user) {
+      Alert.alert('로그인 필요', '로그인 후 이용해주세요.', [
+        {
+          text: '취소',
+          style: 'cancel',
+        },
+        {
+          text: '로그인',
+          onPress: () => {
+            onClose()
+            router.push('/login')
+          },
+        },
+      ])
+      return
+    }
+
     try {
       const result = await toggleBookmark(magazine.id)
       await refetchBookmarkStatus()
