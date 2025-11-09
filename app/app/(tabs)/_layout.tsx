@@ -18,14 +18,28 @@ export default function TabLayout() {
           ),
         }}
       />
+        <Tabs.Screen
+          name="library"
+          options={{
+            title: '내 서재',
+            headerShown: false,
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons
+                name={focused ? 'library' : 'library-outline'}
+                size={24}
+                color={color}
+              />
+            ),
+          }}
+        />
       <Tabs.Screen
-        name="library"
+        name="bookmarks"
         options={{
-          title: '내 서재',
+          title: '찜',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? 'library' : 'library-outline'}
+              name={focused ? 'heart' : 'heart-outline'}
               size={24}
               color={color}
             />
