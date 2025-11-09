@@ -9,6 +9,8 @@ import { AuthProvider, useAuth } from '../feature/auth'
 import {
   PurchasedMagazinesProvider,
   usePurchasedMagazines,
+  BookmarksProvider,
+  useBookmarks,
 } from '../feature/magazines'
 
 function RootLayoutNav() {
@@ -81,16 +83,35 @@ function RootLayoutNav() {
 }
 
 function AppProviders({ children }: { children: React.ReactNode }) {
-  const { magazines, loading, error, refetch } = usePurchasedMagazines()
+  const {
+    magazines: purchasedMagazines,
+    loading: purchasedLoading,
+    error: purchasedError,
+    refetch: refetchPurchased,
+  } = usePurchasedMagazines()
+
+  const {
+    magazines: bookmarkedMagazines,
+    loading: bookmarksLoading,
+    error: bookmarksError,
+    refetch: refetchBookmarks,
+  } = useBookmarks()
 
   return (
     <PurchasedMagazinesProvider
-      magazines={magazines}
-      loading={loading}
-      error={error}
-      refetch={refetch}
+      magazines={purchasedMagazines}
+      loading={purchasedLoading}
+      error={purchasedError}
+      refetch={refetchPurchased}
     >
-      {children}
+      <BookmarksProvider
+        magazines={bookmarkedMagazines}
+        loading={bookmarksLoading}
+        error={bookmarksError}
+        refetch={refetchBookmarks}
+      >
+        {children}
+      </BookmarksProvider>
     </PurchasedMagazinesProvider>
   )
 }

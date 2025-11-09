@@ -17,7 +17,7 @@ import { useAuth } from '@/feature/auth/components'
 import {
   MagazinePreviewBottomSheet,
   Magazine,
-  useBookmarks,
+  useBookmarksContext,
 } from '@/feature/magazines'
 import { Button } from '@/feature/shared'
 import { thumbnail } from '@/feature/shared/utils'
@@ -43,14 +43,14 @@ function LoginRequired() {
   )
 }
 
-function BookmarksContent() {
+export default function Bookmarks() {
   const { user, loading } = useAuth()
   const {
     magazines: bookmarks,
     loading: bookmarksLoading,
     error: bookmarksError,
     refetch,
-  } = useBookmarks()
+  } = useBookmarksContext()
 
   const handleMagazinePress = (magazine: Magazine) => {
     overlay.open(({ isOpen, close }) => (
@@ -142,10 +142,6 @@ function BookmarksContent() {
       </View>
     </View>
   )
-}
-
-export default function Bookmarks() {
-  return <BookmarksContent />
 }
 
 const styles = StyleSheet.create({

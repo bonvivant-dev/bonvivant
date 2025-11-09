@@ -20,7 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth } from '@/feature/auth/components'
 import { supabase } from '@/feature/shared'
 
-import { usePurchasedMagazinesContext } from '../contexts'
+import { usePurchasedMagazinesContext, useBookmarksContext } from '../contexts'
 import { useMagazinePurchase, useBookmarkStatus, useBookmarkToggle } from '../hooks'
 import { Magazine } from '../types'
 
@@ -62,6 +62,9 @@ export function MagazinePreviewBottomSheet({
   // 내 서재 데이터 refetch를 위한 context
   const { refetch: refetchPurchasedMagazines } = usePurchasedMagazinesContext()
 
+  // 찜 목록 데이터 refetch를 위한 context
+  const { refetch: refetchBookmarks } = useBookmarksContext()
+
   // 북마크 관련 hooks
   const { isBookmarked, refetch: refetchBookmarkStatus } = useBookmarkStatus(
     magazine?.id || ''
@@ -92,6 +95,8 @@ export function MagazinePreviewBottomSheet({
     try {
       const result = await toggleBookmark(magazine.id)
       await refetchBookmarkStatus()
+      // 찜 목록 갱신
+      await refetchBookmarks()
 
       // 찜 상태 변경 피드백
       if (result.isBookmarked) {
