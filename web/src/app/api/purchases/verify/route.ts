@@ -46,10 +46,34 @@ export async function POST(request: NextRequest) {
       currency,
     } = body
 
+    console.log('📥 Received purchase verification request:', {
+      magazineId,
+      productId,
+      transactionId,
+      purchaseToken: purchaseToken ? '✅ exists' : '❌ missing',
+      platform,
+      price,
+      currency,
+    })
+
     // 필수 필드 검증
     if (!magazineId || !productId || !transactionId || !purchaseToken) {
+      console.error('❌ Missing required fields:', {
+        magazineId: !!magazineId,
+        productId: !!productId,
+        transactionId: !!transactionId,
+        purchaseToken: !!purchaseToken,
+      })
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        {
+          error: 'Missing required fields',
+          details: {
+            magazineId: !!magazineId,
+            productId: !!productId,
+            transactionId: !!transactionId,
+            purchaseToken: !!purchaseToken,
+          },
+        },
         { status: 400 },
       )
     }

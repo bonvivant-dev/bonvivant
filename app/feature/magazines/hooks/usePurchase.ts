@@ -22,12 +22,7 @@ export function usePurchase({
   onSuccess?: () => void
 }) {
   const [isLoading, setIsLoading] = useState(false)
-  const {
-    connected,
-    fetchProducts,
-    requestPurchase,
-    products,
-  } = useIAP({
+  const { connected, fetchProducts, requestPurchase, products } = useIAP({
     onPurchaseSuccess: async (purchase: Purchase) => {
       const result = await validatePurchase(purchase)
 
@@ -131,27 +126,39 @@ export function usePurchase({
         throw new Error('로그인이 필요합니다.')
       }
 
+      // Android와 iOS에서 transaction ID 필드명이 다를 수 있음
+      const transactionId =
+        Platform.OS === 'android'
+          ? purchase.transactionId || (purchase as any).orderId
+          : purchase.transactionId
+
+      const requestBody = {
+        magazineId: magazine.id,
+        productId: magazineProductId,
+        transactionId,
+        purchaseToken: purchase.purchaseToken,
+        platform: Platform.OS,
+        price: magazine.price,
+        currency: 'KRW',
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/purchases/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({
-          magazineId: magazine.id,
-          productId: magazineProductId,
-          transactionId: purchase.transactionId,
-          purchaseToken: purchase.purchaseToken,
-          platform: Platform.OS,
-          price: magazine.price,
-          currency: 'KRW',
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || '서버 검증에 실패했습니다.')
+        const errorMessage = result.error || '서버 검증에 실패했습니다.'
+        const details = result.details
+          ? `\n\n상세 정보:\n${JSON.stringify(result.details, null, 2)}`
+          : ''
+        throw new Error(errorMessage + details)
       }
 
       return true
