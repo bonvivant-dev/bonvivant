@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback } from 'react'
 import { Platform, Alert } from 'react-native'
 import {
   Purchase,
-  PurchaseAndroid,
   useIAP,
   finishTransaction,
   ErrorCode,
@@ -27,7 +26,6 @@ export function usePurchase({
     connected,
     fetchProducts,
     requestPurchase,
-    validateReceipt,
     products,
   } = useIAP({
     onPurchaseSuccess: async (purchase: Purchase) => {
@@ -36,6 +34,7 @@ export function usePurchase({
       if (result) {
         await finishTransaction({
           purchase,
+          isConsumable: true,
         })
         onSuccess?.()
       }
@@ -112,32 +111,8 @@ export function usePurchase({
   // 영수증 검증
   const validatePurchase = async (purchase: Purchase) => {
     try {
-      // 1단계: react-native-iap의 validateReceipt로 기본 검증
-      let receiptValidation
-      if (Platform.OS === 'ios') {
-        receiptValidation = await validateReceipt(magazineProductId)
-      } else if (Platform.OS === 'android') {
-        const purchaseToken = purchase.purchaseToken
-        const packageName = (purchase as PurchaseAndroid).packageNameAndroid
-        if (!purchaseToken || !packageName) {
-          throw new Error(
-            'Android validation requires packageName and productToken'
-          )
-        }
-        receiptValidation = await validateReceipt(magazineProductId, {
-          packageName,
-          productToken: purchaseToken,
-          accessToken: '',
-          isSub: false,
-        })
-      }
-
-      // validateReceipt 실패 시 중단
-      if (!receiptValidation?.isValid) {
-        throw new Error('영수증이 유효하지 않습니다.')
-      }
-
-      // 2단계: Next.js API로 서버 측 검증 및 DB 저장
+      // 서버 측 검증 및 DB 저장
+      // (클라이언트 검증은 보안상 제거하고 서버 검증만 사용)
       const { data: magazine, error: magazineError } = await supabase
         .from('magazines')
         .select('id, price')
