@@ -13,23 +13,18 @@
       "supportsTablet": true,
       "buildNumber": "16",
       "infoPlist": {
-        "UIBackgroundModes": [
-          "remote-notification"
-        ]
+        "UIBackgroundModes": ["remote-notification"]
       }
     },
     "android": {
       "package": "com.bonvivant.app",
-      "versionCode": 1,
+      "versionCode": 3,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "permissions": [
-        "RECEIVE_BOOT_COMPLETED",
-        "com.android.vending.BILLING"
-      ]
+      "permissions": ["RECEIVE_BOOT_COMPLETED", "com.android.vending.BILLING"]
     },
     "web": {
       "bundler": "metro",
