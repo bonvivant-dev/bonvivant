@@ -21,7 +21,11 @@ import { useAuth } from '@/feature/auth/components'
 import { supabase } from '@/feature/shared'
 
 import { usePurchasedMagazinesContext, useBookmarksContext } from '../contexts'
-import { useMagazinePurchase, useBookmarkStatus, useBookmarkToggle } from '../hooks'
+import {
+  useMagazinePurchase,
+  useBookmarkStatus,
+  useBookmarkToggle,
+} from '../hooks'
 import { Magazine } from '../types'
 
 import { MagazinePreviewModal } from './MagazinePreviewModal'
@@ -50,9 +54,9 @@ export function MagazinePreviewBottomSheet({
     handlePurchase,
     isPurchased,
     isChecking,
-    // isLoading,
-    // connected,
-    // products,
+    isLoading,
+    connected,
+    products,
     refetch,
   } = useMagazinePurchase({
     magazine,
@@ -260,12 +264,13 @@ export function MagazinePreviewBottomSheet({
             <TouchableOpacity
               style={[
                 styles.purchaseButton,
-                (isChecking || isProcessing) && styles.purchaseButtonDisabled,
+                (isChecking || isProcessing || isLoading || !connected) &&
+                  styles.purchaseButtonDisabled,
                 isPurchased && styles.purchaseButtonPurchased,
               ]}
               onPress={handlePurchase}
               activeOpacity={0.8}
-              disabled={isChecking || isProcessing}
+              disabled={isChecking || isProcessing || isLoading || !connected}
             >
               {isChecking || isProcessing ? (
                 <ActivityIndicator color="#fff" />
@@ -281,7 +286,7 @@ export function MagazinePreviewBottomSheet({
               style={styles.devButton}
               onPress={handleMockPurchase}
               activeOpacity={0.8}
-              disabled={isChecking || isProcessing}
+              disabled={isChecking || isProcessing || isLoading || !connected}
             >
               {isChecking || isProcessing ? (
                 <ActivityIndicator color="#fff" />
@@ -293,7 +298,7 @@ export function MagazinePreviewBottomSheet({
             </TouchableOpacity>
 
             {/* Development Only - Debug Info */}
-            {/* <View style={styles.debugContainer}>
+            <View style={styles.debugContainer}>
               <Text style={styles.debugTitle}>🔍 디버그 정보</Text>
               <Text style={styles.debugText}>
                 연결 상태: {connected ? '✅ 연결됨' : '❌ 연결 안됨'}
@@ -316,7 +321,7 @@ export function MagazinePreviewBottomSheet({
                   {'price' in products[0] ? products[0].price || 'N/A' : 'N/A'}
                 </Text>
               )}
-            </View> */}
+            </View>
           </View>
 
           {/* Introduction */}

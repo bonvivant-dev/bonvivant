@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router'
 import { Alert } from 'react-native'
 
-// import { usePurchasedMagazinesContext } from '../contexts'
+import { usePurchasedMagazinesContext } from '../contexts'
 import { Magazine } from '../types'
 
 import { useMagazinePurchaseStatus } from './useMagazinePurchaseStatus'
-// import { usePurchase } from './usePurchase'
+import { usePurchase } from './usePurchase'
 
 interface UseMagazinePurchaseProps {
   magazine: Magazine | null
@@ -21,7 +21,7 @@ export function useMagazinePurchase({
   onClose,
 }: UseMagazinePurchaseProps) {
   const router = useRouter()
-  // const { refetch: refetchPurchasedMagazines } = usePurchasedMagazinesContext()
+  const { refetch: refetchPurchasedMagazines } = usePurchasedMagazinesContext()
 
   // 구매 여부 확인
   const { isPurchased, isChecking, refetch } = useMagazinePurchaseStatus(
@@ -29,17 +29,17 @@ export function useMagazinePurchase({
   )
 
   // 실제 구매 처리
-  // const purchaseHook = usePurchase({
-  //   magazineProductId: magazine?.product_id || '',
-  //   onSuccess: async () => {
-  //     // 구매 상태 갱신
-  //     await refetch()
-  //     // 내 서재 목록 갱신
-  //     await refetchPurchasedMagazines()
-  //     onClose()
-  //     router.push(`/magazine/${magazine?.id}/view`)
-  //   },
-  // })
+  const purchaseHook = usePurchase({
+    magazineProductId: magazine?.product_id || '',
+    onSuccess: async () => {
+      // 구매 상태 갱신
+      await refetch()
+      // 내 서재 목록 갱신
+      await refetchPurchasedMagazines()
+      onClose()
+      router.push(`/magazine/${magazine?.id}/view`)
+    },
+  })
 
   const handlePurchase = async () => {
     if (!magazine) return
@@ -58,7 +58,7 @@ export function useMagazinePurchase({
     }
 
     // 구매 진행
-    // await purchaseHook.buyMagazine()
+    await purchaseHook.buyMagazine()
   }
 
   return {
@@ -66,6 +66,6 @@ export function useMagazinePurchase({
     isPurchased,
     isChecking,
     refetch,
-    // ...purchaseHook,
+    ...purchaseHook,
   }
 }
