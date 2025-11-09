@@ -15,13 +15,23 @@ interface VerifyPurchaseRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // Authorization 헤더에서 Bearer 토큰 추출
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.replace('Bearer ', '')
+
+    if (!token) {
+      return NextResponse.json({ error: 'Missing authorization token' }, { status: 401 })
+    }
+
     const supabase = await supabaseServerClient()
 
+    // Bearer 토큰으로 사용자 인증
     const {
       data: { user },
-    } = await supabase.auth.getUser()
+      error: authError,
+    } = await supabase.auth.getUser(token)
 
-    if (!user) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
