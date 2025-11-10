@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing authorization token' }, { status: 401 })
     }
 
+    // 사용자 인증용 클라이언트 (일반 키)
     const supabase = await supabaseServerClient()
 
     // Bearer 토큰으로 사용자 인증
@@ -34,6 +35,9 @@ export async function POST(request: NextRequest) {
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // DB 작업용 클라이언트 (Service Role - RLS 우회)
+    const supabaseAdmin = await supabaseServerClient(true)
 
     const body: VerifyPurchaseRequest = await request.json()
     const {
@@ -79,7 +83,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 중복 구매 확인
-    const { data: existingPurchase } = await supabase
+    const { data: existingPurchase } = await supabaseAdmin
       .from('purchases')
       .select('id')
       .eq('transaction_id', transactionId)
@@ -93,7 +97,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 매거진 정보 조회
-    const { data: magazine, error: magazineError } = await supabase
+    const { data: magazine, error: magazineError } = await supabaseAdmin
       .from('magazines')
       .select('product_id, price, is_purchasable')
       .eq('id', magazineId)
@@ -165,8 +169,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 구매 데이터 저장
-    const { data: purchase, error: purchaseError } = await supabase
+    // 구매 데이터 저장 (Service Role로 RLS 우회)
+    const { data: purchase, error: purchaseError } = await supabaseAdmin
       .from('purchases')
       .insert({
         user_id: user.id,
@@ -190,8 +194,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // transaction_logs에 로그 저장
-    const { error: logError } = await supabase.from('transaction_logs').insert({
+    // transaction_logs에 로그 저장 (Service Role로 RLS 우회)
+    const { error: logError } = await supabaseAdmin.from('transaction_logs').insert({
       user_id: user.id,
       magazine_id: magazineId,
       transaction_id: transactionId,
