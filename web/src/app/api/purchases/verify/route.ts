@@ -187,6 +187,22 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (purchaseError) {
+      // 중복 키 에러 (23505)인 경우, 이미 처리된 구매로 간주하고 성공 응답
+      if (purchaseError.code === '23505') {
+        console.log('⚠️ Duplicate transaction detected, returning existing purchase')
+        const { data: existingPurchase } = await supabaseAdmin
+          .from('purchases')
+          .select()
+          .eq('transaction_id', transactionId)
+          .single()
+
+        return NextResponse.json({
+          success: true,
+          purchase: existingPurchase,
+          message: 'Purchase already processed',
+        })
+      }
+
       console.error('Purchase save error:', purchaseError)
       return NextResponse.json(
         { error: 'Failed to save purchase' },
