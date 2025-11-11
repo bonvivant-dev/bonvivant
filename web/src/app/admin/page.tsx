@@ -16,7 +16,7 @@ export default function Home() {
                 <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
                   관리자 대시보드
                 </h3>
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   <Link href="/admin/magazines">
                     <div className="bg-green-50 overflow-hidden shadow rounded-lg cursor-pointer hover:bg-green-100 transition-colors">
                       <div className="p-5">
@@ -78,6 +78,42 @@ export default function Home() {
                             <dl>
                               <dt className="text-sm font-medium text-gray-500 truncate">
                                 알림 관리
+                              </dt>
+                              <dd className="text-lg font-medium text-gray-900">
+                                클릭하여 이동
+                              </dd>
+                            </dl>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+
+                  <Link href="/admin/purchases">
+                    <div className="bg-blue-50 overflow-hidden shadow rounded-lg cursor-pointer hover:bg-blue-100 transition-colors">
+                      <div className="p-5">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0">
+                            <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center">
+                              <svg
+                                className="w-5 h-5 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                                />
+                              </svg>
+                            </div>
+                          </div>
+                          <div className="ml-5 w-0 flex-1">
+                            <dl>
+                              <dt className="text-sm font-medium text-gray-500 truncate">
+                                구매 내역
                               </dt>
                               <dd className="text-lg font-medium text-gray-900">
                                 클릭하여 이동
