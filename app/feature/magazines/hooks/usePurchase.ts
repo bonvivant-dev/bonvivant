@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Platform, Alert } from 'react-native'
 import {
   Purchase,
@@ -22,9 +22,6 @@ export function usePurchase({
   onSuccess?: () => void
 }) {
   const [isLoading, setIsLoading] = useState(false)
-  const isValidatingRef = useRef(false)
-  const processedTransactionsRef = useRef<Set<string>>(new Set())
-
   const { connected, fetchProducts, requestPurchase, products } = useIAP({
     onPurchaseSuccess: async (purchase: Purchase) => {
       const result = await validatePurchase(purchase)
@@ -108,27 +105,6 @@ export function usePurchase({
 
   // 영수증 검증
   const validatePurchase = async (purchase: Purchase) => {
-    // 중복 처리 방지: 이미 검증 중이면 스킵
-    if (isValidatingRef.current) {
-      console.log('⏭️ Already validating a purchase, skipping...')
-      return false
-    }
-
-    // transactionId 추출 (임시)
-    const tempTransactionId =
-      Platform.OS === 'android'
-        ? purchase.transactionId || (purchase as any).orderId || purchase.purchaseToken
-        : purchase.transactionId || purchase.purchaseToken
-
-    // 이미 처리한 transaction인지 확인
-    if (processedTransactionsRef.current.has(tempTransactionId)) {
-      console.log('⏭️ Transaction already processed, skipping:', tempTransactionId)
-      return false
-    }
-
-    isValidatingRef.current = true
-    processedTransactionsRef.current.add(tempTransactionId)
-
     try {
       // 서버 측 검증 및 DB 저장
       // (클라이언트 검증은 보안상 제거하고 서버 검증만 사용)
@@ -193,8 +169,6 @@ export function usePurchase({
         error instanceof Error ? error.message : '영수증 검증에 실패했습니다.'
       )
       return false
-    } finally {
-      isValidatingRef.current = false
     }
   }
 
