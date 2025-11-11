@@ -11,6 +11,7 @@ interface VerifyPurchaseRequest {
   platform: 'ios' | 'android'
   price?: number
   currency?: string
+  rawPurchase?: any // 🔍 디버깅용: purchase 객체 전체
 }
 
 export async function POST(request: NextRequest) {
@@ -48,6 +49,7 @@ export async function POST(request: NextRequest) {
       platform,
       price,
       currency,
+      rawPurchase,
     } = body
 
     console.log('📥 Received purchase verification request:', {
@@ -59,6 +61,12 @@ export async function POST(request: NextRequest) {
       price,
       currency,
     })
+
+    // 🔍 디버깅: purchase 객체 전체 로그
+    if (rawPurchase) {
+      console.log('🔍 Raw Purchase Object:')
+      console.log(JSON.stringify(rawPurchase, null, 2))
+    }
 
     // 필수 필드 검증
     if (!magazineId || !productId || !transactionId || !purchaseToken) {

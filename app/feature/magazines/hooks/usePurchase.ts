@@ -166,6 +166,7 @@ export function usePurchase({
         platform: Platform.OS,
         price: magazine.price,
         currency: 'KRW',
+        rawPurchase: purchase,
       }
 
       const response = await fetch(`${API_BASE_URL}/api/purchases/verify`, {
