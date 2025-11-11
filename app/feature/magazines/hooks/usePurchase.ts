@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { Platform, Alert } from 'react-native'
 import {
   Purchase,
@@ -22,6 +22,9 @@ export function usePurchase({
   onSuccess?: () => void
 }) {
   const [isLoading, setIsLoading] = useState(false)
+  const isValidatingRef = useRef(false)
+  const processedTransactionsRef = useRef<Set<string>>(new Set())
+
   const { connected, fetchProducts, requestPurchase, products } = useIAP({
     onPurchaseSuccess: async (purchase: Purchase) => {
       const result = await validatePurchase(purchase)
@@ -105,6 +108,35 @@ export function usePurchase({
 
   // 영수증 검증
   const validatePurchase = async (purchase: Purchase) => {
+    // 🔍 디버깅: purchase 객체 전체 출력
+    console.log('🔍 Purchase object received:')
+    console.log(JSON.stringify(purchase, null, 2))
+    console.log('🔍 purchase.transactionId:', purchase.transactionId)
+    console.log('🔍 purchase.orderId:', (purchase as any).orderId)
+    console.log('🔍 purchase.purchaseToken:', purchase.purchaseToken)
+
+    // 중복 처리 방지: 이미 검증 중이면 스킵
+    if (isValidatingRef.current) {
+      console.log('⏭️ Already validating a purchase, skipping...')
+      return false
+    }
+
+    // transactionId 추출 (purchaseToken을 fallback으로 사용)
+    const transactionId =
+      Platform.OS === 'android'
+        ? purchase.transactionId ||
+          (purchase as any).orderId ||
+          purchase.purchaseToken
+        : purchase.transactionId || purchase.purchaseToken
+
+    // 이미 처리한 transaction인지 확인
+    if (processedTransactionsRef.current.has(transactionId)) {
+      console.log('⏭️ Transaction already processed, skipping:', transactionId)
+      return false
+    }
+
+    isValidatingRef.current = true
+
     try {
       // 서버 측 검증 및 DB 저장
       // (클라이언트 검증은 보안상 제거하고 서버 검증만 사용)
@@ -125,12 +157,6 @@ export function usePurchase({
       if (!session) {
         throw new Error('로그인이 필요합니다.')
       }
-
-      // Android와 iOS에서 transaction ID 필드명이 다를 수 있음
-      const transactionId =
-        Platform.OS === 'android'
-          ? purchase.transactionId || (purchase as any).orderId
-          : purchase.transactionId
 
       const requestBody = {
         magazineId: magazine.id,
@@ -161,6 +187,10 @@ export function usePurchase({
         throw new Error(errorMessage + details)
       }
 
+      // 성공 시에만 처리된 transaction으로 기록
+      processedTransactionsRef.current.add(transactionId)
+      console.log('✅ Purchase verified successfully')
+
       return true
     } catch (error) {
       console.error('Validation failed:', error)
@@ -169,6 +199,8 @@ export function usePurchase({
         error instanceof Error ? error.message : '영수증 검증에 실패했습니다.'
       )
       return false
+    } finally {
+      isValidatingRef.current = false
     }
   }
 
