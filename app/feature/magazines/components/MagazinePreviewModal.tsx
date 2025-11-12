@@ -9,6 +9,7 @@ import {
   Dimensions,
   FlatList,
   Alert,
+  ActivityIndicator,
 } from 'react-native'
 
 import { supabase } from '@/feature/shared'
@@ -36,7 +37,7 @@ export function MagazinePreviewModal({
   const hasShownPurchaseAlert = useRef(false)
 
   // 통합 구매 처리 hook
-  const { handlePurchase, isPurchased } = useMagazinePurchase({
+  const { handlePurchase, isPurchased, isLoading } = useMagazinePurchase({
     magazine,
     onClose,
   })
@@ -158,6 +159,16 @@ export function MagazinePreviewModal({
             </Text>
           </View>
         </View>
+
+        {/* Loading Overlay */}
+        {isLoading && (
+          <View style={styles.loadingOverlay}>
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#fff" />
+              <Text style={styles.loadingText}>구매 처리 중...</Text>
+            </View>
+          </View>
+        )}
       </View>
     </Modal>
   )
@@ -234,6 +245,29 @@ const styles = StyleSheet.create({
   imageViewerPageText: {
     fontSize: 14,
     color: '#fff',
+    fontWeight: '600',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  loadingContainer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    padding: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    fontSize: 16,
+    marginTop: 12,
     fontWeight: '600',
   },
 })

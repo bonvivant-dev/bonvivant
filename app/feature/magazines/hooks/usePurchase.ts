@@ -27,14 +27,19 @@ export function usePurchase({
 
   const { connected, fetchProducts, requestPurchase, products } = useIAP({
     onPurchaseSuccess: async (purchase: Purchase) => {
+      console.log('🎯 onPurchaseSuccess called:', purchase.transactionId)
+
       const result = await validatePurchase(purchase)
 
       if (result) {
+        console.log('✅ Validation successful, finishing transaction...')
         await finishTransaction({
           purchase,
           isConsumable: true,
         })
         onSuccess?.()
+      } else {
+        console.log('❌ Validation failed or skipped')
       }
       setIsLoading(false)
     },
@@ -115,12 +120,6 @@ export function usePurchase({
     console.log('🔍 purchase.orderId:', (purchase as any).orderId)
     console.log('🔍 purchase.purchaseToken:', purchase.purchaseToken)
 
-    // 중복 처리 방지: 이미 검증 중이면 스킵
-    if (isValidatingRef.current) {
-      console.log('⏭️ Already validating a purchase, skipping...')
-      return false
-    }
-
     // transactionId 추출 (purchaseToken을 fallback으로 사용)
     const transactionId =
       Platform.OS === 'android'
@@ -129,6 +128,16 @@ export function usePurchase({
           purchase.purchaseToken
         : purchase.transactionId || purchase.purchaseToken
 
+    console.log('🔍 validatePurchase called for transaction:', transactionId)
+    console.log('🔍 isValidatingRef.current:', isValidatingRef.current)
+    console.log('🔍 processedTransactions:', Array.from(processedTransactionsRef.current))
+
+    // 중복 처리 방지: 이미 검증 중이면 스킵
+    if (isValidatingRef.current) {
+      console.log('⏭️ Already validating a purchase, skipping...')
+      return false
+    }
+
     // 이미 처리한 transaction인지 확인
     if (processedTransactionsRef.current.has(transactionId)) {
       console.log('⏭️ Transaction already processed, skipping:', transactionId)
@@ -136,6 +145,7 @@ export function usePurchase({
     }
 
     isValidatingRef.current = true
+    console.log('🚀 Starting validation for:', transactionId)
 
     try {
       // 서버 측 검증 및 DB 저장

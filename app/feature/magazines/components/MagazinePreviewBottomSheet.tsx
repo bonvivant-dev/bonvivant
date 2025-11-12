@@ -272,7 +272,7 @@ export function MagazinePreviewBottomSheet({
               activeOpacity={0.8}
               disabled={isChecking || isProcessing || isLoading || !connected}
             >
-              {isChecking || isProcessing ? (
+              {isChecking || isProcessing || isLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.purchaseButtonText}>
