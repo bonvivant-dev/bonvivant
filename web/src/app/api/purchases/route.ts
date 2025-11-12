@@ -4,10 +4,34 @@ import { supabaseServerClient } from '@/shared/utils/supabase/server'
 
 export async function GET() {
   try {
-    // 관리자 인증 체크 (필요시 추가)
-    const supabase = await supabaseServerClient(true) // Admin client 사용
+    const supabase = await supabaseServerClient()
+
+    // 현재 사용자 확인
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Admin 권한 확인
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || profile.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Forbidden: Admin access required' },
+        { status: 403 },
+      )
+    }
 
     // 구매 내역 조회 (magazine 정보만 join)
+    // RLS policy로 admin은 모든 구매 내역 조회 가능
     const { data: purchases, error } = await supabase
       .from('purchases')
       .select(
@@ -36,8 +60,9 @@ export async function GET() {
       )
     }
 
-    // 사용자 정보를 별도로 조회
-    const { data: users } = await supabase.auth.admin.listUsers()
+    // 사용자 정보를 별도로 조회 (Service Role 필요)
+    const supabaseAdmin = await supabaseServerClient(true)
+    const { data: users } = await supabaseAdmin.auth.admin.listUsers()
 
     // user_id로 이메일 매핑
     const userEmailMap = new Map(
