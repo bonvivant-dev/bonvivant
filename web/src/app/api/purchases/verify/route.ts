@@ -206,6 +206,7 @@ export async function POST(request: NextRequest) {
     const { error: logError } = await supabaseAdmin.from('transaction_logs').insert({
       user_id: user.id,
       magazine_id: magazineId,
+      purchase_id: purchase.id,
       transaction_id: transactionId,
       platform: platform,
       product_id: productId,
@@ -213,6 +214,8 @@ export async function POST(request: NextRequest) {
       currency: currency || 'KRW',
       status: 'success',
       raw_receipt: purchaseToken,
+      request_data: rawPurchase || body,
+      response_data: verificationResult,
     })
 
     if (logError) {
