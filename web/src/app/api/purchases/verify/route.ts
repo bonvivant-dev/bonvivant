@@ -196,6 +196,25 @@ export async function POST(request: NextRequest) {
 
     if (purchaseError) {
       console.error('Purchase save error:', purchaseError)
+
+      // 중복 키 에러 (race condition)인 경우 기존 purchase 반환
+      if (purchaseError.code === '23505') {
+        const { data: existingPurchase } = await supabaseAdmin
+          .from('purchases')
+          .select()
+          .eq('transaction_id', transactionId)
+          .single()
+
+        if (existingPurchase) {
+          console.log('Race condition detected: returning existing purchase')
+          return NextResponse.json({
+            success: true,
+            purchase: existingPurchase,
+            note: 'Purchase already exists (race condition handled)',
+          })
+        }
+      }
+
       return NextResponse.json(
         { error: 'Failed to save purchase' },
         { status: 500 },
