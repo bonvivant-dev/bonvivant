@@ -27,12 +27,9 @@ export function usePurchase({
 
   const { connected, fetchProducts, requestPurchase, products } = useIAP({
     onPurchaseSuccess: async (purchase: Purchase) => {
-      console.log('🎯 onPurchaseSuccess called:', purchase.transactionId)
-
       const result = await validatePurchase(purchase)
 
       if (result) {
-        console.log('✅ Validation successful, finishing transaction...')
         await finishTransaction({
           purchase,
           isConsumable: true,
@@ -113,13 +110,6 @@ export function usePurchase({
 
   // 영수증 검증
   const validatePurchase = async (purchase: Purchase) => {
-    // 🔍 디버깅: purchase 객체 전체 출력
-    console.log('🔍 Purchase object received:')
-    console.log(JSON.stringify(purchase, null, 2))
-    console.log('🔍 purchase.transactionId:', purchase.transactionId)
-    console.log('🔍 purchase.orderId:', (purchase as any).orderId)
-    console.log('🔍 purchase.purchaseToken:', purchase.purchaseToken)
-
     // transactionId 추출 (purchaseToken을 fallback으로 사용)
     const transactionId =
       Platform.OS === 'android'
@@ -128,24 +118,20 @@ export function usePurchase({
           purchase.purchaseToken
         : purchase.transactionId || purchase.purchaseToken
 
-    console.log('🔍 validatePurchase called for transaction:', transactionId)
-    console.log('🔍 isValidatingRef.current:', isValidatingRef.current)
-    console.log('🔍 processedTransactions:', Array.from(processedTransactionsRef.current))
-
-    // 중복 처리 방지: 이미 검증 중이면 스킵
-    if (isValidatingRef.current) {
-      console.log('⏭️ Already validating a purchase, skipping...')
+    // 🔒 중복 처리 방지: 이미 처리한 transaction인지 먼저 확인하고 즉시 추가
+    if (processedTransactionsRef.current.has(transactionId)) {
       return false
     }
 
-    // 이미 처리한 transaction인지 확인
-    if (processedTransactionsRef.current.has(transactionId)) {
-      console.log('⏭️ Transaction already processed, skipping:', transactionId)
+    // 즉시 추가하여 중복 호출 방지 (race condition 방지)
+    processedTransactionsRef.current.add(transactionId)
+
+    // 이미 검증 중이면 스킵
+    if (isValidatingRef.current) {
       return false
     }
 
     isValidatingRef.current = true
-    console.log('🚀 Starting validation for:', transactionId)
 
     try {
       // 서버 측 검증 및 DB 저장
@@ -198,13 +184,11 @@ export function usePurchase({
         throw new Error(errorMessage + details)
       }
 
-      // 성공 시에만 처리된 transaction으로 기록
-      processedTransactionsRef.current.add(transactionId)
-      console.log('✅ Purchase verified successfully')
-
       return true
     } catch (error) {
-      console.error('Validation failed:', error)
+      // 실패 시 Set에서 제거하여 재시도 가능하게 함
+      processedTransactionsRef.current.delete(transactionId)
+
       Alert.alert(
         '영수증 검증 실패',
         error instanceof Error ? error.message : '영수증 검증에 실패했습니다.'
