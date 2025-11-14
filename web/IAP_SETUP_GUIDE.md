@@ -4,18 +4,22 @@
 
 ## 📱 iOS App Store Server API 설정
 
-### 1. App Store Connect API 키 생성
+### 1. App Store Connect In-App Purchase 키 생성
+
+**⚠️ 필수 권한: Admin 또는 Account Holder 역할 필요** (Developer 권한으로는 불가능)
 
 1. [App Store Connect](https://appstoreconnect.apple.com)에 로그인
-2. **Users and Access** → **Integrations** → **App Store Connect API** 선택
-3. **Generate API Key** 클릭
-4. 다음 정보 입력:
+2. **Users and Access** → **Integrations** 탭 선택
+3. 왼쪽 사이드바에서 **In-App Purchase** 선택
+4. **Generate In-App Purchase Key** 클릭
+5. 다음 정보 입력:
    - **Name**: 키 이름 (예: "IAP Verification Key")
-   - **Access**: "Developer" 권한 선택
-5. 생성 후 다음 정보를 복사:
+6. 생성 후 다음 정보를 복사:
    - **Key ID** (예: `2X9R4HXF34`)
    - **Issuer ID** (페이지 상단에 표시)
-   - **Download API Key** 버튼을 눌러 `.p8` 파일 다운로드
+   - **Download In-App Purchase Key** 버튼을 눌러 `.p8` 파일 다운로드
+
+**참고**: App Store Connect API 키가 아닌, In-App Purchase 전용 키를 생성해야 합니다.
 
 ### 2. Private Key 변환
 
@@ -145,8 +149,8 @@ ANDROID_PACKAGE_NAME=com.yourcompany.bonvivant
 - `APPLE_BUNDLE_ID`가 앱의 실제 Bundle ID와 일치하는지 확인
 
 **"Apple API error"**
-- App Store Connect API 키가 활성화되어 있는지 확인
-- 키 권한이 "Developer" 이상인지 확인
+- In-App Purchase 키가 활성화되어 있는지 확인
+- Admin 또는 Account Holder 권한으로 키를 생성했는지 확인
 
 ### Android 관련 오류
 
