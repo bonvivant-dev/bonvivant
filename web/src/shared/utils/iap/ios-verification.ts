@@ -113,14 +113,44 @@ export async function verifyIOSReceipt(
     )
 
     if (!response.ok) {
-      const errorData = await response.json()
+      // 응답 텍스트를 먼저 읽어서 로깅
+      const responseText = await response.text()
+      console.error('Apple API error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: responseText,
+      })
+
+      // JSON 파싱 시도
+      let errorMessage = response.statusText
+      try {
+        if (responseText) {
+          const errorData = JSON.parse(responseText)
+          errorMessage = errorData.errorMessage || errorData.error || errorMessage
+        }
+      } catch (parseError) {
+        console.error('Failed to parse error response as JSON:', parseError)
+      }
+
       return {
         isValid: false,
-        error: `Apple API error: ${errorData.errorMessage || response.statusText}`,
+        error: `Apple API error (${response.status}): ${errorMessage}`,
       }
     }
 
-    const data = await response.json()
+    const responseText = await response.text()
+    console.log('Apple API success response:', responseText)
+
+    let data
+    try {
+      data = JSON.parse(responseText)
+    } catch (parseError) {
+      console.error('Failed to parse success response as JSON:', parseError)
+      return {
+        isValid: false,
+        error: 'Invalid JSON response from Apple API',
+      }
+    }
 
     // 3. JWS 디코딩
     if (!data.signedTransaction) {
