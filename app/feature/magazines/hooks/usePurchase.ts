@@ -27,9 +27,15 @@ export function usePurchase({
 
   const { connected, fetchProducts, requestPurchase, products } = useIAP({
     onPurchaseSuccess: async (purchase: Purchase) => {
+      console.log('🎯 onPurchaseSuccess 호출됨:', {
+        transactionId: purchase.transactionId,
+        productId: purchase.productId,
+      })
+
       const result = await validatePurchase(purchase)
 
       if (result) {
+        console.log('✅ 검증 성공, finishTransaction 호출')
         await finishTransaction({
           purchase,
           isConsumable: true,
@@ -110,6 +116,15 @@ export function usePurchase({
 
   // 영수증 검증
   const validatePurchase = async (purchase: Purchase) => {
+    // 🔒 STEP 1: 이미 검증 중이면 즉시 반환 (가장 먼저 체크)
+    if (isValidatingRef.current) {
+      console.log('⏭️ 이미 검증 중이므로 스킵')
+      return false
+    }
+
+    // 즉시 플래그 설정하여 동시 실행 차단
+    isValidatingRef.current = true
+
     // transactionId 추출 (purchaseToken을 fallback으로 사용)
     const transactionId =
       Platform.OS === 'android'
@@ -118,20 +133,17 @@ export function usePurchase({
           purchase.purchaseToken
         : purchase.transactionId || purchase.purchaseToken
 
-    // 🔒 중복 처리 방지: 이미 처리한 transaction인지 먼저 확인하고 즉시 추가
+    console.log('🔍 검증 시작:', { transactionId })
+
+    // 🔒 STEP 2: 이미 처리한 transaction인지 확인
     if (processedTransactionsRef.current.has(transactionId)) {
+      console.log('⏭️ 이미 처리한 트랜잭션:', transactionId)
+      isValidatingRef.current = false
       return false
     }
 
-    // 즉시 추가하여 중복 호출 방지 (race condition 방지)
+    // 즉시 추가하여 중복 호출 방지
     processedTransactionsRef.current.add(transactionId)
-
-    // 이미 검증 중이면 스킵
-    if (isValidatingRef.current) {
-      return false
-    }
-
-    isValidatingRef.current = true
 
     try {
       // 서버 측 검증 및 DB 저장
@@ -165,6 +177,7 @@ export function usePurchase({
         rawPurchase: purchase,
       }
 
+      console.log('📡 API 요청 전송:', `${API_BASE_URL}/api/purchases/verify`)
       const response = await fetch(`${API_BASE_URL}/api/purchases/verify`, {
         method: 'POST',
         headers: {
@@ -175,6 +188,7 @@ export function usePurchase({
       })
 
       const result = await response.json()
+      console.log('📡 API 응답:', { status: response.status, result })
 
       if (!response.ok) {
         const errorMessage = result.error || '서버 검증에 실패했습니다.'
@@ -184,6 +198,7 @@ export function usePurchase({
         throw new Error(errorMessage + details)
       }
 
+      console.log('✅ 검증 성공:', transactionId)
       return true
     } catch (error) {
       // 실패 시 Set에서 제거하여 재시도 가능하게 함
