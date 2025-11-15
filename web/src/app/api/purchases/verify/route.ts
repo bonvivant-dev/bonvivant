@@ -142,11 +142,17 @@ export async function POST(request: NextRequest) {
       // 검증된 트랜잭션 정보와 요청 데이터 비교
       const { transactionInfo } = verificationResult
       if (transactionInfo && transactionInfo.productId !== productId) {
+        console.error('❌ Product ID mismatch:', {
+          expected: productId,
+          actual: transactionInfo.productId,
+        })
         return NextResponse.json(
           { error: 'Product ID mismatch' },
           { status: 400 },
         )
       }
+
+      console.log('✅ iOS receipt validation passed')
     } else if (platform === 'android') {
       // Android의 경우 packageName이 필요
       const packageName = process.env.ANDROID_PACKAGE_NAME
@@ -180,6 +186,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 구매 데이터 저장 (Service Role로 RLS 우회)
+    console.log('💾 Saving purchase to database...')
     const { data: purchase, error: purchaseError } = await supabaseAdmin
       .from('purchases')
       .insert({
@@ -197,7 +204,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (purchaseError) {
-      console.error('Purchase save error:', purchaseError)
+      console.error('❌ Purchase save error:', purchaseError)
 
       // 중복 키 에러 (race condition)인 경우 기존 purchase 반환
       if (purchaseError.code === '23505') {
@@ -223,7 +230,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log('✅ Purchase saved successfully:', purchase.id)
+
     // transaction_logs에 로그 저장 (Service Role로 RLS 우회)
+    console.log('📝 Saving transaction log...')
     const { error: logError } = await supabaseAdmin
       .from('transaction_logs')
       .insert({
@@ -242,10 +252,13 @@ export async function POST(request: NextRequest) {
       })
 
     if (logError) {
-      console.error('Transaction log error:', logError)
+      console.error('⚠️ Transaction log error:', logError)
       // 로그 저장 실패는 에러로 처리하지 않음
+    } else {
+      console.log('✅ Transaction log saved')
     }
 
+    console.log('🎉 Sending success response')
     return NextResponse.json({
       success: true,
       purchase,
