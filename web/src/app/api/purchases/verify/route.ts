@@ -21,7 +21,10 @@ export async function POST(request: NextRequest) {
     const token = authHeader?.replace('Bearer ', '')
 
     if (!token) {
-      return NextResponse.json({ error: 'Missing authorization token' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Missing authorization token' },
+        { status: 401 },
+      )
     }
 
     // 사용자 인증용 클라이언트 (일반 키)
@@ -52,28 +55,26 @@ export async function POST(request: NextRequest) {
       rawPurchase,
     } = body
 
+    // iOS의 경우 rawPurchase.id가 실제 transactionId (JWS 아님)
+    const actualTransactionId = platform === 'ios' && rawPurchase?.id
+      ? rawPurchase.id
+      : transactionId
+
     console.log('📥 Received purchase verification request:', {
       magazineId,
       productId,
-      transactionId,
-      purchaseToken: purchaseToken ? '✅ exists' : '❌ missing',
+      actualTransactionId,
       platform,
       price,
       currency,
     })
 
-    // 🔍 디버깅: purchase 객체 전체 로그
-    if (rawPurchase) {
-      console.log('🔍 Raw Purchase Object:')
-      console.log(JSON.stringify(rawPurchase, null, 2))
-    }
-
     // 필수 필드 검증
-    if (!magazineId || !productId || !transactionId || !purchaseToken) {
+    if (!magazineId || !productId || !actualTransactionId || !purchaseToken) {
       console.error('❌ Missing required fields:', {
         magazineId: !!magazineId,
         productId: !!productId,
-        transactionId: !!transactionId,
+        actualTransactionId: !!actualTransactionId,
         purchaseToken: !!purchaseToken,
       })
       return NextResponse.json(
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
           details: {
             magazineId: !!magazineId,
             productId: !!productId,
-            transactionId: !!transactionId,
+            actualTransactionId: !!actualTransactionId,
             purchaseToken: !!purchaseToken,
           },
         },
@@ -94,7 +95,7 @@ export async function POST(request: NextRequest) {
     const { data: existingPurchase } = await supabaseAdmin
       .from('purchases')
       .select('id')
-      .eq('transaction_id', transactionId)
+      .eq('transaction_id', actualTransactionId)
       .maybeSingle()
 
     if (existingPurchase) {
@@ -126,8 +127,8 @@ export async function POST(request: NextRequest) {
     // 실제 Apple/Google 영수증 검증
     let verificationResult
     if (platform === 'ios') {
-      // iOS의 경우 purchaseToken(JWS)을 함께 전달
-      verificationResult = await verifyIOSReceipt(transactionId, purchaseToken)
+      // iOS의 경우 purchaseToken(JWS)만 전달
+      verificationResult = await verifyIOSReceipt(purchaseToken)
       if (!verificationResult.isValid) {
         return NextResponse.json(
           {
@@ -184,7 +185,7 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: user.id,
         magazine_id: magazineId,
-        transaction_id: transactionId,
+        transaction_id: actualTransactionId,
         platform: platform,
         product_id: productId,
         price: price || magazine.price,
@@ -203,7 +204,7 @@ export async function POST(request: NextRequest) {
         const { data: existingPurchase } = await supabaseAdmin
           .from('purchases')
           .select()
-          .eq('transaction_id', transactionId)
+          .eq('transaction_id', actualTransactionId)
           .single()
 
         if (existingPurchase) {
@@ -223,20 +224,22 @@ export async function POST(request: NextRequest) {
     }
 
     // transaction_logs에 로그 저장 (Service Role로 RLS 우회)
-    const { error: logError } = await supabaseAdmin.from('transaction_logs').insert({
-      user_id: user.id,
-      magazine_id: magazineId,
-      purchase_id: purchase.id,
-      transaction_id: transactionId,
-      platform: platform,
-      product_id: productId,
-      price: price || magazine.price,
-      currency: currency || 'KRW',
-      status: 'success',
-      raw_receipt: purchaseToken,
-      request_data: rawPurchase || body,
-      response_data: verificationResult,
-    })
+    const { error: logError } = await supabaseAdmin
+      .from('transaction_logs')
+      .insert({
+        user_id: user.id,
+        magazine_id: magazineId,
+        purchase_id: purchase.id,
+        transaction_id: actualTransactionId,
+        platform: platform,
+        product_id: productId,
+        price: price || magazine.price,
+        currency: currency || 'KRW',
+        status: 'success',
+        raw_receipt: purchaseToken,
+        request_data: rawPurchase || body,
+        response_data: verificationResult,
+      })
 
     if (logError) {
       console.error('Transaction log error:', logError)
