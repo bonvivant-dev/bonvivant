@@ -83,15 +83,63 @@ async function decodeAndVerifyJWS(jws: string): Promise<AppleTransactionInfo> {
 }
 
 /**
- * iOS App Store Server API를 사용한 영수증 검증
+ * iOS 영수증 검증 (클라이언트가 보낸 purchaseToken JWS 직접 검증)
  *
- * @param transactionId - App Store에서 발급한 트랜잭션 ID
+ * @param transactionId - App Store에서 발급한 트랜잭션 ID (검증용)
+ * @param purchaseToken - 클라이언트가 보낸 JWS (signedTransaction)
  * @returns 검증 결과
  */
 export async function verifyIOSReceipt(
-  transactionId: string
+  transactionId: string,
+  purchaseToken?: string
 ): Promise<VerifyIOSReceiptResult> {
   try {
+    // 방법 1: purchaseToken(JWS)이 있으면 직접 검증
+    if (purchaseToken) {
+      console.log('🔍 Verifying iOS receipt using purchaseToken (JWS)')
+
+      const transactionInfo = await decodeAndVerifyJWS(purchaseToken)
+
+      // 트랜잭션 ID 검증
+      if (transactionInfo.transactionId !== transactionId) {
+        console.error('Transaction ID mismatch:', {
+          expected: transactionId,
+          actual: transactionInfo.transactionId,
+        })
+        return {
+          isValid: false,
+          error: 'Transaction ID mismatch',
+        }
+      }
+
+      // Bundle ID 검증
+      const bundleId = process.env.APPLE_BUNDLE_ID
+      if (bundleId && transactionInfo.bundleId !== bundleId) {
+        console.error('Bundle ID mismatch:', {
+          expected: bundleId,
+          actual: transactionInfo.bundleId,
+        })
+        return {
+          isValid: false,
+          error: 'Bundle ID mismatch',
+        }
+      }
+
+      console.log('✅ iOS receipt verified successfully:', {
+        transactionId: transactionInfo.transactionId,
+        productId: transactionInfo.productId,
+        environment: transactionInfo.environment,
+      })
+
+      return {
+        isValid: true,
+        transactionInfo,
+      }
+    }
+
+    // 방법 2: purchaseToken이 없으면 App Store Server API 호출 (fallback)
+    console.log('🔍 Verifying iOS receipt using App Store Server API')
+
     // 1. JWT 토큰 생성
     const token = await generateAppStoreConnectToken()
 

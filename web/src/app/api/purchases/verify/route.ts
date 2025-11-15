@@ -126,7 +126,8 @@ export async function POST(request: NextRequest) {
     // 실제 Apple/Google 영수증 검증
     let verificationResult
     if (platform === 'ios') {
-      verificationResult = await verifyIOSReceipt(transactionId)
+      // iOS의 경우 purchaseToken(JWS)을 함께 전달
+      verificationResult = await verifyIOSReceipt(transactionId, purchaseToken)
       if (!verificationResult.isValid) {
         return NextResponse.json(
           {
