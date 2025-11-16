@@ -370,6 +370,9 @@ export function MagazinePreviewBottomSheet({
         magazine={magazine}
         initialImageIndex={selectedImageIndex}
         onClose={closeImageViewer}
+        isPurchased={isPurchased}
+        onPurchaseRequest={handlePurchase}
+        isLoading={isLoading}
       />
     </Modal>
   )

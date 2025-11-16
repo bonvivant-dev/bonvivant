@@ -14,7 +14,6 @@ import {
 
 import { supabase } from '@/feature/shared'
 
-import { useMagazinePurchase } from '../hooks'
 import { Magazine } from '../types'
 
 const { width } = Dimensions.get('window')
@@ -24,6 +23,9 @@ interface MagazinePreviewModalProps {
   magazine: Magazine | null
   initialImageIndex?: number
   onClose: () => void
+  isPurchased: boolean
+  onPurchaseRequest: () => void
+  isLoading?: boolean
 }
 
 export function MagazinePreviewModal({
@@ -31,16 +33,13 @@ export function MagazinePreviewModal({
   magazine,
   initialImageIndex = 0,
   onClose,
+  isPurchased,
+  onPurchaseRequest,
+  isLoading = false,
 }: MagazinePreviewModalProps) {
   const [selectedImageIndex, setSelectedImageIndex] =
     useState(initialImageIndex)
   const hasShownPurchaseAlert = useRef(false)
-
-  // 통합 구매 처리 hook
-  const { handlePurchase, isPurchased, isLoading } = useMagazinePurchase({
-    magazine,
-    onClose,
-  })
 
   // 모달이 열릴 때마다 alert 표시 상태 초기화
   useEffect(() => {
@@ -76,7 +75,7 @@ export function MagazinePreviewModal({
       [
         {
           text: '구매하기',
-          onPress: handlePurchase,
+          onPress: onPurchaseRequest,
         },
         {
           text: '나중에',
