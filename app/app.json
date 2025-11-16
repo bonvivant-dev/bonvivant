@@ -11,20 +11,25 @@
     "ios": {
       "bundleIdentifier": "com.bonvivant.app",
       "supportsTablet": true,
-      "buildNumber": "16",
+      "buildNumber": "22",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       }
     },
     "android": {
       "package": "com.bonvivant.app",
-      "versionCode": 9,
+      "versionCode": 11,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "permissions": ["RECEIVE_BOOT_COMPLETED", "com.android.vending.BILLING"]
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "com.android.vending.BILLING"
+      ]
     },
     "web": {
       "bundler": "metro",
