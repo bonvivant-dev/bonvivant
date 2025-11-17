@@ -204,6 +204,14 @@ export function MagazinePreviewBottomSheet({
     setIsImageViewerVisible(false)
   }
 
+  // MagazinePreviewModal에서 구매 요청 시 호출되는 핸들러
+  const handlePurchaseFromModal = async () => {
+    // 먼저 이미지 뷰어 모달을 닫음
+    closeImageViewer()
+    // 그 다음 구매 진행
+    await handlePurchase()
+  }
+
   return (
     <Modal
       visible={visible}
@@ -365,15 +373,17 @@ export function MagazinePreviewBottomSheet({
       </SafeAreaView>
 
       {/* Full Screen Image Viewer Modal */}
-      <MagazinePreviewModal
-        visible={isImageViewerVisible}
-        magazine={magazine}
-        initialImageIndex={selectedImageIndex}
-        onClose={closeImageViewer}
-        isPurchased={isPurchased}
-        onPurchaseRequest={handlePurchase}
-        isLoading={isLoading}
-      />
+      {isImageViewerVisible && (
+        <MagazinePreviewModal
+          visible={isImageViewerVisible}
+          magazine={magazine}
+          initialImageIndex={selectedImageIndex}
+          onClose={closeImageViewer}
+          isPurchased={isPurchased}
+          onPurchaseRequest={handlePurchaseFromModal}
+          isLoading={isLoading}
+        />
+      )}
     </Modal>
   )
 }
