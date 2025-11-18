@@ -25,94 +25,8 @@ export function usePurchase({
   const isValidatingRef = useRef(false)
   const processedTransactionsRef = useRef<Set<string>>(new Set())
 
-  const { connected, fetchProducts, requestPurchase, products } = useIAP({
-    onPurchaseSuccess: async (purchase: Purchase) => {
-      try {
-        const result = await validatePurchase(purchase)
-
-        if (result) {
-          onSuccess?.()
-        }
-      } finally {
-        // 검증 성공/실패 여부와 관계없이 트랜잭션 종료
-        // iOS는 finishTransaction이 호출되지 않으면 트랜잭션을 계속 pending으로 유지
-        await finishTransaction({
-          purchase,
-          isConsumable: true,
-        })
-        setIsLoading(false)
-      }
-    },
-    onPurchaseError: error => {
-      // 사용자 취소는 알림 표시 안 함
-      if (error.code !== ErrorCode.UserCancelled) {
-        Alert.alert(
-          '구매 실패',
-          `onPurchaseError: ${error.message} ${error.code}`
-        )
-      }
-      setIsLoading(false)
-    },
-  })
-
-  // 상품 정보 가져오기
-  useEffect(() => {
-    if (!connected || !magazineProductId) return
-    fetchProducts({ skus: [magazineProductId], type: 'in-app' })
-  }, [connected, magazineProductId, fetchProducts])
-
-  // 매거진 구매
-  const buyMagazine = useCallback(async () => {
-    setIsLoading(true)
-    try {
-      const { data: magazine, error: magazineError } = await supabase
-        .from('magazines')
-        .select('*')
-        .eq('product_id', magazineProductId)
-        .single()
-      if (magazineError || !magazine) {
-        setIsLoading(false)
-        Alert.alert('구매 실패', '매거진을 찾을 수 없습니다.')
-        return
-      }
-
-      // 상품이 로드되었는지 확인
-      if (!products || products.length === 0) {
-        setIsLoading(false)
-        Alert.alert(
-          'SKU not found',
-          `상품 ID "${magazineProductId}"를 찾을 수 없습니다.\n\n확인사항:\n- App Store Connect에서 상품이 "Ready to Submit" 상태인지\n- 번들 ID가 일치하는지\n- 상품 동기화 시간이 충분한지 (수 시간 소요)`
-        )
-        return
-      }
-      await requestPurchase({
-        request: {
-          ios: { sku: magazineProductId },
-          android: { skus: [magazineProductId] },
-        },
-        type: 'in-app',
-      })
-
-      return {
-        success: true,
-      }
-    } catch (error) {
-      Alert.alert(
-        '구매 실패',
-        error instanceof Error
-          ? error.message
-          : 'buyMagazine 구매에 실패했습니다.'
-      )
-      setIsLoading(false)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : '구매에 실패했습니다.',
-      }
-    }
-  }, [magazineProductId, requestPurchase, products])
-
-  // 영수증 검증
-  const validatePurchase = async (purchase: Purchase) => {
+  // 영수증 검증 함수를 먼저 선언
+  const validatePurchase = useCallback(async (purchase: Purchase) => {
     // 🔒 STEP 1: 이미 검증 중이면 즉시 반환 (가장 먼저 체크)
     if (isValidatingRef.current) {
       return false
@@ -205,7 +119,106 @@ export function usePurchase({
     } finally {
       isValidatingRef.current = false
     }
-  }
+  }, [magazineProductId])
+
+  // onPurchaseSuccess 콜백을 useCallback으로 메모이제이션
+  // 이렇게 하지 않으면 매 렌더링마다 새로운 함수가 생성되어 useIAP에 중복 등록됨
+  const handlePurchaseSuccess = useCallback(async (purchase: Purchase) => {
+    // 🚨 중요: 이 훅이 처리해야 할 상품이 아니면 무시
+    // useIAP는 전역적으로 이벤트를 리스닝하므로, 여러 인스턴스가 있으면 모두 호출됨
+    if (purchase.productId !== magazineProductId) {
+      return
+    }
+
+    try {
+      const result = await validatePurchase(purchase)
+
+      if (result) {
+        onSuccess?.()
+      }
+    } finally {
+      // 검증 성공/실패 여부와 관계없이 트랜잭션 종료
+      // iOS는 finishTransaction이 호출되지 않으면 트랜잭션을 계속 pending으로 유지
+      await finishTransaction({
+        purchase,
+        isConsumable: true,
+      })
+      setIsLoading(false)
+    }
+  }, [magazineProductId, validatePurchase, onSuccess])
+
+  // onPurchaseError 콜백도 useCallback으로 메모이제이션
+  const handlePurchaseError = useCallback((error: any) => {
+    // 사용자 취소는 알림 표시 안 함
+    if (error.code !== ErrorCode.UserCancelled) {
+      Alert.alert(
+        '구매 실패',
+        `onPurchaseError: ${error.message} ${error.code}`
+      )
+    }
+    setIsLoading(false)
+  }, [])
+
+  const { connected, fetchProducts, requestPurchase, products } = useIAP({
+    onPurchaseSuccess: handlePurchaseSuccess,
+    onPurchaseError: handlePurchaseError,
+  })
+
+  // 상품 정보 가져오기
+  useEffect(() => {
+    if (!connected || !magazineProductId) return
+    fetchProducts({ skus: [magazineProductId], type: 'in-app' })
+  }, [connected, magazineProductId, fetchProducts])
+
+  // 매거진 구매
+  const buyMagazine = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const { data: magazine, error: magazineError } = await supabase
+        .from('magazines')
+        .select('*')
+        .eq('product_id', magazineProductId)
+        .single()
+      if (magazineError || !magazine) {
+        setIsLoading(false)
+        Alert.alert('구매 실패', '매거진을 찾을 수 없습니다.')
+        return
+      }
+
+      // 상품이 로드되었는지 확인
+      if (!products || products.length === 0) {
+        setIsLoading(false)
+        Alert.alert(
+          'SKU not found',
+          `상품 ID "${magazineProductId}"를 찾을 수 없습니다.\n\n확인사항:\n- App Store Connect에서 상품이 "Ready to Submit" 상태인지\n- 번들 ID가 일치하는지\n- 상품 동기화 시간이 충분한지 (수 시간 소요)`
+        )
+        return
+      }
+      await requestPurchase({
+        request: {
+          ios: { sku: magazineProductId },
+          android: { skus: [magazineProductId] },
+        },
+        type: 'in-app',
+      })
+
+      return {
+        success: true,
+      }
+    } catch (error) {
+      Alert.alert(
+        '구매 실패',
+        error instanceof Error
+          ? error.message
+          : 'buyMagazine 구매에 실패했습니다.'
+      )
+      setIsLoading(false)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : '구매에 실패했습니다.',
+      }
+    }
+  }, [magazineProductId, requestPurchase, products])
 
   return {
     isLoading,
