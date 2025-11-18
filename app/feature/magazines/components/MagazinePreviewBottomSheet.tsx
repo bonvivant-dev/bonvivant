@@ -20,7 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth } from '@/feature/auth/components'
 import { supabase } from '@/feature/shared'
 
-import { usePurchasedMagazinesContext, useBookmarksContext } from '../contexts'
+import { useBookmarksContext } from '../contexts'
 import {
   useMagazinePurchase,
   useBookmarkStatus,
@@ -47,24 +47,13 @@ export function MagazinePreviewBottomSheet({
   const { user } = useAuth()
   const [isImageViewerVisible, setIsImageViewerVisible] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
-  const [isProcessing, setIsProcessing] = useState(false)
 
   // 통합 구매 처리 hook
-  const {
-    handlePurchase,
-    isPurchased,
-    isChecking,
-    isLoading,
-    connected,
-    products,
-    refetch,
-  } = useMagazinePurchase({
-    magazine,
-    onClose,
-  })
-
-  // 내 서재 데이터 refetch를 위한 context
-  const { refetch: refetchPurchasedMagazines } = usePurchasedMagazinesContext()
+  const { handlePurchase, isPurchased, isChecking, isLoading, connected } =
+    useMagazinePurchase({
+      magazine,
+      onClose,
+    })
 
   // 찜 목록 데이터 refetch를 위한 context
   const { refetch: refetchBookmarks } = useBookmarksContext()
@@ -127,72 +116,6 @@ export function MagazinePreviewBottomSheet({
     // imagePath에서 "images/" 접두사 제거 (이미 포함되어 있음)
     const path = imagePath.replace(/^images\//, '')
     return supabase.storage.from('images').getPublicUrl(path).data.publicUrl
-  }
-
-  // 개발용 모의 구매 함수
-  const handleMockPurchase = async () => {
-    if (!magazine) return
-
-    // 구매 가능 여부 확인
-    if (
-      !magazine.product_id ||
-      !magazine.is_purchasable ||
-      magazine.price === null ||
-      magazine.price === undefined
-    ) {
-      Alert.alert('알림', '현재 구매할 수 없는 매거진입니다.')
-      return
-    }
-
-    try {
-      setIsProcessing(true)
-
-      // 현재 로그인한 사용자 가져오기
-      const { data: userData } = await supabase.auth.getUser()
-      if (!userData.user) {
-        Alert.alert('오류', '로그인이 필요합니다.')
-        return
-      }
-
-      // purchases 테이블에 구매 데이터 삽입
-      const { error } = await supabase.from('purchases').insert({
-        user_id: userData.user.id,
-        magazine_id: magazine.id,
-        transaction_id: `mock_${Date.now()}`,
-        platform: 'ios', // 개발용은 기본 ios
-        product_id: magazine.product_id,
-        price: magazine.price,
-        currency: 'KRW',
-        status: 'verified',
-        verified_at: new Date().toISOString(),
-      })
-
-      if (error) {
-        console.error('모의 구매 실패:', error)
-        Alert.alert('오류', '구매 데이터 삽입에 실패했습니다.')
-        return
-      }
-
-      // 구매 상태 갱신
-      await refetch()
-      // 내 서재 목록 갱신
-      await refetchPurchasedMagazines()
-
-      Alert.alert('구매 완료', '(개발용) 매거진을 구매했습니다!', [
-        {
-          text: '확인',
-          onPress: () => {
-            onClose()
-            router.push(`/magazine/${magazine.id}/view`)
-          },
-        },
-      ])
-    } catch (error) {
-      console.error('모의 구매 에러:', error)
-      Alert.alert('오류', '구매에 실패했습니다.')
-    } finally {
-      setIsProcessing(false)
-    }
   }
 
   const handleImagePress = (index: number) => {
@@ -272,15 +195,15 @@ export function MagazinePreviewBottomSheet({
             <TouchableOpacity
               style={[
                 styles.purchaseButton,
-                (isChecking || isProcessing || isLoading || !connected) &&
+                (isChecking || isLoading || !connected) &&
                   styles.purchaseButtonDisabled,
                 isPurchased && styles.purchaseButtonPurchased,
               ]}
               onPress={handlePurchase}
               activeOpacity={0.8}
-              disabled={isChecking || isProcessing || isLoading || !connected}
+              disabled={isChecking || isLoading || !connected}
             >
-              {isChecking || isProcessing || isLoading ? (
+              {isChecking || isLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.purchaseButtonText}>
@@ -288,48 +211,6 @@ export function MagazinePreviewBottomSheet({
                 </Text>
               )}
             </TouchableOpacity>
-
-            {/* Development Only - Mock Purchase Button */}
-            <TouchableOpacity
-              style={styles.devButton}
-              onPress={handleMockPurchase}
-              activeOpacity={0.8}
-              disabled={isChecking || isProcessing || isLoading || !connected}
-            >
-              {isChecking || isProcessing ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.devButtonText}>
-                  (개발용) {isPurchased ? '읽기' : '구매하기'}
-                </Text>
-              )}
-            </TouchableOpacity>
-
-            {/* Development Only - Debug Info */}
-            <View style={styles.debugContainer}>
-              <Text style={styles.debugTitle}>🔍 디버그 정보</Text>
-              <Text style={styles.debugText}>
-                연결 상태: {connected ? '✅ 연결됨' : '❌ 연결 안됨'}
-              </Text>
-              <Text style={styles.debugText}>
-                상품 ID: {magazine.product_id || '없음'}
-              </Text>
-              <Text style={styles.debugText}>
-                상품 로드:{' '}
-                {products && products.length > 0 ? '✅ 성공' : '❌ 실패'}
-              </Text>
-              {products && products.length > 0 && (
-                <Text style={styles.debugText}>
-                  상품 개수: {products.length}
-                </Text>
-              )}
-              {products && products.length > 0 && (
-                <Text style={styles.debugText}>
-                  가격:{' '}
-                  {'price' in products[0] ? products[0].price || 'N/A' : 'N/A'}
-                </Text>
-              )}
-            </View>
           </View>
 
           {/* Introduction */}
