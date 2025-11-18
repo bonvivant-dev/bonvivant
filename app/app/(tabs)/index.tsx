@@ -30,7 +30,7 @@ export default function Index() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#007AFF" />
           <Text style={styles.loadingText}>매거진을 불러오는 중...</Text>
@@ -41,7 +41,7 @@ export default function Index() {
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.centered}>
           <Text style={styles.errorText}>오류가 발생했습니다</Text>
           <Text style={styles.errorDetail}>{error}</Text>
@@ -51,7 +51,7 @@ export default function Index() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Bon Vivant</Text>
       </View>
@@ -100,7 +100,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingVertical: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
   },
   centered: {
     flex: 1,
