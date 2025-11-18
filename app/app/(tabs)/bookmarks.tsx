@@ -12,6 +12,7 @@ import {
   Dimensions,
   TouchableOpacity,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { useAuth } from '@/feature/auth/components'
 import {
@@ -49,7 +50,6 @@ export default function Bookmarks() {
     magazines: bookmarks,
     loading: bookmarksLoading,
     error: bookmarksError,
-    refetch,
   } = useBookmarksContext()
 
   const handleMagazinePress = (magazine: Magazine) => {
@@ -64,10 +64,10 @@ export default function Bookmarks() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         <ActivityIndicator size="large" color="#007AFF" />
         <Text style={styles.loadingText}>로딩 중...</Text>
-      </View>
+      </SafeAreaView>
     )
   }
 
@@ -75,18 +75,11 @@ export default function Bookmarks() {
     return <LoginRequired />
   }
 
-  const handleRefresh = async () => {
-    await refetch()
-  }
-
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>찜한 매거진</Text>
-        <TouchableOpacity onPress={handleRefresh} style={styles.refreshButton}>
-          <Ionicons name="refresh" size={24} color="#007AFF" />
-        </TouchableOpacity>
       </View>
 
       {/* Bookmarked Magazines Grid */}
@@ -140,14 +133,14 @@ export default function Bookmarks() {
           />
         )}
       </View>
-    </View>
+    </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#fff',
   },
   loginContainer: {
     flex: 1,
@@ -157,13 +150,11 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: '#FFF',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    backgroundColor: '#fff',
   },
   headerTitle: {
     fontSize: 24,
@@ -231,7 +222,6 @@ const styles = StyleSheet.create({
   coverImage: {
     width: ITEM_WIDTH,
     height: ITEM_WIDTH * 1.4,
-    borderRadius: 8,
     backgroundColor: '#E5E5E5',
   },
   placeholderImage: {
