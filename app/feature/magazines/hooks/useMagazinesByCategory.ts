@@ -50,6 +50,7 @@ export const useMagazinesByCategory = () => {
             )
           )
         `)
+        .eq('is_purchasable', true)
         .order('created_at', { ascending: false })
 
       if (magazinesError) {

@@ -15,6 +15,7 @@ export const useMagazines = () => {
       const { data, error } = await supabase
         .from('magazines')
         .select('*')
+        .eq('is_purchasable', true)
         .order('created_at', { ascending: false })
 
       if (error) {

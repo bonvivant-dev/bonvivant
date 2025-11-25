@@ -553,7 +553,7 @@ export function PDFPreviewModal({
                 {/* Is Purchasable Toggle */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    판매 가능 여부
+                    공개 및 구매 가능 여부
                   </label>
                   <Toggle
                     enabled={isPurchasable}
@@ -562,7 +562,7 @@ export function PDFPreviewModal({
                         shouldValidate: true,
                       })
                     }
-                    label={isPurchasable ? '판매 가능' : '판매 불가'}
+                    label={isPurchasable ? '공개 (구매 가능)' : '비공개 (구매 불가)'}
                   />
                 </div>
 

@@ -143,7 +143,7 @@ function DraggableMagazineCard({
               : 'bg-amber-100 text-amber-800'
           }`}
         >
-          {magazine.is_purchasable ? '판매중' : '판매 정보 필요'}
+          {magazine.is_purchasable ? '공개 (판매 가능)' : '비공개 (판매 불가)'}
         </span>
       </div>
       <h3 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
@@ -684,7 +684,10 @@ export default function MagazinesPage() {
                               className="magazine-swiper"
                             >
                               {category.magazines.map(magazine => (
-                                <SwiperSlide key={magazine.id} className='max-w-[220px]'>
+                                <SwiperSlide
+                                  key={magazine.id}
+                                  className="max-w-[220px]"
+                                >
                                   <div
                                     className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer"
                                     onClick={() => handleEdit(magazine)}
@@ -709,12 +712,12 @@ export default function MagazinesPage() {
                                         }`}
                                       >
                                         {magazine.is_purchasable
-                                          ? '판매중'
-                                          : '판매 정보 필요'}
+                                          ? '공개 (구매 가능)'
+                                          : '비공개 (구매 불가)'}
                                       </span>
                                     </div>
                                     <h3 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
-                                      {magazine.title || '제목 없음'}
+                                      {magazine.title}
                                     </h3>
                                     <p className="text-xs text-gray-400 mb-3">
                                       {dayjs(magazine.created_at).format(
