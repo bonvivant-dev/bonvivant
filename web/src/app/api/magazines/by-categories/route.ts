@@ -6,6 +6,9 @@ interface MagazinesByCategory {
   categories: Array<{
     id: string
     name: string
+    order: number
+    created_at: string
+    updated_at: string | null
     magazines: any[]
   }>
   uncategorized: any[]
@@ -95,6 +98,9 @@ export async function GET() {
       result.categories.push({
         id: category.id,
         name: category.name,
+        order: category.order,
+        created_at: category.created_at,
+        updated_at: category.updated_at,
         magazines: categoryMagazines,
       })
     }
