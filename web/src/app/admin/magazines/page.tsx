@@ -186,6 +186,11 @@ export default function MagazinesPage() {
   const [newCategoryName, setNewCategoryName] = useState('')
   const [isCreatingCategory, setIsCreatingCategory] = useState(false)
   const [showCategoryOrderModal, setShowCategoryOrderModal] = useState(false)
+  const [editingCategoryNameId, setEditingCategoryNameId] = useState<
+    string | null
+  >(null)
+  const [editingCategoryNameValue, setEditingCategoryNameValue] = useState('')
+  const [isUpdatingCategoryName, setIsUpdatingCategoryName] = useState(false)
 
   const fetchMagazines = async () => {
     try {
@@ -515,6 +520,47 @@ export default function MagazinesPage() {
     }
   }
 
+  const handleStartEditCategoryName = (
+    categoryId: string,
+    currentName: string,
+  ) => {
+    setEditingCategoryNameId(categoryId)
+    setEditingCategoryNameValue(currentName)
+  }
+
+  const handleCancelEditCategoryName = () => {
+    setEditingCategoryNameId(null)
+    setEditingCategoryNameValue('')
+  }
+
+  const handleUpdateCategoryName = async (categoryId: string) => {
+    if (!editingCategoryNameValue.trim()) return
+
+    try {
+      setIsUpdatingCategoryName(true)
+      const response = await fetch(`/api/categories/${categoryId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: editingCategoryNameValue.trim() }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to update category')
+      }
+
+      setEditingCategoryNameId(null)
+      setEditingCategoryNameValue('')
+      await fetchMagazines()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update category')
+    } finally {
+      setIsUpdatingCategoryName(false)
+    }
+  }
+
   const handleSaveCategoryOrder = async (reorderedCategories: Category[]) => {
     try {
       setIsLoading(true)
@@ -640,13 +686,106 @@ export default function MagazinesPage() {
                       >
                         <div className="px-6 py-4 border-b border-gray-200">
                           <div className="flex items-center justify-between">
-                            <div>
-                              <h2 className="text-xl font-semibold text-gray-900">
-                                {category.name}
-                              </h2>
-                              <p className="text-sm text-gray-500 mt-1">
-                                총 {category.magazines.length}개
-                              </p>
+                            <div className="flex items-center gap-2">
+                              {editingCategoryNameId === category.id ? (
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="text"
+                                    value={editingCategoryNameValue}
+                                    onChange={e =>
+                                      setEditingCategoryNameValue(e.target.value)
+                                    }
+                                    onKeyDown={e => {
+                                      if (e.key === 'Enter') {
+                                        handleUpdateCategoryName(category.id)
+                                      } else if (e.key === 'Escape') {
+                                        handleCancelEditCategoryName()
+                                      }
+                                    }}
+                                    className="px-3 py-1.5 text-xl font-semibold border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    disabled={isUpdatingCategoryName}
+                                    autoFocus
+                                  />
+                                  <button
+                                    onClick={() =>
+                                      handleUpdateCategoryName(category.id)
+                                    }
+                                    disabled={
+                                      isUpdatingCategoryName ||
+                                      !editingCategoryNameValue.trim()
+                                    }
+                                    className="p-1.5 text-green-600 hover:bg-green-50 rounded-md disabled:opacity-50"
+                                    title="저장"
+                                  >
+                                    <svg
+                                      className="h-5 w-5"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={handleCancelEditCategoryName}
+                                    disabled={isUpdatingCategoryName}
+                                    className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-md disabled:opacity-50"
+                                    title="취소"
+                                  >
+                                    <svg
+                                      className="h-5 w-5"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M6 18L18 6M6 6l12 12"
+                                      />
+                                    </svg>
+                                  </button>
+                                </div>
+                              ) : (
+                                <>
+                                  <h2 className="text-xl font-semibold text-gray-900">
+                                    {category.name}
+                                  </h2>
+                                  <button
+                                    onClick={() =>
+                                      handleStartEditCategoryName(
+                                        category.id,
+                                        category.name,
+                                      )
+                                    }
+                                    className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md"
+                                    title="카테고리 이름 수정"
+                                  >
+                                    <svg
+                                      className="h-4 w-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                      />
+                                    </svg>
+                                  </button>
+                                  <p className="text-sm text-gray-500">
+                                    총 {category.magazines.length}개
+                                  </p>
+                                </>
+                              )}
                             </div>
                             {category.magazines.length > 0 && (
                               <div className="flex gap-2 items-center justify-center">

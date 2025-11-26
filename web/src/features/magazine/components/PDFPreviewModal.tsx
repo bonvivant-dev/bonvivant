@@ -273,10 +273,6 @@ export function PDFPreviewModal({
     setValue('season_id', seasonId || '', { shouldValidate: true })
   }
 
-  const handleCategoryUpdate = (categoryIds: string[]) => {
-    setValue('category_ids', categoryIds, { shouldValidate: true })
-  }
-
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -476,14 +472,12 @@ export function PDFPreviewModal({
                       onUpdate={handleSeasonUpdate}
                     />
                     <MultiCategoryChip
-                      magazineId={magazine?.id}
                       currentCategoryIds={categoryIds}
                       setCurrentCategoryIds={(categoryIds: string[]) =>
                         setValue('category_ids', categoryIds, {
                           shouldValidate: true,
                         })
                       }
-                      onUpdate={handleCategoryUpdate}
                     />
                   </div>
                 </div>
@@ -562,7 +556,9 @@ export function PDFPreviewModal({
                         shouldValidate: true,
                       })
                     }
-                    label={isPurchasable ? '공개 (구매 가능)' : '비공개 (구매 불가)'}
+                    label={
+                      isPurchasable ? '공개 (구매 가능)' : '비공개 (구매 불가)'
+                    }
                   />
                 </div>
 
