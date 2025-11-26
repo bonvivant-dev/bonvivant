@@ -143,7 +143,7 @@ function DraggableMagazineCard({
               : 'bg-amber-100 text-amber-800'
           }`}
         >
-          {magazine.is_purchasable ? '판매중' : '판매 정보 필요'}
+          {magazine.is_purchasable ? '공개 (판매 가능)' : '비공개 (판매 불가)'}
         </span>
       </div>
       <h3 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
@@ -156,6 +156,8 @@ function DraggableMagazineCard({
   )
 }
 
+import { CategoryOrderModal } from '@/features/category/components'
+import { Category } from '@/features/category/types'
 import { PDFPreviewModal } from '@/features/magazine/components'
 import {
   convertPdfToImages,
@@ -183,6 +185,7 @@ export default function MagazinesPage() {
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [isCreatingCategory, setIsCreatingCategory] = useState(false)
+  const [showCategoryOrderModal, setShowCategoryOrderModal] = useState(false)
 
   const fetchMagazines = async () => {
     try {
@@ -512,6 +515,39 @@ export default function MagazinesPage() {
     }
   }
 
+  const handleSaveCategoryOrder = async (reorderedCategories: Category[]) => {
+    try {
+      setIsLoading(true)
+
+      // 새로운 순서로 0부터 재정렬
+      const category_orders = reorderedCategories.map((category, index) => ({
+        category_id: category.id,
+        order: index,
+      }))
+
+      const response = await fetch('/api/categories/reorder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          category_orders,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to reorder categories')
+      }
+
+      await fetchMagazines()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Reorder failed')
+      throw err // 모달에서 에러 처리를 위해 다시 throw
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <DndProvider backend={HTML5Backend}>
       <style jsx global>
@@ -554,6 +590,12 @@ export default function MagazinesPage() {
                     className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
                   >
                     카테고리 추가
+                  </button>
+                  <button
+                    onClick={() => setShowCategoryOrderModal(true)}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+                  >
+                    카테고리 순서 변경
                   </button>
                   <label className="cursor-pointer">
                     <input
@@ -684,7 +726,10 @@ export default function MagazinesPage() {
                               className="magazine-swiper"
                             >
                               {category.magazines.map(magazine => (
-                                <SwiperSlide key={magazine.id} className='max-w-[220px]'>
+                                <SwiperSlide
+                                  key={magazine.id}
+                                  className="max-w-[220px]"
+                                >
                                   <div
                                     className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer"
                                     onClick={() => handleEdit(magazine)}
@@ -709,12 +754,12 @@ export default function MagazinesPage() {
                                         }`}
                                       >
                                         {magazine.is_purchasable
-                                          ? '판매중'
-                                          : '판매 정보 필요'}
+                                          ? '공개 (구매 가능)'
+                                          : '비공개 (구매 불가)'}
                                       </span>
                                     </div>
                                     <h3 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
-                                      {magazine.title || '제목 없음'}
+                                      {magazine.title}
                                     </h3>
                                     <p className="text-xs text-gray-400 mb-3">
                                       {dayjs(magazine.created_at).format(
@@ -861,6 +906,16 @@ export default function MagazinesPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Category Order Modal */}
+      {magazinesByCategory && (
+        <CategoryOrderModal
+          isOpen={showCategoryOrderModal}
+          onClose={() => setShowCategoryOrderModal(false)}
+          categories={magazinesByCategory.categories}
+          onSave={handleSaveCategoryOrder}
+        />
       )}
     </DndProvider>
   )

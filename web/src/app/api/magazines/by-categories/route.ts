@@ -6,6 +6,9 @@ interface MagazinesByCategory {
   categories: Array<{
     id: string
     name: string
+    order: number
+    created_at: string
+    updated_at: string | null
     magazines: any[]
   }>
   uncategorized: any[]
@@ -22,18 +25,11 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // 모든 카테고리 조회
+    // 모든 카테고리 조회 (order 순서대로)
     const { data: categories, error: categoriesError } = await supabase
       .from('categories')
       .select('*')
-      .order('created_at', { ascending: false })
-
-    // 'new' 카테고리를 맨 위로 정렬
-    const sortedCategories = categories ? [...categories].sort((a, b) => {
-      if (a.name.toLowerCase() === 'new') return -1
-      if (b.name.toLowerCase() === 'new') return 1
-      return 0
-    }) : []
+      .order('order', { ascending: true })
 
     if (categoriesError) {
       return NextResponse.json(
@@ -90,7 +86,7 @@ export async function GET() {
     }
 
     // 카테고리가 있는 매거진들을 카테고리별로 분류
-    for (const category of sortedCategories) {
+    for (const category of categories || []) {
       const categoryMagazines = processedMagazines
         .filter(magazine => magazine.category_ids.includes(category.id))
         .sort((a, b) => {
@@ -102,6 +98,9 @@ export async function GET() {
       result.categories.push({
         id: category.id,
         name: category.name,
+        order: category.order,
+        created_at: category.created_at,
+        updated_at: category.updated_at,
         magazines: categoryMagazines,
       })
     }

@@ -19,22 +19,15 @@ export const useMagazinesByCategory = () => {
       setLoading(true)
       setError(null)
 
-      // Fetch all categories
+      // Fetch all categories (ordered by order field)
       const { data: categories, error: categoriesError } = await supabase
         .from('categories')
-        .select('id, name, created_at, updated_at')
-        .order('created_at', { ascending: false })
+        .select('id, name, order, created_at, updated_at')
+        .order('order', { ascending: true })
 
       if (categoriesError) {
         throw categoriesError
       }
-
-      // Sort categories with 'new' first
-      const sortedCategories = categories ? [...categories].sort((a, b) => {
-        if (a.name.toLowerCase() === 'new') return -1
-        if (b.name.toLowerCase() === 'new') return 1
-        return 0
-      }) : []
 
       // Fetch magazines with category relationships
       const { data: magazines, error: magazinesError } = await supabase
@@ -50,6 +43,7 @@ export const useMagazinesByCategory = () => {
             )
           )
         `)
+        .eq('is_purchasable', true)
         .order('created_at', { ascending: false })
 
       if (magazinesError) {
@@ -75,10 +69,10 @@ export const useMagazinesByCategory = () => {
       })
 
       // Group magazines by category
-      const categoriesWithMagazines: Array<Category & { magazines: Magazine[] }> = []
+      const categoriesWithMagazines: (Category & { magazines: Magazine[] })[] = []
 
       // Initialize categories and add magazines
-      sortedCategories.forEach(category => {
+      categories.forEach(category => {
         const categoryMagazines = processedMagazines
           .filter(magazine => magazine.category_ids.includes(category.id))
           .sort((a, b) => {
@@ -91,6 +85,7 @@ export const useMagazinesByCategory = () => {
           categoriesWithMagazines.push({
             id: category.id,
             name: category.name,
+            order: category.order,
             created_at: category.created_at || '',
             updated_at: category.updated_at || null,
             magazines: categoryMagazines,
