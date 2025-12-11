@@ -371,9 +371,9 @@ export function PDFPreviewModal({
           </div>
         )}
 
-        <div className="w-[1400px] min-w-[1200px] h-90vh bg-white rounded-lg shadow-xl overflow-hidden">
+        <div className="w-[90vw] max-w-[1400px] h-[85vh] max-h-[1000px] bg-white rounded-lg shadow-xl overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-400">
+          <div className="flex items-center justify-between p-4 border-b border-gray-400 flex-shrink-0">
             <div>
               <h2 className="text-xl font-semibold">
                 {magazine ? `[매거진 편집] ${title}` : title}
@@ -387,7 +387,8 @@ export function PDFPreviewModal({
             </button>
           </div>
 
-          <div className="flex h-full">
+          {/* Body */}
+          <div className="flex flex-1 overflow-hidden">
             {/* Left Column - Basic Information */}
             <div className="w-1/4 p-4 border-r border-gray-300 overflow-y-auto">
               <div className="mb-4">
@@ -619,7 +620,7 @@ export function PDFPreviewModal({
             </div>
 
             {/* Right Column - PDF Page Selection */}
-            <div className="w-[55%] flex flex-col">
+            <div className="w-[55%] flex flex-col overflow-y-auto">
               {/* Swiper Section */}
               <div className="p-4 flex-1 content-center">
                 <p className="text-m text-gray-600 mb-3">
@@ -716,8 +717,8 @@ export function PDFPreviewModal({
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-between p-2 bg-gray-50 border-t border-gray-300">
+          {/* Footer - flex-shrink-0 to always be visible */}
+          <div className="flex items-center justify-between p-2 bg-gray-50 border-t border-gray-300 flex-shrink-0">
             {/* Delete button on the left (only in edit mode) */}
             <div className="flex justify-start">
               {magazine && onDelete && (
