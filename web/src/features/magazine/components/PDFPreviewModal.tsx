@@ -109,15 +109,15 @@ function DraggableImageItem({
       ref={ref}
       style={{ opacity }}
       data-handler-id={handlerId}
-      className="flex-shrink-0 relative cursor-grab active:cursor-grabbing"
+      className="relative cursor-grab active:cursor-grabbing h-[200px] aspect-[2/3] flex-shrink-0"
     >
       <img
         src={page.dataUrl}
         alt={`Page ${page.pageNumber}`}
-        className="h-full object-cover rounded border"
+        className="w-full h-full object-cover rounded border"
         draggable={false}
       />
-      <div className="absolute top-1 left-1 bg-black/60 text-white px-2 py-1 rounded text-sm">
+      <div className="absolute top-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-sm">
         {page.pageNumber}
       </div>
       <button
@@ -125,16 +125,10 @@ function DraggableImageItem({
           e.stopPropagation()
           onRemove(page.pageNumber)
         }}
-        className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 cursor-pointer"
+        className="absolute top-2 right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 cursor-pointer"
       >
         ×
       </button>
-      {/* Drag indicator */}
-      <div className="absolute bottom-1 right-1 bg-black/60 text-white rounded px-1">
-        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M9 5a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm6-12a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" />
-        </svg>
-      </div>
     </div>
   )
 }
@@ -377,9 +371,9 @@ export function PDFPreviewModal({
           </div>
         )}
 
-        <div className="w-[1400px] min-w-[1200px] h-90vh bg-white rounded-lg shadow-xl overflow-hidden">
+        <div className="w-[90vw] max-w-[1400px] h-[85vh] max-h-[1000px] bg-white rounded-lg shadow-xl overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-400">
+          <div className="flex items-center justify-between p-4 border-b border-gray-400 flex-shrink-0">
             <div>
               <h2 className="text-xl font-semibold">
                 {magazine ? `[매거진 편집] ${title}` : title}
@@ -393,7 +387,8 @@ export function PDFPreviewModal({
             </button>
           </div>
 
-          <div className="flex h-full">
+          {/* Body */}
+          <div className="flex flex-1 overflow-hidden">
             {/* Left Column - Basic Information */}
             <div className="w-1/4 p-4 border-r border-gray-300 overflow-y-auto">
               <div className="mb-4">
@@ -625,7 +620,7 @@ export function PDFPreviewModal({
             </div>
 
             {/* Right Column - PDF Page Selection */}
-            <div className="w-[55%] flex flex-col">
+            <div className="w-[55%] flex flex-col overflow-y-auto">
               {/* Swiper Section */}
               <div className="p-4 flex-1 content-center">
                 <p className="text-m text-gray-600 mb-3">
@@ -722,8 +717,8 @@ export function PDFPreviewModal({
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-between p-2 bg-gray-50 border-t border-gray-300">
+          {/* Footer - flex-shrink-0 to always be visible */}
+          <div className="flex items-center justify-between p-2 bg-gray-50 border-t border-gray-300 flex-shrink-0">
             {/* Delete button on the left (only in edit mode) */}
             <div className="flex justify-start">
               {magazine && onDelete && (
