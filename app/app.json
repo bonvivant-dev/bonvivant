@@ -11,7 +11,7 @@
     "ios": {
       "bundleIdentifier": "com.bonvivant.app",
       "supportsTablet": true,
-      "buildNumber": "26",
+      "buildNumber": "27",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"
