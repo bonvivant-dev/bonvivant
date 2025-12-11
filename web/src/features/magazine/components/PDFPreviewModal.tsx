@@ -109,15 +109,15 @@ function DraggableImageItem({
       ref={ref}
       style={{ opacity }}
       data-handler-id={handlerId}
-      className="flex-shrink-0 relative cursor-grab active:cursor-grabbing"
+      className="relative cursor-grab active:cursor-grabbing h-[200px] aspect-[2/3] flex-shrink-0"
     >
       <img
         src={page.dataUrl}
         alt={`Page ${page.pageNumber}`}
-        className="h-full object-cover rounded border"
+        className="w-full h-full object-cover rounded border"
         draggable={false}
       />
-      <div className="absolute top-1 left-1 bg-black/60 text-white px-2 py-1 rounded text-sm">
+      <div className="absolute top-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-sm">
         {page.pageNumber}
       </div>
       <button
@@ -125,16 +125,10 @@ function DraggableImageItem({
           e.stopPropagation()
           onRemove(page.pageNumber)
         }}
-        className="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 cursor-pointer"
+        className="absolute top-2 right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 cursor-pointer"
       >
         ×
       </button>
-      {/* Drag indicator */}
-      <div className="absolute bottom-1 right-1 bg-black/60 text-white rounded px-1">
-        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M9 5a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm6-12a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm0 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4z" />
-        </svg>
-      </div>
     </div>
   )
 }
