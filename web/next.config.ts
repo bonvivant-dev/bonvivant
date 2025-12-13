@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [new URL('https://shvxzuvqnlffnldbvtdf.supabase.co/**')],
   },
+  experimental: {
+    middlewareClientMaxBodySize: '50mb',
+  },
 }
 
 export default nextConfig
