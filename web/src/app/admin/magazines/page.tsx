@@ -1,4 +1,5 @@
 'use client'
+import path from 'path'
 
 import dayjs from 'dayjs'
 import Image from 'next/image'
@@ -7,10 +8,28 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { FcDocument } from 'react-icons/fc'
+// eslint-disable-next-line import/order
 import { Swiper, SwiperSlide } from 'swiper/react'
 
-// Import Swiper styles
 import 'swiper/css'
+
+import { v4 as uuidv4 } from 'uuid'
+
+import { CategoryOrderModal } from '@/features/category/components'
+import { Category } from '@/features/category/types'
+import { PDFPreviewModal } from '@/features/magazine/components'
+import {
+  convertPdfToImages,
+  convertPdfFromStorage,
+} from '@/features/magazine/lib'
+import {
+  Magazine,
+  MagazinesByCategory,
+  PDFPageImage,
+} from '@/features/magazine/types'
+import { Header, LoadingOverlay } from '@/shared/components'
+import { thumbnail } from '@/shared/utils'
+import { supabaseBrowserClient } from '@/shared/utils/supabase/client'
 
 // Custom Swiper styles
 const swiperStyles = `
@@ -156,21 +175,6 @@ function DraggableMagazineCard({
   )
 }
 
-import { CategoryOrderModal } from '@/features/category/components'
-import { Category } from '@/features/category/types'
-import { PDFPreviewModal } from '@/features/magazine/components'
-import {
-  convertPdfToImages,
-  convertPdfFromStorage,
-} from '@/features/magazine/lib'
-import {
-  Magazine,
-  MagazinesByCategory,
-  PDFPageImage,
-} from '@/features/magazine/types'
-import { Header, LoadingOverlay } from '@/shared/components'
-import { thumbnail } from '@/shared/utils'
-
 export default function MagazinesPage() {
   const [magazinesByCategory, setMagazinesByCategory] =
     useState<MagazinesByCategory | null>(null)
@@ -224,61 +228,90 @@ export default function MagazinesPage() {
       setError(null)
 
       try {
-        const formData = new FormData()
-
-        // 편집 모드일 때는 file이 없을 수 있음 (PDF는 변경하지 않는 경우)
-        if (file) {
-          formData.append('file', file)
-        }
-
-        // Add magazine metadata if provided
-        if (magazineFormData) {
-          formData.append('title', magazineFormData.title)
-          formData.append('summary', magazineFormData.summary)
-          formData.append('introduction', magazineFormData.introduction)
-          formData.append(
-            'category_ids',
-            JSON.stringify(magazineFormData.category_ids),
-          )
-          formData.append('season_id', magazineFormData.season_id)
-          formData.append(
-            'price',
-            magazineFormData.price !== null
-              ? magazineFormData.price.toString()
-              : '',
-          )
-          formData.append(
-            'is_purchasable',
-            magazineFormData.is_purchasable.toString(),
-          )
-          formData.append('product_id', magazineFormData.product_id || '')
-          // Add cover image URL if provided
-          if (magazineFormData.cover_image_url) {
-            formData.append('cover_image_url', magazineFormData.cover_image_url)
-          }
-        }
-
-        // 선택된 페이지들을 순서와 메타데이터와 함께 FormData에 추가
-        const pageMetadata = selectedPages.map((page, index) => ({
-          order: index,
-          originalPageNumber: page.pageNumber,
-          fileName: `${page.pageNumber}.jpg`,
-        }))
-
-        // 메타데이터 정보 추가
-        formData.append('pageMetadata', JSON.stringify(pageMetadata))
-
-        // 선택된 페이지들을 순서대로 추가 (원본 페이지 번호로 파일명 설정)
-        selectedPages.forEach((page, index) => {
-          formData.append(`image-${index}`, page.blob, `${page.pageNumber}.jpg`)
-        })
+        let storageKey: string
+        let safeFileName: string
+        let originalFileName: string
 
         if (editingMagazineId) {
-          const url = `/api/magazines/${editingMagazineId}`
-          const method = 'PUT'
-          const response = await fetch(url, {
-            method,
-            body: formData,
+          // 편집 모드: 클라이언트에서 직접 Supabase Storage에 업로드
+
+          // 기존 매거진 정보 가져오기 (storage_key 필요)
+          const magazineResponse = await fetch(
+            `/api/magazines/${editingMagazineId}`,
+          )
+          if (!magazineResponse.ok) {
+            throw new Error('Failed to fetch magazine info')
+          }
+          const { magazine: currentMagazine } = await magazineResponse.json()
+
+          storageKey = currentMagazine.storage_key
+
+          // PDF 파일이 새로 제공된 경우 업로드 (편집 시 드물지만 가능)
+          if (file) {
+            originalFileName = file.name
+            const fileExtension = path.parse(originalFileName).ext
+            safeFileName = `${storageKey}${fileExtension}`
+
+            const pdfBuffer = await file.arrayBuffer()
+            const { error: pdfUploadError } =
+              await supabaseBrowserClient.storage
+                .from('magazines')
+                .upload(`${storageKey}/${safeFileName}`, pdfBuffer, {
+                  contentType: 'application/pdf',
+                  upsert: true,
+                })
+
+            if (pdfUploadError) {
+              console.error('Failed to upload PDF:', pdfUploadError)
+              throw new Error(`PDF 업로드 실패: ${pdfUploadError.message}`)
+            }
+          }
+
+          // 이미지들 업로드
+          const previewImages: string[] = []
+
+          for (let index = 0; index < selectedPages.length; index++) {
+            const page = selectedPages[index]
+            const storagePath = `preview/${storageKey}/${page.pageNumber}.jpg`
+            const fullPath = `images/${storagePath}`
+
+            const { error: imageUploadError } =
+              await supabaseBrowserClient.storage
+                .from('images')
+                .upload(storagePath, page.blob, {
+                  contentType: 'image/jpeg',
+                  upsert: true,
+                })
+
+            if (imageUploadError) {
+              console.error(`Error uploading image ${index}:`, imageUploadError)
+            } else {
+              previewImages.push(fullPath)
+            }
+          }
+
+          // 메타데이터만 API route로 전송
+          const response = await fetch(`/api/magazines/${editingMagazineId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              preview_images: previewImages,
+              title: magazineFormData?.title || '',
+              summary: magazineFormData?.summary || '',
+              introduction: magazineFormData?.introduction || '',
+              category_ids: magazineFormData?.category_ids || [],
+              season_id: magazineFormData?.season_id || '',
+              cover_image_url: magazineFormData?.cover_image_url || '',
+              price:
+                magazineFormData?.price !== null &&
+                magazineFormData?.price !== undefined
+                  ? magazineFormData.price
+                  : null,
+              is_purchasable: magazineFormData?.is_purchasable || false,
+              product_id: magazineFormData?.product_id || null,
+            }),
           })
 
           if (!response.ok) {
@@ -286,11 +319,78 @@ export default function MagazinesPage() {
             throw new Error(errorData.error || 'Update failed')
           }
         } else {
-          const url = '/api/magazines/upload'
-          const method = 'POST'
-          const response = await fetch(url, {
-            method,
-            body: formData,
+          // 새 업로드: 클라이언트에서 직접 Supabase Storage에 업로드
+          if (!file) {
+            throw new Error('PDF 파일이 필요합니다.')
+          }
+
+          storageKey = uuidv4()
+          originalFileName = file.name
+          const fileExtension = path.parse(originalFileName).ext
+          safeFileName = `${storageKey}${fileExtension}`
+
+          // 1. PDF 업로드
+          const pdfBuffer = await file.arrayBuffer()
+          const { error: pdfUploadError } = await supabaseBrowserClient.storage
+            .from('magazines')
+            .upload(`${storageKey}/${safeFileName}`, pdfBuffer, {
+              contentType: 'application/pdf',
+              upsert: true,
+            })
+
+          if (pdfUploadError) {
+            console.error('Failed to upload PDF:', pdfUploadError)
+            throw new Error(`PDF 업로드 실패: ${pdfUploadError.message}`)
+          }
+
+          // 2. 이미지들 업로드
+          const previewImages: string[] = []
+
+          for (let index = 0; index < selectedPages.length; index++) {
+            const page = selectedPages[index]
+            const storagePath = `preview/${storageKey}/${page.pageNumber}.jpg`
+            const fullPath = `images/${storagePath}`
+
+            const { error: imageUploadError } =
+              await supabaseBrowserClient.storage
+                .from('images')
+                .upload(storagePath, page.blob, {
+                  contentType: 'image/jpeg',
+                  upsert: true,
+                })
+
+            if (imageUploadError) {
+              console.error(`Error uploading image ${index}:`, imageUploadError)
+            } else {
+              previewImages.push(fullPath)
+            }
+          }
+
+          // 3. 메타데이터만 API route로 전송
+          const response = await fetch('/api/magazines/upload', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              storage_key: storageKey,
+              original_filename: originalFileName,
+              safe_filename: safeFileName,
+              preview_images: previewImages,
+              title: magazineFormData?.title || '',
+              summary: magazineFormData?.summary || '',
+              introduction: magazineFormData?.introduction || '',
+              category_ids: magazineFormData?.category_ids || [],
+              season_id: magazineFormData?.season_id || '',
+              cover_image_url: magazineFormData?.cover_image_url || '',
+              price:
+                magazineFormData?.price !== null &&
+                magazineFormData?.price !== undefined
+                  ? magazineFormData.price
+                  : null,
+              is_purchasable: magazineFormData?.is_purchasable || false,
+              product_id: magazineFormData?.product_id || null,
+            }),
           })
 
           if (!response.ok) {
@@ -693,7 +793,9 @@ export default function MagazinesPage() {
                                     type="text"
                                     value={editingCategoryNameValue}
                                     onChange={e =>
-                                      setEditingCategoryNameValue(e.target.value)
+                                      setEditingCategoryNameValue(
+                                        e.target.value,
+                                      )
                                     }
                                     onKeyDown={e => {
                                       if (e.key === 'Enter') {

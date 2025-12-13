@@ -65,85 +65,20 @@ export async function PUT(
       return NextResponse.json({ error: 'Magazine not found' }, { status: 404 })
     }
 
-    // Check if request has FormData (for image updates) or JSON (for simple updates)
-    const contentType = request.headers.get('content-type') || ''
-    let title, summary, introduction, season_id, category_ids, pageMetadata, coverImageUrl, price, is_purchasable, product_id
+    // 클라이언트에서 이미 Supabase Storage에 업로드 완료
+    // 메타데이터만 받아서 DB에 저장
+    const body = await request.json()
 
-    if (contentType.includes('multipart/form-data')) {
-      // Handle FormData (image updates included)
-      const formData = await request.formData()
-
-      title = formData.get('title') as string
-      summary = formData.get('summary') as string
-      introduction = formData.get('introduction') as string
-      season_id = formData.get('season_id') as string
-      const categoryIdsStr = formData.get('category_ids') as string
-      category_ids = categoryIdsStr ? JSON.parse(categoryIdsStr) : []
-      pageMetadata = formData.get('pageMetadata') as string
-      coverImageUrl = formData.get('cover_image_url') as string
-      const priceStr = formData.get('price') as string
-      price = priceStr && priceStr !== '' ? parseInt(priceStr, 10) : null
-      const isPurchasableStr = formData.get('is_purchasable') as string
-      is_purchasable = isPurchasableStr === 'true'
-      product_id = formData.get('product_id') as string | null
-
-      // Handle preview image updates if pageMetadata exists
-      if (pageMetadata) {
-        try {
-          const metadata = JSON.parse(pageMetadata)
-          const previewImages: string[] = []
-
-          // Process new preview images
-          for (let i = 0; i < metadata.length; i++) {
-            const imageFile = formData.get(`image-${i}`) as File
-            if (imageFile) {
-              const fileName = metadata[i].fileName
-              const storagePath = `preview/${currentMagazine.storage_key}/${fileName}`
-              const fullPath = `images/${storagePath}`
-
-              // Upload to images bucket
-              const { error: uploadError } = await supabase.storage
-                .from('images')
-                .upload(storagePath, imageFile, {
-                  contentType: 'image/jpeg',
-                  upsert: true,
-                })
-
-              if (uploadError) {
-                console.error('Preview image upload error:', uploadError)
-              } else {
-                previewImages.push(fullPath)
-              }
-            }
-          }
-
-          // Update preview_images and cover_image in database
-          if (previewImages.length > 0) {
-            const coverImage = coverImageUrl
-            await supabase
-              .from('magazines')
-              .update({
-                preview_images: previewImages,
-                cover_image: coverImage,
-              })
-              .eq('id', id)
-          }
-        } catch (metadataError) {
-          console.error('Preview image processing error:', metadataError)
-        }
-      }
-    } else {
-      // Handle JSON (simple metadata updates)
-      const body = await request.json()
-      title = body.title
-      summary = body.summary
-      introduction = body.introduction
-      season_id = body.season_id
-      category_ids = body.category_ids
-      price = body.price
-      is_purchasable = body.is_purchasable
-      product_id = body.product_id
-    }
+    const title = body.title
+    const summary = body.summary
+    const introduction = body.introduction
+    const season_id = body.season_id
+    const category_ids = body.category_ids
+    const price = body.price
+    const is_purchasable = body.is_purchasable
+    const product_id = body.product_id
+    const preview_images = body.preview_images
+    const cover_image_url = body.cover_image_url
 
     const updateData: any = {
       updated_at: new Date().toISOString(),
@@ -158,6 +93,9 @@ export async function PUT(
     if (price !== undefined) updateData.price = price
     if (is_purchasable !== undefined) updateData.is_purchasable = is_purchasable
     if (product_id !== undefined) updateData.product_id = product_id || null
+    if (preview_images !== undefined) updateData.preview_images = preview_images
+    if (cover_image_url !== undefined)
+      updateData.cover_image = cover_image_url || null
 
     // Handle PDF file rename if title changed
     if (title && title !== currentMagazine.title) {
