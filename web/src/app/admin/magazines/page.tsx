@@ -8,10 +8,12 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { FcDocument } from 'react-icons/fc'
+import { Scrollbar } from 'swiper/modules'
 // eslint-disable-next-line import/order
 import { Swiper, SwiperSlide } from 'swiper/react'
 
 import 'swiper/css'
+import 'swiper/css/scrollbar'
 
 import { v4 as uuidv4 } from 'uuid'
 
@@ -44,6 +46,28 @@ const swiperStyles = `
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  /* Swiper scrollbar customization */
+  .swiper-scrollbar {
+    height: 8px !important;
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-radius: 4px !important;
+  }
+
+  .swiper-scrollbar-drag {
+    background: rgba(59, 130, 246, 0.6) !important;
+    border-radius: 4px !important;
+    cursor: grab !important;
+  }
+
+  .swiper-scrollbar-drag:hover {
+    background: rgba(59, 130, 246, 0.8) !important;
+  }
+
+  .swiper-scrollbar-drag:active {
+    cursor: grabbing !important;
+    background: rgba(59, 130, 246, 1) !important;
   }
 `
 
@@ -956,8 +980,10 @@ export default function MagazinesPage() {
                         ) : (
                           <div className="p-6">
                             <Swiper
+                              modules={[Scrollbar]}
                               spaceBetween={20}
                               slidesPerView={1}
+                              scrollbar={{ draggable: true }}
                               breakpoints={{
                                 640: { slidesPerView: 2 },
                                 768: { slidesPerView: 3 },
@@ -1032,8 +1058,10 @@ export default function MagazinesPage() {
 
                       <div className="p-6">
                         <Swiper
+                          modules={[Scrollbar]}
                           spaceBetween={20}
                           slidesPerView={1}
+                          scrollbar={{ draggable: true }}
                           breakpoints={{
                             640: { slidesPerView: 2 },
                             768: { slidesPerView: 3 },
