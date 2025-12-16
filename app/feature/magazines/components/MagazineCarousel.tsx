@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     gap: 8,
   },
   imageContainer: {
@@ -147,6 +147,7 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 4,
     lineHeight: 18,
+    height: 36,
   },
   summary: {
     fontSize: 12,
