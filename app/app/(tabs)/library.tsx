@@ -12,9 +12,10 @@ import {
   Image,
   Dimensions,
 } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { usePurchasedMagazinesContext } from '@/feature/magazines'
-import { Button } from '@/feature/shared'
+import { Button, LogoHeader } from '@/feature/shared'
 import { thumbnail } from '@/feature/shared/utils'
 
 import { useAuth, NameInputBottomSheet } from '../../feature/auth/components'
@@ -84,9 +85,11 @@ function LibraryContent() {
   }
 
   return (
-    <View style={styles.container}>
-      {/* Header with logout button */}
-      <View style={styles.header}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <LogoHeader />
+
+      {/* User greeting */}
+      <View style={styles.userSection}>
         <TouchableOpacity onPress={() => setShowNameInputBottomSheet(true)}>
           {userName ? (
             <Text style={styles.welcomeText}>
@@ -96,7 +99,6 @@ function LibraryContent() {
             <Text style={styles.namePromptText}>닉네임을 입력해주세요</Text>
           )}
         </TouchableOpacity>
-
         <TouchableOpacity onPress={handleSignOut} style={styles.logoutButton}>
           <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
         </TouchableOpacity>
@@ -106,7 +108,10 @@ function LibraryContent() {
       <View style={styles.librarySection}>
         <View style={styles.libraryHeader}>
           <Text style={styles.libraryTitle}>내 서재</Text>
-          <TouchableOpacity onPress={handleRefresh} style={styles.refreshButton}>
+          <TouchableOpacity
+            onPress={handleRefresh}
+            style={styles.refreshButton}
+          >
             <Ionicons name="refresh" size={24} color="#007AFF" />
           </TouchableOpacity>
         </View>
@@ -166,7 +171,7 @@ function LibraryContent() {
         onClose={() => setShowNameInputBottomSheet(false)}
         username={userName}
       />
-    </View>
+    </SafeAreaView>
   )
 }
 
@@ -177,7 +182,7 @@ export default function Library() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#fff',
   },
   loginContainer: {
     flex: 1,
@@ -186,14 +191,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
     padding: 20,
   },
-  header: {
+  userSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
+    paddingVertical: 4,
     backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
   logoutButton: {
     padding: 8,

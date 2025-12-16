@@ -20,7 +20,7 @@ import {
   Magazine,
   useBookmarksContext,
 } from '@/feature/magazines'
-import { Button } from '@/feature/shared'
+import { Button, LogoHeader } from '@/feature/shared'
 import { thumbnail } from '@/feature/shared/utils'
 
 const { width } = Dimensions.get('window')
@@ -77,10 +77,7 @@ export default function Bookmarks() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>찜한 매거진</Text>
-      </View>
+      <LogoHeader />
 
       {/* Bookmarked Magazines Grid */}
       <View style={styles.bookmarksSection}>
@@ -148,21 +145,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F5F5F5',
     padding: 20,
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    backgroundColor: '#fff',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  refreshButton: {
-    padding: 8,
   },
   loadingText: {
     marginTop: 10,

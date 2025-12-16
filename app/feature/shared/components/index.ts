@@ -1,4 +1,5 @@
 export * from './Button'
+export * from './LogoHeader'
 export * from './PageHeader'
 export * from './Spinner'
 export * from './TextField'

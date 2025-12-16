@@ -5,7 +5,6 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
-  Image,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -15,6 +14,7 @@ import {
   useMagazinesByCategory,
   Magazine,
 } from '@/feature/magazines'
+import { LogoHeader } from '@/feature/shared'
 
 export default function Index() {
   const { magazinesByCategory, loading, error } = useMagazinesByCategory()
@@ -53,13 +53,7 @@ export default function Index() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Image
-          source={require('@/assets/images/bonvivant.png')}
-          style={styles.headerLogo}
-          resizeMode="contain"
-        />
-      </View>
+      <LogoHeader />
 
       <ScrollView
         style={styles.scrollView}
@@ -89,15 +83,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  header: {
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  headerLogo: {
-    width: 80,
-    height: 80,
   },
   scrollView: {
     flex: 1,
