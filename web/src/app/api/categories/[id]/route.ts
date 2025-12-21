@@ -97,19 +97,24 @@ export async function DELETE(
     const supabase = await supabaseServerClient()
     const { id } = await params
 
-    const { data: magazinesWithCategory } = await supabase
+    // 먼저 해당 카테고리와 매거진의 연결을 모두 삭제
+    const { error: deleteMagazineCategoriesError } = await supabase
       .from('magazine_categories')
-      .select('magazine_id')
+      .delete()
       .eq('category_id', id)
-      .limit(1)
 
-    if (magazinesWithCategory && magazinesWithCategory.length > 0) {
+    if (deleteMagazineCategoriesError) {
+      console.error(
+        'Error deleting magazine categories:',
+        deleteMagazineCategoriesError,
+      )
       return NextResponse.json(
-        { error: '해당 카테고리에 속한 매거진이 있어 삭제할 수 없어요' },
-        { status: 400 },
+        { error: 'Failed to delete magazine categories' },
+        { status: 500 },
       )
     }
 
+    // 카테고리 삭제
     const { error } = await supabase.from('categories').delete().eq('id', id)
 
     if (error) {
