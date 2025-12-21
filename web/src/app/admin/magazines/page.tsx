@@ -685,6 +685,37 @@ export default function MagazinesPage() {
     }
   }
 
+  const handleDeleteCategory = async (
+    categoryId: string,
+    categoryName: string,
+    magazineCount: number,
+  ) => {
+    const confirmMessage =
+      magazineCount > 0
+        ? `[${categoryName}] 카테고리를 삭제하시겠습니까?\n\n속한 매거진 ${magazineCount}개는 카테고리 연결이 해제됩니다.\n(다른 카테고리에도 속해있으면 그대로 유지됩니다)`
+        : `[${categoryName}] 카테고리를 삭제하시겠습니까?`
+
+    if (!confirm(confirmMessage)) return
+
+    try {
+      setIsLoading(true)
+      const response = await fetch(`/api/categories/${categoryId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete category')
+      }
+
+      await fetchMagazines()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete category')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleSaveCategoryOrder = async (reorderedCategories: Category[]) => {
     try {
       setIsLoading(true)
@@ -913,9 +944,9 @@ export default function MagazinesPage() {
                                 </>
                               )}
                             </div>
-                            {category.magazines.length > 0 && (
-                              <div className="flex gap-2 items-center justify-center">
-                                {isEditing ? (
+                            <div className="flex gap-2 items-center justify-center">
+                              {category.magazines.length > 0 &&
+                                (isEditing ? (
                                   <div className="flex gap-2">
                                     <span className="text-sm text-gray-500 content-center">
                                       각 매거진을 드래그하여 순서를 변경할 수
@@ -948,9 +979,20 @@ export default function MagazinesPage() {
                                   >
                                     순서 편집
                                   </button>
-                                )}
-                              </div>
-                            )}
+                                ))}
+                              <button
+                                onClick={() =>
+                                  handleDeleteCategory(
+                                    category.id,
+                                    category.name,
+                                    category.magazines.length,
+                                  )
+                                }
+                                className="px-4 py-2 text-sm border border-red-300 text-red-600 rounded-md hover:bg-red-50"
+                              >
+                                삭제
+                              </button>
+                            </div>
                           </div>
                         </div>
 
@@ -1071,8 +1113,14 @@ export default function MagazinesPage() {
                           className="magazine-swiper"
                         >
                           {magazinesByCategory.uncategorized.map(magazine => (
-                            <SwiperSlide key={magazine.id}>
-                              <div className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                            <SwiperSlide
+                              key={magazine.id}
+                              className="max-w-[220px]"
+                            >
+                              <div
+                                className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer"
+                                onClick={() => handleEdit(magazine)}
+                              >
                                 {magazine.cover_image && (
                                   <div className="aspect-[3/4] mb-3">
                                     <Image
@@ -1084,16 +1132,26 @@ export default function MagazinesPage() {
                                     />
                                   </div>
                                 )}
+                                <div className="mb-2">
+                                  <span
+                                    className={`inline-block px-2 py-1 text-xs font-medium rounded ${
+                                      magazine.is_purchasable
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-amber-100 text-amber-800'
+                                    }`}
+                                  >
+                                    {magazine.is_purchasable
+                                      ? '공개 (구매 가능)'
+                                      : '비공개 (구매 불가)'}
+                                  </span>
+                                </div>
                                 <h3 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
                                   {magazine.title || '제목 없음'}
                                 </h3>
-                                <p className="text-xs text-gray-500 mb-2 line-clamp-1">
-                                  {magazine.summary || '요약 없음'}
-                                </p>
                                 <p className="text-xs text-gray-400 mb-3">
-                                  {new Date(
-                                    magazine.created_at,
-                                  ).toLocaleDateString('ko-KR')}
+                                  {dayjs(magazine.created_at).format(
+                                    'YYYY.MM.DD',
+                                  )}
                                 </p>
                               </div>
                             </SwiperSlide>
