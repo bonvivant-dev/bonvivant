@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { TouchableOpacity, View, StyleSheet, Text } from 'react-native'
+import { TouchableOpacity, View, StyleSheet } from 'react-native'
+
+import { Text } from './Text'
 
 interface PageHeaderProps {
   title: string
@@ -38,7 +40,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
     color: '#333',
   },
   placeholder: {

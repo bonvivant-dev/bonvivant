@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
 import {
-  Text,
   View,
   TouchableOpacity,
   StyleSheet,
@@ -15,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { usePurchasedMagazinesContext } from '@/feature/magazines'
-import { Button, LogoHeader } from '@/feature/shared'
+import { Button, LogoHeader, Text } from '@/feature/shared'
 import { thumbnail } from '@/feature/shared/utils'
 
 import { useAuth, NameInputBottomSheet } from '../../feature/auth/components'
@@ -211,7 +210,6 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontSize: 18,
-    fontWeight: '600',
     color: '#333',
   },
   underline: {
@@ -221,7 +219,6 @@ const styles = StyleSheet.create({
   },
   namePromptText: {
     fontSize: 18,
-    fontWeight: '600',
     textDecorationLine: 'underline',
     textDecorationStyle: 'solid',
     textDecorationColor: '#333',
@@ -239,7 +236,6 @@ const styles = StyleSheet.create({
   },
   libraryTitle: {
     fontSize: 22,
-    fontWeight: '700',
     color: '#333',
   },
   refreshButton: {
@@ -307,7 +303,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#333',
     marginTop: 8,
-    fontWeight: '500',
     lineHeight: 16,
   },
   loginSection: {

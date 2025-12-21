@@ -1,5 +1,7 @@
+import { useFonts } from 'expo-font'
 import * as Linking from 'expo-linking'
 import { Stack } from 'expo-router'
+import * as SplashScreen from 'expo-splash-screen'
 import { OverlayProvider } from 'overlay-kit'
 import { useEffect } from 'react'
 import { Alert } from 'react-native'
@@ -12,6 +14,9 @@ import {
   BookmarksProvider,
   useBookmarks,
 } from '../feature/magazines'
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync()
 
 function RootLayoutNav() {
   const { supabase } = useAuth()
@@ -117,6 +122,23 @@ function AppProviders({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    Pretendard: require('../assets/fonts/Pretendard-Regular.otf'),
+    'Pretendard-Medium': require('../assets/fonts/Pretendard-Medium.otf'),
+    'Pretendard-SemiBold': require('../assets/fonts/Pretendard-SemiBold.otf'),
+    'Pretendard-Bold': require('../assets/fonts/Pretendard-Bold.otf'),
+  })
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync()
+    }
+  }, [fontsLoaded, fontError])
+
+  if (!fontsLoaded && !fontError) {
+    return null
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>

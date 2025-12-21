@@ -1,15 +1,16 @@
 import { Ionicons } from '@expo/vector-icons'
 import React from 'react'
 import {
-  TextInput,
   StyleSheet,
   KeyboardTypeOptions,
-  TextInputProps,
+  TextInputProps as RNTextInputProps,
   View,
   TouchableOpacity,
 } from 'react-native'
 
-interface Props extends TextInputProps {
+import { TextInput } from './TextInput'
+
+interface Props extends RNTextInputProps {
   value: string
   onChangeText: (text: string) => void
   placeholder?: string

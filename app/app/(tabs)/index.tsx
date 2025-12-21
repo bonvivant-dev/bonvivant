@@ -1,11 +1,5 @@
 import { overlay } from 'overlay-kit'
-import {
-  Text,
-  View,
-  ScrollView,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native'
+import { View, ScrollView, StyleSheet, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import {
@@ -15,6 +9,7 @@ import {
   Magazine,
 } from '@/feature/magazines'
 import { LogoHeader } from '@/feature/shared'
+import { Text } from '@/feature/shared/components'
 
 export default function Index() {
   const { magazinesByCategory, loading, error } = useMagazinesByCategory()
@@ -103,7 +98,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 18,
-    fontWeight: 'bold',
     color: '#ff4444',
     marginBottom: 8,
   },

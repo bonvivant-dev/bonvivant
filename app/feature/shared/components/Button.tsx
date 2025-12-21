@@ -1,11 +1,12 @@
 import {
   Pressable,
-  Text,
   ActivityIndicator,
   StyleSheet,
   StyleProp,
   ViewStyle,
 } from 'react-native'
+
+import { Text } from './Text'
 
 interface Props {
   children: React.ReactNode
@@ -16,7 +17,14 @@ interface Props {
   textColor?: string
 }
 
-export function Button({ children, loading, disabled, onPress, style, textColor = 'white' }: Props) {
+export function Button({
+  children,
+  loading,
+  disabled,
+  onPress,
+  style,
+  textColor = 'white',
+}: Props) {
   return (
     <Pressable
       onPress={onPress}
@@ -39,7 +47,9 @@ export function Button({ children, loading, disabled, onPress, style, textColor 
       {loading ? (
         <ActivityIndicator color="white" />
       ) : typeof children === 'string' ? (
-        <Text style={[styles.buttonText, { color: textColor }]}>{children}</Text>
+        <Text style={[styles.buttonText, { color: textColor }]}>
+          {children}
+        </Text>
       ) : (
         children
       )}
@@ -56,6 +66,5 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
     fontSize: 18,
-    fontWeight: '600',
   },
 })

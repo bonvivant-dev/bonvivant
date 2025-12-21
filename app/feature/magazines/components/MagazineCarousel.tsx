@@ -2,13 +2,13 @@ import { Image } from 'expo-image'
 import React from 'react'
 import {
   View,
-  Text,
   FlatList,
   StyleSheet,
   Dimensions,
   TouchableOpacity,
 } from 'react-native'
 
+import { Text } from '@/feature/shared/components'
 import { thumbnail } from '@/feature/shared/utils'
 
 import { Magazine } from '../types'
@@ -49,7 +49,7 @@ function MagazineCard({ magazine, onPress }: MagazineCardProps) {
         )}
       </View>
       {/* show magazine title */}
-      <Text style={styles.title} numberOfLines={2}>
+      <Text fontWeight="semibold" style={styles.title} numberOfLines={2}>
         {magazine.title}
       </Text>
     </TouchableOpacity>
@@ -68,7 +68,9 @@ export const MagazineCarousel: React.FC<MagazineCarouselProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.categoryTitle}>{title}</Text>
+        <Text fontWeight="bold" style={styles.categoryTitle}>
+          {title}
+        </Text>
       </View>
 
       <FlatList
@@ -99,7 +101,6 @@ const styles = StyleSheet.create({
   },
   categoryTitle: {
     fontSize: 20,
-    fontWeight: '700',
     color: '#333',
   },
   count: {
@@ -114,7 +115,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
     justifyContent: 'flex-start',
     gap: 8,
   },
@@ -143,7 +143,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 14,
-    fontWeight: '400',
     color: '#333',
     marginBottom: 4,
     lineHeight: 18,

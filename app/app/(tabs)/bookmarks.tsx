@@ -3,7 +3,6 @@ import { router } from 'expo-router'
 import { overlay } from 'overlay-kit'
 import React from 'react'
 import {
-  Text,
   View,
   StyleSheet,
   ActivityIndicator,
@@ -20,7 +19,7 @@ import {
   Magazine,
   useBookmarksContext,
 } from '@/feature/magazines'
-import { Button, LogoHeader } from '@/feature/shared'
+import { Button, LogoHeader, Text } from '@/feature/shared'
 import { thumbnail } from '@/feature/shared/utils'
 
 const { width } = Dimensions.get('window')
@@ -218,7 +217,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#333',
     marginTop: 8,
-    fontWeight: '500',
     lineHeight: 16,
   },
   loginSection: {

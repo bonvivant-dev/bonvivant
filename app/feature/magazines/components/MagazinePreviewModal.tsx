@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react'
 import {
   Modal,
   View,
-  Text,
   Image,
   TouchableOpacity,
   StyleSheet,
@@ -13,6 +12,7 @@ import {
 } from 'react-native'
 
 import { supabase } from '@/feature/shared'
+import { Text } from '@/feature/shared/components'
 
 import { Magazine } from '../types'
 
@@ -200,7 +200,6 @@ const styles = StyleSheet.create({
   },
   imageViewerTitle: {
     fontSize: 16,
-    fontWeight: '600',
     color: '#fff',
     textAlign: 'center',
     flex: 1,
@@ -209,7 +208,6 @@ const styles = StyleSheet.create({
   imageViewerCloseText: {
     fontSize: 20,
     color: '#fff',
-    fontWeight: 'bold',
   },
 
   imageViewerContent: {
@@ -244,7 +242,6 @@ const styles = StyleSheet.create({
   imageViewerPageText: {
     fontSize: 14,
     color: '#fff',
-    fontWeight: '600',
   },
   loadingOverlay: {
     position: 'absolute',
@@ -267,6 +264,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     marginTop: 12,
-    fontWeight: '600',
   },
 })

@@ -1,7 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router'
 import React, { useEffect } from 'react'
 import {
-  Text,
   View,
   StyleSheet,
   ActivityIndicator,
@@ -10,7 +9,7 @@ import {
   Platform,
 } from 'react-native'
 
-import { PageHeader } from '@/feature/shared'
+import { Text, PageHeader } from '@/feature/shared'
 
 import { useAuth, EmailSignUpForm } from '../feature/auth/components'
 

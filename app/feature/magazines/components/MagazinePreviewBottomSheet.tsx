@@ -4,7 +4,6 @@ import React, { useState } from 'react'
 import {
   Modal,
   View,
-  Text,
   Image,
   TouchableOpacity,
   StyleSheet,
@@ -19,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { useAuth } from '@/feature/auth/components'
 import { supabase } from '@/feature/shared'
+import { Text } from '@/feature/shared/components'
 
 import { useBookmarksContext } from '../contexts'
 import {
@@ -161,7 +161,9 @@ export function MagazinePreviewBottomSheet({
             )}
           </TouchableOpacity>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Text style={styles.closeButtonText}>✕</Text>
+            <Text fontWeight="bold" style={styles.closeButtonText}>
+              ✕
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -186,7 +188,9 @@ export function MagazinePreviewBottomSheet({
               )}
             </View>
             <View style={styles.titleContainer}>
-              <Text style={styles.title}>{magazine.title}</Text>
+              <Text fontWeight="semibold" style={styles.title}>
+                {magazine.title}
+              </Text>
             </View>
           </View>
 
@@ -206,7 +210,7 @@ export function MagazinePreviewBottomSheet({
               {isChecking || isLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.purchaseButtonText}>
+                <Text fontWeight="semibold" style={styles.purchaseButtonText}>
                   {isPurchased ? '읽기' : '구매하기'}
                 </Text>
               )}
@@ -262,7 +266,6 @@ export function MagazinePreviewBottomSheet({
           onClose={closeImageViewer}
           isPurchased={isPurchased}
           onPurchaseRequest={handlePurchaseFromModal}
-          isLoading={isLoading}
         />
       )}
     </Modal>
@@ -345,7 +348,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
     color: '#333',
     lineHeight: 28,
   },
@@ -367,7 +369,6 @@ const styles = StyleSheet.create({
   },
   purchaseButtonText: {
     fontSize: 16,
-    fontWeight: '600',
     color: '#fff',
   },
   devButton: {
@@ -380,7 +381,6 @@ const styles = StyleSheet.create({
   },
   devButtonText: {
     fontSize: 14,
-    fontWeight: '600',
     color: '#fff',
   },
   introSection: {
@@ -388,7 +388,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
     color: '#333',
     marginBottom: 12,
   },
@@ -424,7 +423,6 @@ const styles = StyleSheet.create({
   },
   debugTitle: {
     fontSize: 14,
-    fontWeight: '600',
     color: '#495057',
     marginBottom: 8,
   },

@@ -2,7 +2,6 @@ import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet'
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react'
 import {
   View,
-  Text,
   StyleSheet,
   Alert,
   Platform,
@@ -10,7 +9,7 @@ import {
   Keyboard,
 } from 'react-native'
 
-import { Button, TextField } from '@/feature/shared'
+import { Button, TextField, Text } from '@/feature/shared'
 
 import { useAuth } from './AuthContext'
 
@@ -210,7 +209,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
     color: '#333',
     marginBottom: 8,
   },

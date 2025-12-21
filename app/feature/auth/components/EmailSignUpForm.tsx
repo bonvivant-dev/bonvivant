@@ -1,8 +1,8 @@
 import { router } from 'expo-router'
 import React, { useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 
-import { Button, TextField } from '@/feature/shared'
+import { Button, Text, TextField } from '@/feature/shared'
 
 import { AuthErrorMessage } from '../constants'
 

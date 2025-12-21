@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router'
 import React, { useState, useEffect, useCallback } from 'react'
 import {
   View,
-  Text,
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
@@ -12,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { WebView } from 'react-native-webview'
 
 import { supabase } from '@/feature/shared'
+import { Text } from '@/feature/shared/components'
 
 import { Magazine } from '../types'
 
@@ -356,7 +356,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 16,
-    fontWeight: '600',
     color: '#fff',
     textAlign: 'center',
     flex: 1,
@@ -364,7 +363,6 @@ const styles = StyleSheet.create({
   closeButtonText: {
     fontSize: 20,
     color: '#fff',
-    fontWeight: 'bold',
   },
 
   contentContainer: {
@@ -420,6 +418,5 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
   },
 })
