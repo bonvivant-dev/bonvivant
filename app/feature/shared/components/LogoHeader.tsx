@@ -4,6 +4,8 @@ interface LogoHeaderProps {
   children?: React.ReactNode
 }
 
+const LOGO_SIZE = 100
+
 export function LogoHeader({ children }: LogoHeaderProps) {
   return (
     <View style={styles.header}>
@@ -26,8 +28,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   headerLogo: {
-    width: 80,
-    height: 80,
+    width: LOGO_SIZE,
+    height: LOGO_SIZE,
   },
   rightContent: {
     flexDirection: 'row',
