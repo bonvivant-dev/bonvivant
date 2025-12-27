@@ -108,7 +108,7 @@ export default function LibraryPage() {
       {/* Purchased Magazines Grid */}
       <View style={styles.librarySection}>
         <View style={styles.libraryHeader}>
-          <Text style={styles.libraryTitle}>내 서재</Text>
+          <Text fontWeight="semibold" style={styles.libraryTitle}>내 서재</Text>
           <TouchableOpacity
             onPress={handleRefresh}
             style={styles.refreshButton}
@@ -216,7 +216,9 @@ const styles = StyleSheet.create({
   },
   librarySection: {
     flex: 1,
-    padding: 16,
+    paddingTop: 4,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
   },
   libraryHeader: {
     flexDirection: 'row',
