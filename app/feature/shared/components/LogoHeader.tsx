@@ -8,13 +8,12 @@ import {
   Alert,
   Image,
   TouchableOpacity,
-  // ActivityIndicator,
+  ActivityIndicator,
 } from 'react-native'
-
-// import { usePurchaseRestore } from '@/feature/magazines/hooks'
 
 import { useAuth } from '@/feature/auth/components/AuthContext'
 import { NameInputBottomSheet } from '@/feature/auth/components/NameInputBottomSheet'
+import { usePurchaseRestore } from '@/feature/magazines/hooks'
 
 import { Button } from './Button'
 import { Text } from './Text'
@@ -35,7 +34,7 @@ function UserProfileBottomSheet({
   onClose,
 }: UserProfileBottomSheetProps) {
   const { user, signOut, deleteAccount, supabase } = useAuth()
-  // const { isRestoring, restorePurchases } = usePurchaseRestore()
+  const { isRestoring, restorePurchases } = usePurchaseRestore()
   const [showNameInput, setShowNameInput] = useState(false)
   const [currentUserName, setCurrentUserName] = useState(
     user?.user_metadata?.full_name || ''
@@ -45,7 +44,7 @@ function UserProfileBottomSheet({
   const bottomSheetModalRef = useRef<BottomSheetModal>(null)
 
   // variables
-  const snapPoints = useMemo(() => ['40%'], [])
+  const snapPoints = useMemo(() => ['45%'], [])
 
   // callbacks
   const handleSheetChanges = useCallback(
@@ -117,7 +116,7 @@ function UserProfileBottomSheet({
   }
 
   const handleRestorePurchases = async () => {
-    // await restorePurchases()
+    await restorePurchases()
   }
 
   const handleDeleteAccount = async () => {
@@ -197,17 +196,14 @@ function UserProfileBottomSheet({
               <TouchableOpacity
                 style={styles.restoreButton}
                 onPress={handleRestorePurchases}
-                // disabled={isRestoring}
+                disabled={isRestoring}
               >
                 <Ionicons name="refresh-outline" size={24} color="#007AFF" />
-                <Text style={styles.restoreText}>구매 내역 복원</Text>
-                {/* {isRestoring ? (
+                {isRestoring ? (
                   <ActivityIndicator size="small" color="#007AFF" />
                 ) : (
-                  <Text style={styles.restoreText}>
-                    {isRestoring ? '복원 중...' : '구매 내역 복원'}
-                  </Text>
-                )} */}
+                  <Text style={styles.restoreText}>구매 내역 복원</Text>
+                )}
               </TouchableOpacity>
 
               <TouchableOpacity
