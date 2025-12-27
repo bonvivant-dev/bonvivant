@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
 import { Platform } from 'react-native'
 
-import { supabase } from '@/feature/shared'
+import { supabase } from '@/feature/shared/lib'
 
 const PUSH_TOKEN_STORAGE_KEY = '@push_token'
 

@@ -6,7 +6,7 @@ import {
   finishTransaction,
 } from 'react-native-iap'
 
-import { supabase } from '@/feature/shared'
+import { supabase } from '@/feature/shared/lib'
 
 // API 베이스 URL (환경에 따라 변경)
 const API_BASE_URL = __DEV__
@@ -81,7 +81,7 @@ export function usePurchaseRestore() {
     }
   }, [])
 
-  // 구매 복원
+  // 구매 내역 복원
   const restorePurchases = useCallback(async () => {
     setIsRestoring(true)
     try {
@@ -100,7 +100,7 @@ export function usePurchaseRestore() {
       const availablePurchases = await getAvailablePurchases()
 
       if (!availablePurchases || availablePurchases.length === 0) {
-        Alert.alert('구매 복원', '복원할 구매 내역이 없습니다.')
+        Alert.alert('구매 내역 복원', '복원할 구매 내역이 없습니다.')
         setIsRestoring(false)
         return { success: true, restoredCount: 0 }
       }
@@ -135,12 +135,12 @@ export function usePurchaseRestore() {
       // 결과 메시지 표시
       if (successCount > 0) {
         Alert.alert(
-          '구매 복원 완료',
+          '구매 내역 복원 완료',
           `${successCount}개의 구매 내역이 복원되었습니다.`
         )
       } else if (failureCount > 0) {
         Alert.alert(
-          '구매 복원',
+          '구매 내역 복원',
           '복원할 구매 내역이 없거나 이미 복원되었습니다.'
         )
       }
@@ -153,14 +153,14 @@ export function usePurchaseRestore() {
     } catch (error) {
       setIsRestoring(false)
       Alert.alert(
-        '구매 복원 실패',
+        '구매 내역 복원 실패',
         error instanceof Error
           ? error.message
           : '구매 복원에 실패했습니다. 잠시 후 다시 시도해주세요.'
       )
       return {
         success: false,
-        error: error instanceof Error ? error.message : '구매 복원 실패',
+        error: error instanceof Error ? error.message : '구매 내역 복원 실패',
       }
     }
   }, [validatePurchase])

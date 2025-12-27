@@ -18,7 +18,7 @@ import {
   useBookmarksContext,
   MagazineCard,
 } from '@/feature/magazines'
-import { Button, LogoHeader, Text } from '@/feature/shared'
+import { Button, LogoHeader, Text } from '@/feature/shared/components'
 
 const ITEM_SPACING = 12
 const HORIZONTAL_PADDING = 20

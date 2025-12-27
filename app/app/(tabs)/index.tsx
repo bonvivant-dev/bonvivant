@@ -8,8 +8,7 @@ import {
   useMagazinesByCategory,
   Magazine,
 } from '@/feature/magazines'
-import { LogoHeader } from '@/feature/shared'
-import { Text } from '@/feature/shared/components'
+import { LogoHeader, Text } from '@/feature/shared/components'
 
 export default function MainPage() {
   const { magazinesByCategory, loading, error } = useMagazinesByCategory()

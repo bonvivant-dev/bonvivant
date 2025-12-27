@@ -13,8 +13,7 @@ import {
 
 import IconGoogle from '@/assets/icons/ic-google.svg'
 import { useAuth, EmailLoginForm } from '@/feature/auth/components'
-import { PageHeader } from '@/feature/shared'
-import { Text } from '@/feature/shared/components'
+import { PageHeader, Text } from '@/feature/shared/components'
 
 export default function LoginPage() {
   const { user, loading, signInWithGoogle } = useAuth()

@@ -5,7 +5,7 @@ import * as WebBrowser from 'expo-web-browser'
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { Alert, Platform } from 'react-native'
 
-import { supabase } from '@/feature/shared'
+import { supabase } from '@/feature/shared/lib'
 
 import { AuthErrorMessage } from '../constants'
 

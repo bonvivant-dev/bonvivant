@@ -17,8 +17,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { useAuth } from '@/feature/auth/components'
-import { supabase } from '@/feature/shared'
 import { Text } from '@/feature/shared/components'
+import { supabase } from '@/feature/shared/lib'
 
 import { useBookmarksContext } from '../contexts'
 import {

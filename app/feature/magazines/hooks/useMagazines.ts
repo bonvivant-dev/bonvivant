@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-import { supabase } from '@/feature/shared'
+import { supabase } from '@/feature/shared/lib'
 
 import { Magazine } from '../types'
 

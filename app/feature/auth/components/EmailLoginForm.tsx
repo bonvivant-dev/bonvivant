@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 import React, { useState } from 'react'
 import { View, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 
-import { Button, Text, TextField } from '@/feature/shared'
+import { Button, Text, TextField } from '@/feature/shared/components'
 
 import { AuthErrorMessage } from '../constants'
 
