@@ -18,7 +18,7 @@ export function UserProfileBottomSheet({
   visible,
   onClose,
 }: UserProfileBottomSheetProps) {
-  const { user, signOut, supabase } = useAuth()
+  const { user, signOut, deleteAccount, supabase } = useAuth()
   const [showNameInput, setShowNameInput] = useState(false)
   const [currentUserName, setCurrentUserName] = useState(
     user?.user_metadata?.full_name || ''
@@ -99,6 +99,35 @@ export function UserProfileBottomSheet({
     router.push('/login')
   }
 
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      '회원 탈퇴',
+      '정말로 탈퇴하시겠습니까?\n구매한 매거진을 포함한 모든 데이터가 삭제되며 복구할 수 없습니다.',
+      [
+        {
+          text: '취소',
+          style: 'cancel',
+        },
+        {
+          text: '탈퇴',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteAccount()
+              bottomSheetModalRef.current?.dismiss()
+              Alert.alert('완료', '회원 탈퇴가 완료되었습니다.')
+            } catch (error) {
+              Alert.alert(
+                '오류',
+                error instanceof Error ? error.message : '계정 삭제에 실패했습니다.'
+              )
+            }
+          },
+        },
+      ]
+    )
+  }
+
   return (
     <>
       <BottomSheetModal
@@ -140,6 +169,13 @@ export function UserProfileBottomSheet({
               >
                 <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
                 <Text style={styles.logoutText}>로그아웃</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.deleteAccountButton}
+                onPress={handleDeleteAccount}
+              >
+                <Text style={styles.deleteAccountText}>회원 탈퇴</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -227,5 +263,14 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: 16,
     color: '#FF3B30',
+  },
+  deleteAccountButton: {
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  deleteAccountText: {
+    fontSize: 12,
+    color: '#999',
+    textDecorationLine: 'underline',
   },
 })

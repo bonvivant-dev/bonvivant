@@ -20,6 +20,7 @@ interface AuthContextType {
     password: string
   ) => Promise<{ success: boolean }>
   signOut: () => Promise<void>
+  deleteAccount: () => Promise<void>
   supabase: SupabaseClient
 }
 
@@ -206,6 +207,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const deleteAccount = async () => {
+    try {
+      if (!user) {
+        throw new Error('로그인된 사용자가 없습니다')
+      }
+
+      const { error: rpcError } = await supabase.rpc('delete_user')
+
+      if (rpcError) {
+        console.error('Account deletion error:', rpcError)
+        throw new Error('계정 삭제에 실패했습니다')
+      }
+
+      await signOut()
+    } catch (error) {
+      console.error('Delete account error:', error)
+      throw error
+    }
+  }
+
   const value = {
     user,
     session,
@@ -214,6 +235,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithEmail,
     signUpWithEmail,
     signOut,
+    deleteAccount,
     supabase,
   }
 
