@@ -86,17 +86,10 @@ export function MagazinePreviewBottomSheet({
     }
 
     try {
-      const result = await toggleBookmark(magazine.id)
+      await toggleBookmark(magazine.id)
       await refetchBookmarkStatus()
       // 찜 목록 갱신
       await refetchBookmarks()
-
-      // 찜 상태 변경 피드백
-      if (result.isBookmarked) {
-        Alert.alert('찜 완료', '매거진을 찜 목록에 추가했습니다.')
-      } else {
-        Alert.alert('찜 해제', '매거진을 찜 목록에서 제거했습니다.')
-      }
     } catch (error) {
       console.error('북마크 토글 실패:', error)
       Alert.alert('오류', '찜 처리 중 오류가 발생했습니다.')
