@@ -11,7 +11,7 @@ import {
 import { LogoHeader } from '@/feature/shared'
 import { Text } from '@/feature/shared/components'
 
-export default function Index() {
+export default function MainPage() {
   const { magazinesByCategory, loading, error } = useMagazinesByCategory()
 
   const handleMagazinePress = (magazine: Magazine) => {

@@ -7,9 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   FlatList,
-  Image,
   Dimensions,
-  TouchableOpacity,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
@@ -18,14 +16,18 @@ import {
   MagazinePreviewBottomSheet,
   Magazine,
   useBookmarksContext,
+  MagazineCard,
 } from '@/feature/magazines'
 import { Button, LogoHeader, Text } from '@/feature/shared'
-import { thumbnail } from '@/feature/shared/utils'
 
-const { width } = Dimensions.get('window')
 const ITEM_SPACING = 12
-const ITEMS_PER_ROW = 3
-const ITEM_WIDTH = (width - ITEM_SPACING * (ITEMS_PER_ROW + 1)) / ITEMS_PER_ROW
+const HORIZONTAL_PADDING = 20
+const NUM_COLUMNS = 3
+
+const { width: screenWidth } = Dimensions.get('window')
+const ITEM_WIDTH =
+  (screenWidth - HORIZONTAL_PADDING * 2 - ITEM_SPACING * (NUM_COLUMNS - 1)) /
+  NUM_COLUMNS
 
 function LoginRequired() {
   return (
@@ -43,7 +45,7 @@ function LoginRequired() {
   )
 }
 
-export default function Bookmarks() {
+export default function BookmarksPage() {
   const { user, loading } = useAuth()
   const {
     magazines: bookmarks,
@@ -77,8 +79,6 @@ export default function Bookmarks() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <LogoHeader />
-
-      {/* Bookmarked Magazines Grid */}
       <View style={styles.bookmarksSection}>
         {bookmarksLoading ? (
           <View style={styles.centered}>
@@ -102,29 +102,24 @@ export default function Bookmarks() {
           <FlatList
             data={bookmarks}
             keyExtractor={item => item.id}
-            numColumns={ITEMS_PER_ROW}
+            numColumns={NUM_COLUMNS}
             contentContainerStyle={styles.gridContainer}
             columnWrapperStyle={styles.row}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.magazineItem}
-                onPress={() => handleMagazinePress(item)}
+            renderItem={({ item, index }) => (
+              <View
+                style={[
+                  styles.itemContainer,
+                  (index + 1) % NUM_COLUMNS !== 0 && {
+                    marginRight: ITEM_SPACING,
+                  },
+                ]}
               >
-                {item.cover_image ? (
-                  <Image
-                    source={{ uri: thumbnail(item.cover_image) }}
-                    style={styles.coverImage}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={styles.placeholderImage}>
-                    <Ionicons name="book" size={40} color="#999" />
-                  </View>
-                )}
-                <Text style={styles.magazineTitle} numberOfLines={2}>
-                  {item.title}
-                </Text>
-              </TouchableOpacity>
+                <MagazineCard
+                  magazine={item}
+                  onPress={handleMagazinePress}
+                  width={ITEM_WIDTH}
+                />
+              </View>
             )}
           />
         )}
@@ -152,7 +147,7 @@ const styles = StyleSheet.create({
   },
   bookmarksSection: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 20,
   },
   centered: {
@@ -196,28 +191,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     marginBottom: ITEM_SPACING,
   },
-  magazineItem: {
+  itemContainer: {
     width: ITEM_WIDTH,
-    marginRight: ITEM_SPACING,
-  },
-  coverImage: {
-    width: ITEM_WIDTH,
-    height: ITEM_WIDTH * 1.4,
-    backgroundColor: '#E5E5E5',
-  },
-  placeholderImage: {
-    width: ITEM_WIDTH,
-    height: ITEM_WIDTH * 1.4,
-    borderRadius: 8,
-    backgroundColor: '#E5E5E5',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  magazineTitle: {
-    fontSize: 12,
-    color: '#333',
-    marginTop: 8,
-    lineHeight: 16,
   },
   loginSection: {
     alignItems: 'center',

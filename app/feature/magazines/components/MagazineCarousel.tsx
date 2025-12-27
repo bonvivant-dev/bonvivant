@@ -1,59 +1,18 @@
-import { Image } from 'expo-image'
 import React from 'react'
-import {
-  View,
-  FlatList,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-} from 'react-native'
+import { View, FlatList, StyleSheet } from 'react-native'
 
 import { Text } from '@/feature/shared/components'
-import { thumbnail } from '@/feature/shared/utils'
 
 import { Magazine } from '../types'
 
-const { width: screenWidth } = Dimensions.get('window')
-const ITEM_WIDTH = screenWidth * 0.25
+import { MagazineCard } from './MagazineCard'
+
 const ITEM_MARGIN = 12
 
 interface MagazineCarouselProps {
   title: string
   magazines: Magazine[]
   onMagazinePress: (magazine: Magazine) => void
-}
-
-interface MagazineCardProps {
-  magazine: Magazine
-  onPress: (magazine: Magazine) => void
-}
-
-function MagazineCard({ magazine, onPress }: MagazineCardProps) {
-  return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => onPress(magazine)}
-      activeOpacity={0.8}
-    >
-      <View style={styles.imageContainer}>
-        {magazine.cover_image ? (
-          <Image
-            source={{ uri: thumbnail(magazine.cover_image) }}
-            style={styles.coverImage}
-            contentFit="cover"
-          />
-        ) : (
-          <View style={styles.placeholderImage}>
-            <Text style={styles.placeholderText}>No Cover</Text>
-          </View>
-        )}
-      </View>
-      {/* show magazine title */}
-      <Text fontWeight="semibold" style={styles.title} numberOfLines={2}>
-        {magazine.title}
-      </Text>
-    </TouchableOpacity>
-  )
 }
 
 export const MagazineCarousel: React.FC<MagazineCarouselProps> = ({
@@ -90,7 +49,7 @@ export const MagazineCarousel: React.FC<MagazineCarouselProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   header: {
     flexDirection: 'row',
@@ -103,54 +62,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#333',
   },
-  count: {
-    fontSize: 14,
-    color: '#666',
-  },
   listContainer: {
     paddingHorizontal: 16,
-  },
-  card: {
-    width: ITEM_WIDTH,
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
-    gap: 8,
-  },
-  imageContainer: {
-    width: '100%',
-    aspectRatio: 320 / 470,
-  },
-  coverImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#f0f0f0',
-  },
-  placeholderImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#e0e0e0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  placeholderText: {
-    color: '#999',
-    fontSize: 12,
-  },
-  cardContent: {
-    padding: 12,
-  },
-  title: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 4,
-    lineHeight: 18,
-    height: 36,
-  },
-  summary: {
-    fontSize: 12,
-    color: '#666',
-    lineHeight: 16,
   },
 })

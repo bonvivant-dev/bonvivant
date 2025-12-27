@@ -1,3 +1,4 @@
+export * from './MagazineCard'
 export * from './MagazinePreviewBottomSheet'
 export * from './MagazinePreviewModal'
 export * from './MagazineFullViewer'

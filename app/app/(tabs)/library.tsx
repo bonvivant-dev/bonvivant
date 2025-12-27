@@ -8,21 +8,23 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Image,
   Dimensions,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-import { usePurchasedMagazinesContext } from '@/feature/magazines'
+import { MagazineCard, usePurchasedMagazinesContext } from '@/feature/magazines'
 import { Button, LogoHeader, Text } from '@/feature/shared'
-import { thumbnail } from '@/feature/shared/utils'
 
 import { useAuth, NameInputBottomSheet } from '../../feature/auth/components'
 
-const { width } = Dimensions.get('window')
 const ITEM_SPACING = 12
-const ITEMS_PER_ROW = 3
-const ITEM_WIDTH = (width - ITEM_SPACING * (ITEMS_PER_ROW + 1)) / ITEMS_PER_ROW
+const HORIZONTAL_PADDING = 20
+const NUM_COLUMNS = 3
+
+const { width: screenWidth } = Dimensions.get('window')
+const ITEM_WIDTH =
+  (screenWidth - HORIZONTAL_PADDING * 2 - ITEM_SPACING * (NUM_COLUMNS - 1)) /
+  NUM_COLUMNS
 
 function LoginRequired() {
   return (
@@ -40,7 +42,7 @@ function LoginRequired() {
   )
 }
 
-function LibraryContent() {
+export default function LibraryPage() {
   const { user, loading, signOut } = useAuth()
   const {
     magazines,
@@ -137,29 +139,23 @@ function LibraryContent() {
           <FlatList
             data={magazines}
             keyExtractor={item => item.id}
-            numColumns={ITEMS_PER_ROW}
+            numColumns={3}
             contentContainerStyle={styles.gridContainer}
             columnWrapperStyle={styles.row}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.magazineItem}
-                onPress={() => handleMagazinePress(item.id)}
+            renderItem={({ item, index }) => (
+              <View
+                style={[
+                  styles.itemContainer,
+                  (index + 1) % NUM_COLUMNS !== 0 && {
+                    marginRight: ITEM_SPACING,
+                  },
+                ]}
               >
-                {item.cover_image ? (
-                  <Image
-                    source={{ uri: thumbnail(item.cover_image) }}
-                    style={styles.coverImage}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <View style={styles.placeholderImage}>
-                    <Ionicons name="book" size={40} color="#999" />
-                  </View>
-                )}
-                <Text style={styles.magazineTitle} numberOfLines={2}>
-                  {item.title}
-                </Text>
-              </TouchableOpacity>
+                <MagazineCard
+                  magazine={item}
+                  onPress={() => handleMagazinePress(item.id)}
+                />
+              </View>
             )}
           />
         )}
@@ -173,11 +169,6 @@ function LibraryContent() {
     </SafeAreaView>
   )
 }
-
-export default function Library() {
-  return <LibraryContent />
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -225,8 +216,7 @@ const styles = StyleSheet.create({
   },
   librarySection: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    padding: 16,
   },
   libraryHeader: {
     flexDirection: 'row',
@@ -282,28 +272,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     marginBottom: ITEM_SPACING,
   },
-  magazineItem: {
+  itemContainer: {
     width: ITEM_WIDTH,
-    marginRight: ITEM_SPACING,
-  },
-  coverImage: {
-    width: ITEM_WIDTH,
-    height: ITEM_WIDTH * 1.4,
-    backgroundColor: '#E5E5E5',
-  },
-  placeholderImage: {
-    width: ITEM_WIDTH,
-    height: ITEM_WIDTH * 1.4,
-    borderRadius: 8,
-    backgroundColor: '#E5E5E5',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  magazineTitle: {
-    fontSize: 12,
-    color: '#333',
-    marginTop: 8,
-    lineHeight: 16,
   },
   loginSection: {
     alignItems: 'center',
