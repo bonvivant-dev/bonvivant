@@ -1,3 +1,4 @@
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 import { useFonts } from 'expo-font'
 import * as Linking from 'expo-linking'
 import { Stack } from 'expo-router'
@@ -143,9 +144,11 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
         <AppProviders>
-          <OverlayProvider>
-            <RootLayoutNav />
-          </OverlayProvider>
+          <BottomSheetModalProvider>
+            <OverlayProvider>
+              <RootLayoutNav />
+            </OverlayProvider>
+          </BottomSheetModalProvider>
         </AppProviders>
       </AuthProvider>
     </GestureHandlerRootView>

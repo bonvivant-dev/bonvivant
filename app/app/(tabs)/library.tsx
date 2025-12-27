@@ -1,12 +1,11 @@
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import React, { useState } from 'react'
+import React from 'react'
 import {
   View,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Alert,
   FlatList,
   Dimensions,
 } from 'react-native'
@@ -15,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { MagazineCard, usePurchasedMagazinesContext } from '@/feature/magazines'
 import { Button, LogoHeader, Text } from '@/feature/shared'
 
-import { useAuth, NameInputBottomSheet } from '../../feature/auth/components'
+import { useAuth } from '../../feature/auth/components'
 
 const ITEM_SPACING = 12
 const HORIZONTAL_PADDING = 20
@@ -43,26 +42,13 @@ function LoginRequired() {
 }
 
 export default function LibraryPage() {
-  const { user, loading, signOut } = useAuth()
+  const { user, loading } = useAuth()
   const {
     magazines,
     loading: magazinesLoading,
     error: magazinesError,
     refetch,
   } = usePurchasedMagazinesContext()
-  const userName = user?.user_metadata?.full_name || ''
-  const [showNameInputBottomSheet, setShowNameInputBottomSheet] =
-    useState(false)
-
-  const handleSignOut = async () => {
-    Alert.alert('로그아웃', '로그아웃하시겠습니까?', [
-      {
-        text: '취소',
-        style: 'cancel',
-      },
-      { text: '확인', onPress: async () => await signOut() },
-    ])
-  }
 
   const handleMagazinePress = (magazineId: string) => {
     router.push(`/magazine/${magazineId}/view`)
@@ -88,22 +74,6 @@ export default function LibraryPage() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <LogoHeader />
-
-      {/* User greeting */}
-      <View style={styles.userSection}>
-        <TouchableOpacity onPress={() => setShowNameInputBottomSheet(true)}>
-          {userName ? (
-            <Text style={styles.welcomeText}>
-              <Text style={styles.underline}>{userName}</Text> 님, 안녕하세요
-            </Text>
-          ) : (
-            <Text style={styles.namePromptText}>닉네임을 입력해주세요</Text>
-          )}
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleSignOut} style={styles.logoutButton}>
-          <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
-        </TouchableOpacity>
-      </View>
 
       {/* Purchased Magazines Grid */}
       <View style={styles.librarySection}>
@@ -154,18 +124,13 @@ export default function LibraryPage() {
                 <MagazineCard
                   magazine={item}
                   onPress={() => handleMagazinePress(item.id)}
+                  width={ITEM_WIDTH}
                 />
               </View>
             )}
           />
         )}
       </View>
-
-      <NameInputBottomSheet
-        visible={showNameInputBottomSheet}
-        onClose={() => setShowNameInputBottomSheet(false)}
-        username={userName}
-      />
     </SafeAreaView>
   )
 }
@@ -181,44 +146,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
     padding: 20,
   },
-  userSection: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 4,
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  logoutButton: {
-    padding: 8,
-  },
   loadingText: {
     marginTop: 10,
     color: '#666',
     fontSize: 14,
   },
-  welcomeText: {
-    fontSize: 18,
-    color: '#333',
-  },
-  underline: {
-    textDecorationLine: 'underline',
-    textDecorationStyle: 'solid',
-    textDecorationColor: '#333',
-  },
-  namePromptText: {
-    fontSize: 18,
-    textDecorationLine: 'underline',
-    textDecorationStyle: 'solid',
-    textDecorationColor: '#333',
-  },
   librarySection: {
     flex: 1,
     paddingTop: 4,
     paddingBottom: 16,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   libraryHeader: {
     flexDirection: 'row',

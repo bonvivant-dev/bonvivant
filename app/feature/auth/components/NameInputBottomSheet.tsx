@@ -1,15 +1,17 @@
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet'
+import { Ionicons } from '@expo/vector-icons'
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet'
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react'
 import {
   View,
   StyleSheet,
   Alert,
   Platform,
-  KeyboardAvoidingView,
   Keyboard,
+  TouchableOpacity,
+  TextInput,
 } from 'react-native'
 
-import { Button, TextField, Text } from '@/feature/shared'
+import { Button, Text } from '@/feature/shared'
 
 import { useAuth } from './AuthContext'
 
@@ -27,15 +29,18 @@ export function NameInputBottomSheet({
   const { supabase } = useAuth()
   const [name, setName] = useState(username)
   const [loading, setLoading] = useState(false)
-  const [keyboardVisible, setKeyboardVisible] = useState(false)
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
 
   // ref
-  const bottomSheetRef = useRef<BottomSheet>(null)
+  const bottomSheetModalRef = useRef<BottomSheetModal>(null)
 
   // variables
   const snapPoints = useMemo(() => {
-    return keyboardVisible ? ['70%'] : ['50%', '70%']
-  }, [keyboardVisible])
+    if (keyboardHeight > 0) {
+      return ['70%']
+    }
+    return ['50%']
+  }, [keyboardHeight])
 
   // callbacks
   const handleSheetChanges = useCallback(
@@ -50,32 +55,29 @@ export function NameInputBottomSheet({
   // effects
   useEffect(() => {
     if (visible) {
-      bottomSheetRef.current?.expand()
+      bottomSheetModalRef.current?.present()
     } else {
-      bottomSheetRef.current?.close()
+      bottomSheetModalRef.current?.dismiss()
     }
   }, [visible])
 
   useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      () => {
-        setKeyboardVisible(true)
-        // 키보드가 올라오면 바텀시트를 더 높은 위치로
-        bottomSheetRef.current?.snapToIndex(1)
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      e => {
+        setKeyboardHeight(e.endCoordinates.height)
       }
     )
-
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
       () => {
-        setKeyboardVisible(false)
+        setKeyboardHeight(0)
       }
     )
 
     return () => {
-      keyboardDidShowListener?.remove()
-      keyboardDidHideListener?.remove()
+      keyboardWillShow.remove()
+      keyboardWillHide.remove()
     }
   }, [])
 
@@ -103,7 +105,7 @@ export function NameInputBottomSheet({
       })
 
       if (error) throw error
-      bottomSheetRef.current?.close()
+      bottomSheetModalRef.current?.dismiss()
     } catch (error) {
       Alert.alert('오류', '이름 저장 중 오류가 발생했습니다.')
       console.error('Name update error:', error)
@@ -114,7 +116,7 @@ export function NameInputBottomSheet({
 
   const handleCancel = () => {
     setName('')
-    bottomSheetRef.current?.close()
+    bottomSheetModalRef.current?.dismiss()
   }
 
   if (!visible) {
@@ -122,58 +124,65 @@ export function NameInputBottomSheet({
   }
 
   return (
-    <BottomSheet
-      ref={bottomSheetRef}
-      index={-1}
+    <BottomSheetModal
+      ref={bottomSheetModalRef}
       snapPoints={snapPoints}
       onChange={handleSheetChanges}
       enablePanDownToClose
       backgroundStyle={styles.bottomSheet}
       handleIndicatorStyle={styles.indicator}
-      keyboardBehavior="fillParent"
+      keyboardBehavior="extend"
       enableDynamicSizing={false}
       keyboardBlurBehavior="restore"
+      android_keyboardInputMode="adjustResize"
     >
       <BottomSheetView style={styles.contentContainer}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardAvoidingView}
-        >
-          <View style={styles.header}>
-            <Text style={styles.title}>닉네임을 입력해주세요</Text>
-          </View>
+        <View style={styles.header}>
+          <Text style={styles.title}>닉네임을 입력해주세요</Text>
+        </View>
 
-          <View style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
-            <TextField
-              value={name}
+        <View style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
+          <View style={styles.inputContainer}>
+            <TextInput
               onChangeText={setName}
               placeholder="이름 입력"
+              placeholderTextColor="#999"
               maxLength={20}
               editable={!loading}
-              autoFocus
+              autoFocus={true}
+              style={[styles.input, name ? styles.inputWithClear : null]}
             />
-
-            <View style={styles.buttonContainer}>
-              <Button
-                onPress={handleCancel}
-                disabled={loading}
-                style={{ width: '50%', flex: 1, backgroundColor: '#F5F5F5' }}
-                textColor="#000"
+            {name && !loading && (
+              <TouchableOpacity
+                style={styles.clearButton}
+                onPress={() => setName('')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                취소
-              </Button>
-              <Button
-                onPress={handleSave}
-                disabled={loading}
-                style={{ width: '50%', flex: 1 }}
-              >
-                저장
-              </Button>
-            </View>
+                <Ionicons name="close-circle" size={24} color="#000" />
+              </TouchableOpacity>
+            )}
           </View>
-        </KeyboardAvoidingView>
+
+          <View style={styles.buttonContainer}>
+            <Button
+              onPress={handleCancel}
+              disabled={loading}
+              style={{ width: '50%', flex: 1, backgroundColor: '#F5F5F5' }}
+              textColor="#000"
+            >
+              취소
+            </Button>
+            <Button
+              onPress={handleSave}
+              disabled={loading}
+              style={{ width: '50%', flex: 1 }}
+            >
+              저장
+            </Button>
+          </View>
+        </View>
       </BottomSheetView>
-    </BottomSheet>
+    </BottomSheetModal>
   )
 }
 
@@ -199,9 +208,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
   },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
   header: {
     alignItems: 'center',
     marginTop: 20,
@@ -211,6 +217,30 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#333',
     marginBottom: 8,
+  },
+  inputContainer: {
+    position: 'relative',
+  },
+  input: {
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    paddingVertical: 15,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    height: 50,
+    fontFamily: 'Pretendard',
+  },
+  inputWithClear: {
+    paddingRight: 45,
+  },
+  clearButton: {
+    position: 'absolute',
+    right: 12,
+    top: '50%',
+    transform: [{ translateY: -12 }],
+    zIndex: 1,
   },
   buttonContainer: {
     flexDirection: 'row',

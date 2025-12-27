@@ -1,21 +1,41 @@
-import { View, StyleSheet, Image } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import React, { useState } from 'react'
+import { View, StyleSheet, Image, TouchableOpacity } from 'react-native'
+
+import { UserProfileBottomSheet } from '@/feature/auth/components'
 
 interface LogoHeaderProps {
-  children?: React.ReactNode
+  showUserIcon?: boolean
 }
 
 const LOGO_SIZE = 100
 
-export function LogoHeader({ children }: LogoHeaderProps) {
+export function LogoHeader({ showUserIcon = true }: LogoHeaderProps) {
+  const [showProfileSheet, setShowProfileSheet] = useState(false)
+
   return (
-    <View style={styles.header}>
-      <Image
-        source={require('@/assets/images/bonvivant.png')}
-        style={styles.headerLogo}
-        resizeMode="contain"
+    <>
+      <View style={styles.header}>
+        <Image
+          source={require('@/assets/images/bonvivant.png')}
+          style={styles.headerLogo}
+          resizeMode="contain"
+        />
+        {showUserIcon && (
+          <TouchableOpacity
+            style={styles.userIconButton}
+            onPress={() => setShowProfileSheet(prev => !prev)}
+          >
+            <Ionicons name="person-circle-outline" size={32} color="#333" />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <UserProfileBottomSheet
+        visible={showProfileSheet}
+        onClose={() => setShowProfileSheet(false)}
       />
-      {children && <View style={styles.rightContent}>{children}</View>}
-    </View>
+    </>
   )
 }
 
@@ -25,14 +45,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 8,
+    paddingRight: 16,
     backgroundColor: '#fff',
   },
   headerLogo: {
     width: LOGO_SIZE,
     height: LOGO_SIZE,
   },
-  rightContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  userIconButton: {
+    padding: 4,
   },
 })

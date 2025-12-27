@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   },
   bookmarksSection: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingTop: 4,
     paddingBottom: 16,
   },
