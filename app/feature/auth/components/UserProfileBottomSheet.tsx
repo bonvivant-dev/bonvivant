@@ -18,9 +18,11 @@ export function UserProfileBottomSheet({
   visible,
   onClose,
 }: UserProfileBottomSheetProps) {
-  const { user, signOut } = useAuth()
+  const { user, signOut, supabase } = useAuth()
   const [showNameInput, setShowNameInput] = useState(false)
-  const userName = user?.user_metadata?.full_name || ''
+  const [currentUserName, setCurrentUserName] = useState(
+    user?.user_metadata?.full_name || ''
+  )
 
   // ref
   const bottomSheetModalRef = useRef<BottomSheetModal>(null)
@@ -46,6 +48,24 @@ export function UserProfileBottomSheet({
       bottomSheetModalRef.current?.dismiss()
     }
   }, [visible])
+
+  // 바텀시트가 열릴 때마다 최신 사용자 정보 가져오기
+  useEffect(() => {
+    const fetchLatestUserInfo = async () => {
+      if (visible && user) {
+        try {
+          const { data, error } = await supabase.auth.getUser()
+          if (!error && data.user) {
+            setCurrentUserName(data.user.user_metadata?.full_name || '')
+          }
+        } catch (error) {
+          console.error('Failed to fetch latest user info:', error)
+        }
+      }
+    }
+
+    fetchLatestUserInfo()
+  }, [visible, user, supabase])
 
   const handleSignOut = async () => {
     Alert.alert('로그아웃', '로그아웃하시겠습니까?', [
@@ -105,8 +125,8 @@ export function UserProfileBottomSheet({
               >
                 <View style={styles.nameContent}>
                   <Ionicons name="person-outline" size={24} color="#666" />
-                  {userName ? (
-                    <Text style={styles.userName}>{userName}</Text>
+                  {currentUserName ? (
+                    <Text style={styles.userName}>{currentUserName}</Text>
                   ) : (
                     <Text style={styles.namePrompt}>닉네임을 입력해주세요</Text>
                   )}
@@ -133,7 +153,7 @@ export function UserProfileBottomSheet({
       <NameInputBottomSheet
         visible={showNameInput}
         onClose={handleNameInputClose}
-        username={userName}
+        username={currentUserName}
       />
     </>
   )

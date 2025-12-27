@@ -33,6 +33,7 @@ export function NameInputBottomSheet({
 
   // ref
   const bottomSheetModalRef = useRef<BottomSheetModal>(null)
+  const inputRef = useRef<TextInput>(null)
 
   // variables
   const snapPoints = useMemo(() => {
@@ -81,30 +82,38 @@ export function NameInputBottomSheet({
     }
   }, [])
 
-  const validateName = () => {
-    if (!name.trim()) {
-      Alert.alert('오류', '이름을 입력해주세요.')
-      return false
-    }
-    if (name.trim().length < 2) {
-      Alert.alert('오류', '이름은 2글자 이상이어야 합니다.')
-      return false
-    }
-    return true
-  }
-
   const handleSave = async () => {
-    if (!validateName()) return
+    const currentName = name.trim()
+
+    if (!currentName) {
+      Alert.alert('오류', '이름을 입력해주세요.')
+      return
+    }
+    if (currentName.length < 2) {
+      Alert.alert('오류', '이름은 2글자 이상이어야 합니다.')
+      return
+    }
 
     setLoading(true)
     try {
-      const { error } = await supabase.auth.updateUser({
+      console.log('Saving name:', currentName)
+      const { data, error } = await supabase.auth.updateUser({
         data: {
-          full_name: name.trim(),
+          full_name: currentName,
         },
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
+
+      console.log('Update successful:', data)
+
+      // 세션 새로고침하여 UI 업데이트
+      await supabase.auth.refreshSession()
+
+      Alert.alert('성공', '닉네임이 변경되었습니다.')
       bottomSheetModalRef.current?.dismiss()
     } catch (error) {
       Alert.alert('오류', '이름 저장 중 오류가 발생했습니다.')
@@ -144,6 +153,8 @@ export function NameInputBottomSheet({
         <View style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
           <View style={styles.inputContainer}>
             <TextInput
+              ref={inputRef}
+              defaultValue={username}
               onChangeText={setName}
               placeholder="이름 입력"
               placeholderTextColor="#999"
@@ -155,7 +166,10 @@ export function NameInputBottomSheet({
             {name && !loading && (
               <TouchableOpacity
                 style={styles.clearButton}
-                onPress={() => setName('')}
+                onPress={() => {
+                  inputRef.current?.clear()
+                  setName('')
+                }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Ionicons name="close-circle" size={24} color="#000" />
