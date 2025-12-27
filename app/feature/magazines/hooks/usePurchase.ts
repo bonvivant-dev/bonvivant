@@ -5,6 +5,7 @@ import {
   useIAP,
   finishTransaction,
   ErrorCode,
+  getAvailablePurchases,
 } from 'react-native-iap'
 
 import { supabase } from '@/feature/shared'
@@ -220,9 +221,84 @@ export function usePurchase({
     }
   }, [magazineProductId, requestPurchase, products])
 
+  // 구매 복원
+  const restorePurchases = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      // 이전에 구매한 모든 항목 가져오기
+      const availablePurchases = await getAvailablePurchases()
+
+      if (!availablePurchases || availablePurchases.length === 0) {
+        Alert.alert('구매 복원', '복원할 구매 내역이 없습니다.')
+        setIsLoading(false)
+        return { success: true, restoredCount: 0 }
+      }
+
+      let successCount = 0
+      let failureCount = 0
+
+      // 각 구매 항목에 대해 검증 및 복원 수행
+      for (const purchase of availablePurchases) {
+        try {
+          const result = await validatePurchase(purchase)
+
+          if (result) {
+            successCount++
+          } else {
+            failureCount++
+          }
+
+          // 검증 후 트랜잭션 종료
+          await finishTransaction({
+            purchase,
+            isConsumable: true,
+          })
+        } catch (error) {
+          console.error('Purchase restoration error:', error)
+          failureCount++
+        }
+      }
+
+      setIsLoading(false)
+
+      // 결과 메시지 표시
+      if (successCount > 0) {
+        Alert.alert(
+          '구매 복원 완료',
+          `${successCount}개의 구매 내역이 복원되었습니다.`
+        )
+        onSuccess?.()
+      } else if (failureCount > 0) {
+        Alert.alert(
+          '구매 복원 실패',
+          '구매 내역 복원에 실패했습니다.\n잠시 후 다시 시도해주세요.'
+        )
+      }
+
+      return {
+        success: successCount > 0,
+        restoredCount: successCount,
+        failedCount: failureCount,
+      }
+    } catch (error) {
+      setIsLoading(false)
+      Alert.alert(
+        '구매 복원 실패',
+        error instanceof Error
+          ? error.message
+          : '구매 복원에 실패했습니다. 잠시 후 다시 시도해주세요.'
+      )
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : '구매 복원 실패',
+      }
+    }
+  }, [validatePurchase, onSuccess])
+
   return {
     isLoading,
     buyMagazine,
+    restorePurchases,
     connected,
     products, // 디버깅용 추가
   }

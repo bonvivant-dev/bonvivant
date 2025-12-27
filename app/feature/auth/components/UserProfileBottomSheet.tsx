@@ -2,8 +2,15 @@ import { Ionicons } from '@expo/vector-icons'
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet'
 import { router } from 'expo-router'
 import React, { useCallback, useMemo, useRef, useEffect, useState } from 'react'
-import { View, StyleSheet, Alert, TouchableOpacity } from 'react-native'
+import {
+  View,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native'
 
+import { usePurchaseRestore } from '@/feature/magazines/hooks'
 import { Button, Text } from '@/feature/shared'
 
 import { useAuth } from './AuthContext'
@@ -19,6 +26,7 @@ export function UserProfileBottomSheet({
   onClose,
 }: UserProfileBottomSheetProps) {
   const { user, signOut, deleteAccount, supabase } = useAuth()
+  const { isRestoring, restorePurchases } = usePurchaseRestore()
   const [showNameInput, setShowNameInput] = useState(false)
   const [currentUserName, setCurrentUserName] = useState(
     user?.user_metadata?.full_name || ''
@@ -99,6 +107,10 @@ export function UserProfileBottomSheet({
     router.push('/login')
   }
 
+  const handleRestorePurchases = async () => {
+    await restorePurchases()
+  }
+
   const handleDeleteAccount = async () => {
     Alert.alert(
       '회원 탈퇴',
@@ -169,6 +181,21 @@ export function UserProfileBottomSheet({
               >
                 <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
                 <Text style={styles.logoutText}>로그아웃</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.restoreButton}
+                onPress={handleRestorePurchases}
+                disabled={isRestoring}
+              >
+                {isRestoring ? (
+                  <ActivityIndicator size="small" color="#007AFF" />
+                ) : (
+                  <Ionicons name="refresh-outline" size={24} color="#007AFF" />
+                )}
+                <Text style={styles.restoreText}>
+                  {isRestoring ? '복원 중...' : '구매 복원'}
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -263,6 +290,19 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: 16,
     color: '#FF3B30',
+  },
+  restoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: '#F0F8FF',
+    borderRadius: 12,
+  },
+  restoreText: {
+    fontSize: 16,
+    color: '#007AFF',
   },
   deleteAccountButton: {
     alignItems: 'center',
