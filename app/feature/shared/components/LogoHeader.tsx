@@ -23,13 +23,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
     backgroundColor: '#fff',
   },
   headerLogo: {
-    width: 60,
-    height: 60,
+    width: 80,
+    height: 80,
   },
   rightContent: {
     flexDirection: 'row',
