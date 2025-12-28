@@ -12,6 +12,7 @@
       "bundleIdentifier": "com.bonvivant.app",
       "supportsTablet": true,
       "buildNumber": "29",
+      "usesAppleSignIn": true,
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"

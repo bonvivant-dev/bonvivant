@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router'
 import React, { useCallback, useEffect } from 'react'
 import {
@@ -16,7 +17,7 @@ import { useAuth, EmailLoginForm } from '@/feature/auth/components'
 import { PageHeader, Text } from '@/feature/shared/components'
 
 export default function LoginPage() {
-  const { user, loading, signInWithGoogle } = useAuth()
+  const { user, loading, signInWithGoogle, signInWithApple } = useAuth()
   const { returnUrl } = useLocalSearchParams<{ returnUrl?: string }>()
 
   const handleLoginSuccess = useCallback(() => {
@@ -31,6 +32,15 @@ export default function LoginPage() {
       handleLoginSuccess()
     } catch (error) {
       Alert.alert('구글 로그인 실패', error as string)
+    }
+  }
+
+  const handleAppleSignIn = async () => {
+    try {
+      await signInWithApple()
+      handleLoginSuccess()
+    } catch (error) {
+      Alert.alert('Apple 로그인 실패', error as string)
     }
   }
 
@@ -64,10 +74,23 @@ export default function LoginPage() {
           <Text style={styles.dividerText}>또는</Text>
           <View style={styles.dividerLine} />
         </View>
-        <View style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Pressable onPress={handleGoogleSignIn}>
+        <View
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 20,
+          }}
+        >
+          <Pressable onPress={handleGoogleSignIn} style={styles.socialButton}>
             <IconGoogle width={32} height={32} />
           </Pressable>
+          {Platform.OS === 'ios' && (
+            <Pressable onPress={handleAppleSignIn} style={styles.socialButton}>
+              <Ionicons name="logo-apple" size={32} color="#000" />
+            </Pressable>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -103,5 +126,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 15,
     color: '#666',
     fontSize: 14,
+  },
+  socialButton: {
+    padding: 8,
   },
 })
