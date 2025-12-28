@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet'
+import * as Linking from 'expo-linking'
 import { router } from 'expo-router'
 import React, { useCallback, useMemo, useRef, useEffect, useState } from 'react'
 import {
@@ -17,6 +18,10 @@ import { usePurchaseRestore } from '@/feature/magazines/hooks'
 
 import { Button } from './Button'
 import { Text } from './Text'
+
+const PRIVACY_URL = 'https://bonvivant-web.vercel.app/privacy'
+const TERMS_URL = 'https://bonvivant-web.vercel.app/terms'
+const REFUND_URL = 'https://bonvivant-web.vercel.app/refund'
 
 interface LogoHeaderProps {
   showUserIcon?: boolean
@@ -150,6 +155,15 @@ function UserProfileBottomSheet({
     )
   }
 
+  const handleLinkPress = async (url: string) => {
+    try {
+      await Linking.openURL(url)
+    } catch (error) {
+      console.error('Failed to open URL:', error)
+      Alert.alert('오류', 'URL을 열 수 없습니다.')
+    }
+  }
+
   return (
     <>
       <BottomSheetModal
@@ -212,10 +226,40 @@ function UserProfileBottomSheet({
               >
                 <Text style={styles.deleteAccountText}>회원 탈퇴</Text>
               </TouchableOpacity>
+
+              {/* 정책 링크 */}
+              <View style={styles.policyLinksContainer}>
+                <TouchableOpacity onPress={() => handleLinkPress(TERMS_URL)}>
+                  <Text style={styles.policyLinkText}>이용약관</Text>
+                </TouchableOpacity>
+                <Text style={styles.policySeparator}>•</Text>
+                <TouchableOpacity onPress={() => handleLinkPress(PRIVACY_URL)}>
+                  <Text style={styles.policyLinkText}>개인정보 처리방침</Text>
+                </TouchableOpacity>
+                <Text style={styles.policySeparator}>•</Text>
+                <TouchableOpacity onPress={() => handleLinkPress(REFUND_URL)}>
+                  <Text style={styles.policyLinkText}>환불 정책</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ) : (
             <View style={styles.section}>
               <Button onPress={handleLoginPress}>로그인하고 이용하기</Button>
+
+              {/* 정책 링크 (비로그인) */}
+              <View style={styles.policyLinksContainer}>
+                <TouchableOpacity onPress={() => handleLinkPress(TERMS_URL)}>
+                  <Text style={styles.policyLinkText}>이용약관</Text>
+                </TouchableOpacity>
+                <Text style={styles.policySeparator}>•</Text>
+                <TouchableOpacity onPress={() => handleLinkPress(PRIVACY_URL)}>
+                  <Text style={styles.policyLinkText}>개인정보 처리방침</Text>
+                </TouchableOpacity>
+                <Text style={styles.policySeparator}>•</Text>
+                <TouchableOpacity onPress={() => handleLinkPress(REFUND_URL)}>
+                  <Text style={styles.policyLinkText}>환불 정책</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
         </BottomSheetView>
@@ -359,11 +403,26 @@ const styles = StyleSheet.create({
   },
   deleteAccountButton: {
     alignItems: 'center',
-    paddingVertical: 12,
   },
   deleteAccountText: {
     fontSize: 12,
     color: '#999',
     textDecorationLine: 'underline',
+  },
+  policyLinksContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  policyLinkText: {
+    fontSize: 12,
+    color: '#007AFF',
+    textDecorationLine: 'underline',
+  },
+  policySeparator: {
+    fontSize: 12,
+    color: '#CCC',
   },
 })
