@@ -128,6 +128,16 @@ export function MagazinePreviewBottomSheet({
     await handlePurchase()
   }
 
+  const handlePurchaseButtonPress = async () => {
+    if (!user) {
+      onClose()
+      router.push('/login')
+      return
+    }
+
+    await handlePurchase()
+  }
+
   return (
     <Modal
       visible={visible}
@@ -192,19 +202,23 @@ export function MagazinePreviewBottomSheet({
             <TouchableOpacity
               style={[
                 styles.purchaseButton,
-                (isChecking || isLoading || !connected) &&
+                (isChecking || isLoading || (!connected && user)) &&
                   styles.purchaseButtonDisabled,
                 isPurchased && styles.purchaseButtonPurchased,
               ]}
-              onPress={handlePurchase}
+              onPress={handlePurchaseButtonPress}
               activeOpacity={0.8}
-              disabled={isChecking || isLoading || !connected}
+              disabled={isChecking || isLoading || (!connected && user)}
             >
               {isChecking || isLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text fontWeight="semibold" style={styles.purchaseButtonText}>
-                  {isPurchased ? '읽기' : '구매하기'}
+                  {isPurchased
+                    ? '읽기'
+                    : !user
+                      ? '로그인하고 구매하기'
+                      : '구매하기'}
                 </Text>
               )}
             </TouchableOpacity>
