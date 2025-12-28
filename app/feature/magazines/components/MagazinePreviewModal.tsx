@@ -11,8 +11,8 @@ import {
   ActivityIndicator,
 } from 'react-native'
 
-import { supabase } from '@/feature/shared'
 import { Text } from '@/feature/shared/components'
+import { supabase } from '@/feature/shared/lib'
 
 import { Magazine } from '../types'
 

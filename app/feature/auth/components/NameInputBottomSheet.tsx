@@ -11,7 +11,8 @@ import {
   TextInput,
 } from 'react-native'
 
-import { Button, Text } from '@/feature/shared'
+import { Button } from '@/feature/shared/components/Button'
+import { Text } from '@/feature/shared/components/Text'
 
 import { useAuth } from './AuthContext'
 

@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { MagazineCard, usePurchasedMagazinesContext } from '@/feature/magazines'
-import { Button, LogoHeader, Text } from '@/feature/shared'
+import { Button, LogoHeader, Text } from '@/feature/shared/components'
 
 import { useAuth } from '../../feature/auth/components'
 
@@ -78,7 +78,9 @@ export default function LibraryPage() {
       {/* Purchased Magazines Grid */}
       <View style={styles.librarySection}>
         <View style={styles.libraryHeader}>
-          <Text fontWeight="semibold" style={styles.libraryTitle}>내 서재</Text>
+          <Text fontWeight="semibold" style={styles.libraryTitle}>
+            내 서재
+          </Text>
           <TouchableOpacity
             onPress={handleRefresh}
             style={styles.refreshButton}

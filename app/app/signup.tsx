@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native'
 
-import { Text, PageHeader } from '@/feature/shared'
+import { PageHeader, Text } from '@/feature/shared/components'
 
 import { useAuth, EmailSignUpForm } from '../feature/auth/components'
 

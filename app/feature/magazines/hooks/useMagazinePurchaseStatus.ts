@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 
-import { supabase } from '@/feature/shared'
+import { supabase } from '@/feature/shared/lib'
 
 export function useMagazinePurchaseStatus(magazineId: string | null) {
   const [isPurchased, setIsPurchased] = useState(false)

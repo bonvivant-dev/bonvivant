@@ -11,16 +11,17 @@
     "ios": {
       "bundleIdentifier": "com.bonvivant.app",
       "supportsTablet": true,
-      "buildNumber": "27",
+      "buildNumber": "29",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"
-        ]
+        ],
+        "NSUserNotificationsUsageDescription": "새로운 매거진 출시 및 중요한 서비스 소식을 알려드립니다."
       }
     },
     "android": {
       "package": "com.bonvivant.app",
-      "versionCode": 14,
+      "versionCode": 15,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"

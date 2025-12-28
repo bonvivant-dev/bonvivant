@@ -1,17 +1,17 @@
+import { Paths, File, Directory } from 'expo-file-system'
 import { useRouter } from 'expo-router'
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   View,
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
-  Alert,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { WebView } from 'react-native-webview'
 
-import { supabase } from '@/feature/shared'
 import { Text } from '@/feature/shared/components'
+import { supabase } from '@/feature/shared/lib'
 
 import { Magazine } from '../types'
 
@@ -20,8 +20,65 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
   const [magazine, setMagazine] = useState<Magazine | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [pdfUrl, setPdfUrl] = useState<string>('')
+  const [pdfData, setPdfData] = useState<string>('')
   const [pdfLoaded, setPdfLoaded] = useState(false)
+  const webViewRef = useRef<any>(null)
+
+  const getPdfData = useCallback(async (magazineData: Magazine) => {
+    try {
+      // 캐시 디렉토리 및 파일 경로 설정
+      const cacheDir = new Directory(Paths.document, 'magazines')
+      const cacheFile = new File(cacheDir, `${magazineData.storage_key}.pdf`)
+
+      let base64Data: string
+
+      // 1. 캐시된 파일이 있는지 확인
+      if (cacheFile.exists) {
+        // 캐시된 파일을 Uint8Array로 읽기
+        const uint8Array = await cacheFile.bytes()
+        // Uint8Array를 base64로 변환
+        base64Data = uint8ArrayToBase64(uint8Array)
+      } else {
+        // 2. 캐시가 없으면 다운로드
+        const { data, error } = await supabase.storage
+          .from('magazines')
+          .createSignedUrl(
+            `${magazineData.storage_key}/${magazineData.storage_key}.pdf`,
+            3600
+          )
+
+        if (error) {
+          console.error('Error creating signed URL:', error)
+          return ''
+        }
+
+        if (!data?.signedUrl) {
+          return ''
+        }
+
+        // 캐시 디렉토리 생성 (존재하지 않으면)
+        if (!cacheDir.exists) {
+          cacheDir.create()
+        }
+
+        // PDF 다운로드
+        const response = await fetch(data.signedUrl)
+        const arrayBuffer = await response.arrayBuffer()
+        const uint8Array = new Uint8Array(arrayBuffer)
+
+        // 캐시에 저장
+        await cacheFile.write(uint8Array)
+
+        // Uint8Array를 base64로 변환
+        base64Data = uint8ArrayToBase64(uint8Array)
+      }
+
+      return base64Data
+    } catch (err) {
+      console.error('PDF 로딩 에러:', err)
+      throw err
+    }
+  }, [])
 
   const fetchMagazine = useCallback(async () => {
     try {
@@ -38,57 +95,69 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
 
       setMagazine(data)
 
-      // PDF URL 생성
-      const pdfSignedUrl = await getPdfUrl(data)
-      setPdfUrl(pdfSignedUrl)
+      // PDF 데이터 가져오기 (base64)
+      const pdfBase64 = await getPdfData(data)
+      setPdfData(pdfBase64)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
-  }, [magazineId])
+  }, [magazineId, getPdfData])
 
   useEffect(() => {
     if (!magazineId) return
     fetchMagazine()
   }, [magazineId, fetchMagazine])
 
-  const getPdfUrl = async (magazineData: Magazine) => {
-    const { data, error } = await supabase.storage
-      .from('magazines')
-      .createSignedUrl(
-        `${magazineData.storage_key}/${magazineData.storage_key}.pdf`,
-        3600
-      )
-
-    if (error) {
-      console.error('Error creating signed URL:', error)
-      return ''
+  const uint8ArrayToBase64 = (uint8Array: Uint8Array): string => {
+    let binaryString = ''
+    const len = uint8Array.length
+    for (let i = 0; i < len; i++) {
+      binaryString += String.fromCharCode(uint8Array[i])
     }
-
-    return data.signedUrl
+    return btoa(binaryString)
   }
 
   const handleClose = () => {
     router.back()
   }
 
-  const handleError = (error: any) => {
-    console.error('PDF Error:', error)
-    Alert.alert('오류', '매거진을 불러오는 중 오류가 발생했습니다.', [
-      { text: '확인', onPress: handleClose },
-    ])
-  }
-
   const handleWebViewMessage = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data)
-      if (data.type === 'pdfLoaded') {
+
+      if (data.type === 'console') {
+        // WebView 콘솔 메시지를 React Native 콘솔로 출력
+        if (data.level === 'error') {
+          console.error('[WebView]', data.message)
+        } else {
+          console.log('[WebView]', data.message)
+        }
+      } else if (data.type === 'pdfLoaded') {
         setPdfLoaded(true)
+      } else if (data.type === 'pageChanged') {
+        // 페이지 변경 이벤트 처리 (필요시)
       }
     } catch (error) {
       console.error('WebView 메시지 파싱 에러:', error)
     }
+  }
+
+  // injectedJavaScript 생성
+  const getInjectedJavaScript = () => {
+    if (!pdfData) return ''
+
+    return `
+      (function() {
+        if (typeof loadPdfData === 'function') {
+          loadPdfData(\`${pdfData}\`);
+        } else {
+          console.error('loadPdfData 함수를 찾을 수 없습니다');
+        }
+      })();
+      true;
+    `
   }
 
   if (loading) {
@@ -127,9 +196,28 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
 
       {/* PDF Content */}
       <View style={styles.contentContainer}>
-        {pdfUrl ? (
+        {pdfData ? (
           <>
             <WebView
+              ref={webViewRef}
+              originWhitelist={['*']}
+              onError={syntheticEvent => {
+                const { nativeEvent } = syntheticEvent
+                console.error('WebView Error:', nativeEvent)
+              }}
+              onHttpError={syntheticEvent => {
+                const { nativeEvent } = syntheticEvent
+                console.error('WebView HTTP Error:', nativeEvent)
+              }}
+              onMessage={handleWebViewMessage}
+              renderError={errorName => (
+                <View style={styles.centered}>
+                  <Text style={styles.errorText}>
+                    WebView 에러: {errorName}
+                  </Text>
+                </View>
+              )}
+              injectedJavaScript={getInjectedJavaScript()}
               source={{
                 html: `
                 <!DOCTYPE html>
@@ -137,7 +225,6 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
                 <head>
                   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
                   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-                  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
                   <style>
                     body {
                       margin: 0;
@@ -205,34 +292,47 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
                   <div class="page-indicator" id="pageIndicator">1 / 1</div>
 
                   <script>
-                    const url = "${pdfUrl}";
+                    // 콘솔 로그를 React Native로 전송
+                    const originalLog = console.log;
+                    const originalError = console.error;
+
+                    console.log = function(...args) {
+                      originalLog.apply(console, args);
+                      window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: 'console',
+                        level: 'log',
+                        message: args.join(' ')
+                      }));
+                    };
+                    console.error = function(...args) {
+                      originalError.apply(console, args);
+                      window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: 'console',
+                        level: 'error',
+                        message: args.join(' ')
+                      }));
+                    };
+
                     const container = document.getElementById('pdfContainer');
                     const pageIndicator = document.getElementById('pageIndicator');
 
                     // PDF.js 워커 설정
                     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-                    // 여러 CORS 프록시 시도
-                    const corsProxies = [
-                      '',  // 직접 시도
-                      'https://api.allorigins.win/raw?url=',
-                      'https://corsproxy.io/?',
-                      'https://cors-anywhere.herokuapp.com/'
-                    ];
+                    // PDF 데이터 로드 함수 (injectedJavaScript에서 호출됨)
+                    window.loadPdfData = function(pdfData) {
+                      try {
+                        // Base64를 Uint8Array로 변환
+                        const binaryString = atob(pdfData);
+                        const len = binaryString.length;
 
-                    async function tryLoadPdf() {
-                      for (let i = 0; i < corsProxies.length; i++) {
-                        try {
-                          const proxyUrl = corsProxies[i] + (corsProxies[i] ? encodeURIComponent(url) : url);
-                          const pdf = await pdfjsLib.getDocument(proxyUrl).promise;
-                          return pdf;
-                        } catch (error) {
-                          if (i === corsProxies.length - 1) throw error;
+                        const bytes = new Uint8Array(len);
+                        for (let i = 0; i < len; i++) {
+                          bytes[i] = binaryString.charCodeAt(i);
                         }
-                      }
-                    }
-
-                    tryLoadPdf().then(function(pdf) {
+                        // PDF 로드
+                        pdfjsLib.getDocument({data: bytes}).promise.then(function(pdf) {
+                          console.log('PDF 로드 성공, 페이지 수:', pdf.numPages);
                       container.innerHTML = '';
                       pageIndicator.textContent = '1 / ' + pdf.numPages;
 
@@ -288,23 +388,26 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
                         }));
                       });
 
-                    }).catch(function(error) {
-                      console.error('PDF loading error:', error);
-                      container.innerHTML = '<div class="error">PDF를 불러올 수 없습니다.<br>네트워크를 확인해주세요.</div>';
-                    });
+                        }).catch(function(error) {
+                          console.error('PDF 렌더링 에러:', error);
+                          container.innerHTML = '<div class="error">PDF를 불러올 수 없습니다.<br>네트워크를 확인해주세요.</div>';
+                        });
+                      } catch (error) {
+                        console.error('PDF 처리 에러:', error);
+                        container.innerHTML = '<div class="error">PDF 처리 중 오류가 발생했습니다.<br>' + error.message + '</div>';
+                      }
+                    };
+
+                    // React Native에 준비 완료 알림
+                    window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({
+                      type: 'ready'
+                    }));
                   </script>
                 </body>
                 </html>
               `,
               }}
               style={styles.pdf}
-              onMessage={handleWebViewMessage}
-              onLoadStart={() => console.log('PDF 로딩 시작')}
-              onLoadEnd={() => console.log('PDF 로딩 완료')}
-              onError={syntheticEvent => {
-                const { nativeEvent } = syntheticEvent
-                handleError(nativeEvent)
-              }}
               scalesPageToFit={true}
               javaScriptEnabled={true}
               domStorageEnabled={true}

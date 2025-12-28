@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 
-import { supabase } from '@/feature/shared'
+import { supabase } from '@/feature/shared/lib'
 
 import { Magazine, Category } from '../types'
 
 export interface MagazinesByCategory {
-  categories: Array<Category & { magazines: Magazine[] }>
+  categories: (Category & { magazines: Magazine[] })[]
 }
 
 export const useMagazinesByCategory = () => {
@@ -32,7 +32,8 @@ export const useMagazinesByCategory = () => {
       // Fetch magazines with category relationships
       const { data: magazines, error: magazinesError } = await supabase
         .from('magazines')
-        .select(`
+        .select(
+          `
           *,
           magazine_categories (
             category_id,
@@ -42,7 +43,8 @@ export const useMagazinesByCategory = () => {
               name
             )
           )
-        `)
+        `
+        )
         .eq('is_purchasable', true)
         .order('created_at', { ascending: false })
 
@@ -62,14 +64,20 @@ export const useMagazinesByCategory = () => {
 
         return {
           ...magazine,
-          category_ids: magazine.magazine_categories?.map((mc: any) => mc.category_id) || [],
-          categories: magazine.magazine_categories?.map((mc: any) => mc.categories).filter(Boolean) || [],
+          category_ids:
+            magazine.magazine_categories?.map((mc: any) => mc.category_id) ||
+            [],
+          categories:
+            magazine.magazine_categories
+              ?.map((mc: any) => mc.categories)
+              .filter(Boolean) || [],
           category_orders: categoryOrders,
         }
       })
 
       // Group magazines by category
-      const categoriesWithMagazines: (Category & { magazines: Magazine[] })[] = []
+      const categoriesWithMagazines: (Category & { magazines: Magazine[] })[] =
+        []
 
       // Initialize categories and add magazines
       categories.forEach(category => {

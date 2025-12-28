@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 
 import { useAuth } from '@/feature/auth/components'
-import { supabase } from '@/feature/shared'
+import { supabase } from '@/feature/shared/lib'
 
 export function useBookmarkToggle() {
   const { user } = useAuth()
