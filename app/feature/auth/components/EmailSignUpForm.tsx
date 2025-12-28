@@ -21,6 +21,14 @@ export function EmailSignUpForm() {
   const [agreeToPrivacy, setAgreeToPrivacy] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  // 회원가입 버튼 활성화 조건
+  const isFormValid =
+    email.trim() !== '' &&
+    password.trim() !== '' &&
+    confirmPassword.trim() !== '' &&
+    agreeToTerms &&
+    agreeToPrivacy
+
   const validateForm = () => {
     if (!email.trim()) {
       Alert.alert('오류', '이메일을 입력해주세요.')
@@ -188,7 +196,11 @@ export function EmailSignUpForm() {
           </TouchableOpacity>
         </View>
 
-        <Button loading={loading} onPress={handleSignUp} disabled={loading}>
+        <Button
+          loading={loading}
+          onPress={handleSignUp}
+          disabled={!isFormValid || loading}
+        >
           회원가입
         </Button>
       </View>
