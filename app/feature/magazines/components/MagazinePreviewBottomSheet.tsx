@@ -202,13 +202,13 @@ export function MagazinePreviewBottomSheet({
             <TouchableOpacity
               style={[
                 styles.purchaseButton,
-                (isChecking || isLoading || (!connected && user)) &&
+                (isChecking || isLoading || (!connected && !!user)) &&
                   styles.purchaseButtonDisabled,
                 isPurchased && styles.purchaseButtonPurchased,
               ]}
               onPress={handlePurchaseButtonPress}
               activeOpacity={0.8}
-              disabled={isChecking || isLoading || (!connected && user)}
+              disabled={isChecking || isLoading || (!connected && !!user)}
             >
               {isChecking || isLoading ? (
                 <ActivityIndicator color="#fff" />
