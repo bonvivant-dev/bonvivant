@@ -11,7 +11,7 @@
     "ios": {
       "bundleIdentifier": "com.bonvivant.app",
       "supportsTablet": true,
-      "buildNumber": "27",
+      "buildNumber": "29",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"
@@ -20,7 +20,7 @@
     },
     "android": {
       "package": "com.bonvivant.app",
-      "versionCode": 14,
+      "versionCode": 15,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
