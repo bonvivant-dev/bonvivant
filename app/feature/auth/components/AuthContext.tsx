@@ -214,8 +214,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error
 
-      if (data.user && data.user.email_confirmed_at !== null) {
+      // 이미 가입된 사용자는 identities가 비어있음
+      if (data.user && data.user.identities?.length === 0) {
         throw new Error(AuthErrorMessage.USER_ALREADY_REGISTERED)
+      }
+
+      // 이메일 확인이 비활성화된 경우 세션이 생성되므로 설정
+      if (data.session) {
+        setSession(data.session)
+        setUser(data.user)
       }
 
       return { success: true }

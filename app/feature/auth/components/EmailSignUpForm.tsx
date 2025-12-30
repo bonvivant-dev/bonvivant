@@ -62,19 +62,6 @@ export function EmailSignUpForm() {
     }
   }
 
-  const handleSignUpSuccess = () => {
-    Alert.alert(
-      '회원가입 완료',
-      '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료한 후 로그인해주세요.',
-      [
-        {
-          text: '로그인하기',
-          onPress: () => router.replace('/login'),
-        },
-      ]
-    )
-  }
-
   const handleSignUp = async () => {
     if (!validateForm()) return
     setLoading(true)
@@ -83,13 +70,13 @@ export function EmailSignUpForm() {
       const result = await signUpWithEmail(email.trim(), password)
       if (result.success) {
         Alert.alert(
-          '회원가입 완료',
-          '회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료한 후 로그인해주세요.',
+          '회원가입 완료 🇫🇷',
+          '회원가입이 완료되었어요. 이제 봉비방의 다양한 매거진을 둘러보세요.',
           [
             {
               text: '확인',
               onPress: () => {
-                handleSignUpSuccess()
+                router.replace('/')
               },
             },
           ]
