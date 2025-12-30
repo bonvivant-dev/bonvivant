@@ -25,6 +25,11 @@ export default function ProfileScreen() {
     user?.user_metadata?.name || ''
   )
 
+  // 이메일로 가입한 사용자인지 확인
+  const isEmailUser = user?.identities?.some(
+    identity => identity.provider === 'email'
+  )
+
   // 페이지가 포커스될 때마다 최신 사용자 정보 가져오기
   useEffect(() => {
     const fetchLatestUserInfo = async () => {
@@ -124,7 +129,10 @@ export default function ProfileScreen() {
       />
       <PageHeader title="프로필" />
       {user ? (
-        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.contentContainer}
+        >
           <View style={styles.section}>
             <TouchableOpacity
               style={styles.nameContainer}
@@ -141,13 +149,15 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={20} color="#999" />
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.logoutButton}
-              onPress={handleSignOut}
-            >
-              <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
-              <Text style={styles.logoutText}>로그아웃</Text>
-            </TouchableOpacity>
+            {isEmailUser && (
+              <TouchableOpacity
+                style={styles.passwordButton}
+                onPress={() => router.push('/change-password')}
+              >
+                <Ionicons name="lock-closed-outline" size={24} color="#007AFF" />
+                <Text style={styles.passwordText}>비밀번호 변경</Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={styles.restoreButton}
@@ -155,6 +165,14 @@ export default function ProfileScreen() {
             >
               <Ionicons name="refresh-outline" size={24} color="#007AFF" />
               <Text style={styles.restoreText}>구매 내역 복원</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleSignOut}
+            >
+              <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
+              <Text style={styles.logoutText}>로그아웃</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -266,6 +284,19 @@ const styles = StyleSheet.create({
   namePrompt: {
     fontSize: 16,
     color: '#999',
+  },
+  passwordButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: '#F0F8FF',
+    borderRadius: 12,
+  },
+  passwordText: {
+    fontSize: 16,
+    color: '#007AFF',
   },
   logoutButton: {
     flexDirection: 'row',
