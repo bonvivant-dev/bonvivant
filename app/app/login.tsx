@@ -22,14 +22,12 @@ export default function LoginPage() {
 
   const handleLoginSuccess = useCallback(() => {
     if (returnUrl) return router.replace(returnUrl as any)
-    if (router.canGoBack()) return router.back()
     router.replace('/')
   }, [returnUrl])
 
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle()
-      handleLoginSuccess()
     } catch (error) {
       Alert.alert('구글 로그인 실패', error as string)
     }
@@ -38,7 +36,6 @@ export default function LoginPage() {
   const handleAppleSignIn = async () => {
     try {
       await signInWithApple()
-      handleLoginSuccess()
     } catch (error) {
       Alert.alert('Apple 로그인 실패', error as string)
     }

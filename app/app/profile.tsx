@@ -73,7 +73,7 @@ export default function ProfileScreen() {
   }
 
   const handleLoginPress = () => {
-    router.replace('/login')
+    router.push('/login')
   }
 
   const handleRestorePurchases = async () => {
