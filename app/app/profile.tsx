@@ -12,6 +12,7 @@ import {
 
 import { useAuth } from '@/feature/auth/components/AuthContext'
 import { NameInputBottomSheet } from '@/feature/auth/components/NameInputBottomSheet'
+import { usePurchaseRestore } from '@/feature/magazines/hooks/usePurchaseRestore'
 import { Button, Text, PageHeader } from '@/feature/shared/components'
 
 const PRIVACY_URL = 'https://bonvivant-web.vercel.app/privacy'
@@ -24,6 +25,7 @@ export default function ProfileScreen() {
   const [currentUserName, setCurrentUserName] = useState(
     user?.user_metadata?.name || ''
   )
+  const { isRestoring, restorePurchases } = usePurchaseRestore()
 
   // 이메일로 가입한 사용자인지 확인
   const isEmailUser = user?.identities?.some(
@@ -77,7 +79,7 @@ export default function ProfileScreen() {
   }
 
   const handleRestorePurchases = async () => {
-    // await restorePurchases()
+    await restorePurchases()
   }
 
   const handleDeleteAccount = async () => {
@@ -154,7 +156,11 @@ export default function ProfileScreen() {
                 style={styles.passwordButton}
                 onPress={() => router.push('/change-password')}
               >
-                <Ionicons name="lock-closed-outline" size={24} color="#007AFF" />
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={24}
+                  color="#007AFF"
+                />
                 <Text style={styles.passwordText}>비밀번호 변경</Text>
               </TouchableOpacity>
             )}
@@ -162,9 +168,12 @@ export default function ProfileScreen() {
             <TouchableOpacity
               style={styles.restoreButton}
               onPress={handleRestorePurchases}
+              disabled={isRestoring}
             >
               <Ionicons name="refresh-outline" size={24} color="#007AFF" />
-              <Text style={styles.restoreText}>구매 내역 복원</Text>
+              <Text style={styles.restoreText}>
+                {isRestoring ? '복원 중...' : '구매 내역 복원'}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
