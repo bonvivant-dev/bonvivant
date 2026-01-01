@@ -21,7 +21,7 @@ import {
 import { Button, LogoHeader, Text } from '@/feature/shared/components'
 
 const ITEM_SPACING = 12
-const HORIZONTAL_PADDING = 20
+const HORIZONTAL_PADDING = 16
 const NUM_COLUMNS = 3
 
 const { width: screenWidth } = Dimensions.get('window')
@@ -80,6 +80,12 @@ export default function BookmarksPage() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <LogoHeader />
       <View style={styles.bookmarksSection}>
+        <View style={styles.bookmarksHeader}>
+          <Text fontWeight="bold" style={styles.bookmarksTitle}>
+            찜한 매거진
+          </Text>
+        </View>
+
         {bookmarksLoading ? (
           <View style={styles.centered}>
             <ActivityIndicator size="large" color="#007AFF" />
@@ -147,9 +153,19 @@ const styles = StyleSheet.create({
   },
   bookmarksSection: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 4,
     paddingBottom: 16,
+  },
+  bookmarksHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  bookmarksTitle: {
+    fontSize: 20,
+    color: '#333',
   },
   centered: {
     flex: 1,
