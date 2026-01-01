@@ -11,7 +11,7 @@
     "ios": {
       "bundleIdentifier": "com.bonvivant.app",
       "supportsTablet": true,
-      "buildNumber": "29",
+      "buildNumber": "31",
       "usesAppleSignIn": true,
       "infoPlist": {
         "UIBackgroundModes": [
@@ -22,7 +22,7 @@
     },
     "android": {
       "package": "com.bonvivant.app",
-      "versionCode": 15,
+      "versionCode": 17,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
