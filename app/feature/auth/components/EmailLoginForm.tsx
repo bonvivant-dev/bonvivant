@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router'
+import { router } from 'expo-router'
 import React, { useState } from 'react'
 import { View, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 
@@ -10,7 +10,6 @@ import { useAuth } from './AuthContext'
 
 export function EmailLoginForm() {
   const { signInWithEmail } = useAuth()
-  const { returnUrl } = useLocalSearchParams<{ returnUrl?: string }>()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -38,13 +37,6 @@ export function EmailLoginForm() {
 
     try {
       await signInWithEmail(email.trim(), password)
-      if (returnUrl) {
-        router.replace(returnUrl as any)
-      } else if (router.canGoBack()) {
-        router.back()
-      } else {
-        router.replace('/')
-      }
     } catch (error) {
       const errorMessage = (error as Error).message
       if (errorMessage === AuthErrorMessage.EMAIL_NOT_CONFIRMED) {

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
-import React from 'react'
+import React, { useState } from 'react'
 import {
   StyleSheet,
   KeyboardTypeOptions,
@@ -22,26 +22,52 @@ interface Props extends RNTextInputProps {
 }
 
 export function TextField(props: Props) {
+  const [showPassword, setShowPassword] = useState(false)
+
   const handleClear = () => {
     props.onChangeText('')
   }
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(prev => !prev)
+  }
+
+  // secureTextEntry가 있을 때는 눈 아이콘, 없을 때는 clear 아이콘
+  const showPasswordToggle = props.secureTextEntry
+  const showClearButton = !props.secureTextEntry && props.value && props.editable !== false
+
   return (
     <View style={styles.container}>
       <TextInput
-        style={[styles.input, props.value ? styles.inputWithClear : null]}
+        {...props}
+        style={[
+          styles.input,
+          (showPasswordToggle || showClearButton) && styles.inputWithIcon,
+        ]}
         placeholder={props.placeholder}
         placeholderTextColor="#999"
         keyboardType={props.keyboardType}
-        secureTextEntry={props.secureTextEntry}
+        secureTextEntry={props.secureTextEntry && !showPassword}
         editable={props.editable}
         autoCapitalize={props.autoCapitalize}
         autoCorrect={props.autoCorrect}
-        {...props}
       />
-      {props.value && props.editable !== false && (
+      {showPasswordToggle && (
         <TouchableOpacity
-          style={styles.clearButton}
+          style={styles.iconButton}
+          onPress={togglePasswordVisibility}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons
+            name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+            size={24}
+            color="#666"
+          />
+        </TouchableOpacity>
+      )}
+      {showClearButton && (
+        <TouchableOpacity
+          style={styles.iconButton}
           onPress={handleClear}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
@@ -66,10 +92,10 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     height: 50,
   },
-  inputWithClear: {
-    paddingRight: 45, // clear button을 위한 여유 공간
+  inputWithIcon: {
+    paddingRight: 45, // 아이콘을 위한 여유 공간
   },
-  clearButton: {
+  iconButton: {
     position: 'absolute',
     right: 12,
     top: '50%',

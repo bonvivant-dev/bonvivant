@@ -17,7 +17,7 @@ import { Button, LogoHeader, Text } from '@/feature/shared/components'
 import { useAuth } from '../../feature/auth/components'
 
 const ITEM_SPACING = 12
-const HORIZONTAL_PADDING = 20
+const HORIZONTAL_PADDING = 16
 const NUM_COLUMNS = 3
 
 const { width: screenWidth } = Dimensions.get('window')
@@ -78,14 +78,14 @@ export default function LibraryPage() {
       {/* Purchased Magazines Grid */}
       <View style={styles.librarySection}>
         <View style={styles.libraryHeader}>
-          <Text fontWeight="semibold" style={styles.libraryTitle}>
+          <Text fontWeight="bold" style={styles.libraryTitle}>
             내 서재
           </Text>
           <TouchableOpacity
             onPress={handleRefresh}
             style={styles.refreshButton}
           >
-            <Ionicons name="refresh" size={24} color="#007AFF" />
+            <Ionicons name="refresh" size={20} color="#007AFF" />
           </TouchableOpacity>
         </View>
 
@@ -155,18 +155,17 @@ const styles = StyleSheet.create({
   },
   librarySection: {
     flex: 1,
-    paddingTop: 4,
     paddingBottom: 16,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   libraryHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 6,
   },
   libraryTitle: {
-    fontSize: 22,
+    fontSize: 20,
     color: '#333',
   },
   refreshButton: {

@@ -94,23 +94,18 @@ export function NameInputBottomSheet({
       Alert.alert('오류', '이름은 2글자 이상이어야 합니다.')
       return
     }
+    if (currentName.length > 15) {
+      Alert.alert('오류', '이름은 15글자 이하여야 합니다.')
+      return
+    }
 
     setLoading(true)
     try {
-      console.log('Saving name:', currentName)
-      const { data, error } = await supabase.auth.updateUser({
+      await supabase.auth.updateUser({
         data: {
-          full_name: currentName,
+          name: currentName,
         },
       })
-
-      if (error) {
-        console.error('Supabase error:', error)
-        throw error
-      }
-
-      console.log('Update successful:', data)
-
       // 세션 새로고침하여 UI 업데이트
       await supabase.auth.refreshSession()
 
@@ -148,7 +143,7 @@ export function NameInputBottomSheet({
     >
       <BottomSheetView style={styles.contentContainer}>
         <View style={styles.header}>
-          <Text style={styles.title}>닉네임을 입력해주세요</Text>
+          <Text style={styles.title}>닉네임을 입력해주세요 (최대 15자)</Text>
         </View>
 
         <View style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
@@ -159,7 +154,7 @@ export function NameInputBottomSheet({
               onChangeText={setName}
               placeholder="이름 입력"
               placeholderTextColor="#999"
-              maxLength={20}
+              maxLength={15}
               editable={!loading}
               autoFocus={true}
               style={[styles.input, name ? styles.inputWithClear : null]}

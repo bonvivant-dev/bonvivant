@@ -1,6 +1,8 @@
 import { SupabaseClient, User, Session } from '@supabase/supabase-js'
+import * as AppleAuthentication from 'expo-apple-authentication'
 import { makeRedirectUri } from 'expo-auth-session'
 import * as QueryParams from 'expo-auth-session/build/QueryParams'
+import * as Crypto from 'expo-crypto'
 import * as WebBrowser from 'expo-web-browser'
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { Alert, Platform } from 'react-native'
@@ -14,6 +16,7 @@ interface AuthContextType {
   session: Session | null
   loading: boolean
   signInWithGoogle: () => Promise<void>
+  signInWithApple: () => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<void>
   signUpWithEmail: (
     email: string,
@@ -134,6 +137,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const signInWithApple = async () => {
+    try {
+      // Generate nonce for security
+      const nonce = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        Math.random().toString()
+      )
+
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+        nonce,
+      })
+
+      if (!credential.identityToken) {
+        throw new Error('Apple 로그인에 실패했습니다.')
+      }
+
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken,
+        nonce,
+      })
+
+      console.log('error', error)
+      console.log('data', data)
+
+      if (error) throw error
+
+      // 세션과 사용자 정보를 명시적으로 설정
+      if (data.session && data.user) {
+        setSession(data.session)
+        setUser(data.user)
+      }
+    } catch (error) {
+      console.log('error', error)
+      if ((error as any).code === 'ERR_REQUEST_CANCELED') {
+        // 사용자가 로그인을 취소한 경우
+        console.log('사용자가 Apple 로그인을 취소했습니다.')
+        return
+      }
+      throw error
+    }
+  }
+
   const signInWithEmail = async (email: string, password: string) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -164,8 +214,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) throw error
 
-      if (data.user && data.user.email_confirmed_at !== null) {
+      // 이미 가입된 사용자는 identities가 비어있음
+      if (data.user && data.user.identities?.length === 0) {
         throw new Error(AuthErrorMessage.USER_ALREADY_REGISTERED)
+      }
+
+      // 이메일 확인이 비활성화된 경우 세션이 생성되므로 설정
+      if (data.session) {
+        setSession(data.session)
+        setUser(data.user)
       }
 
       return { success: true }
@@ -232,6 +289,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     loading,
     signInWithGoogle,
+    signInWithApple,
     signInWithEmail,
     signUpWithEmail,
     signOut,
