@@ -62,6 +62,7 @@ export async function updateSession(request: NextRequest) {
       pathname.startsWith('/privacy') ||
       pathname.startsWith('/terms') ||
       pathname.startsWith('/refund') ||
+      pathname.startsWith('/support') ||
       pathname.startsWith('/api') // API 라우트는 자체 인증 처리
     ) {
       return supabaseResponse
