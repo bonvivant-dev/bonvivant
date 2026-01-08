@@ -11,7 +11,7 @@
     "ios": {
       "bundleIdentifier": "com.bonvivant.app",
       "supportsTablet": true,
-      "buildNumber": "31",
+      "buildNumber": "35",
       "usesAppleSignIn": true,
       "infoPlist": {
         "UIBackgroundModes": [
@@ -41,6 +41,7 @@
     "plugins": [
       "expo-router",
       "expo-notifications",
+      "expo-apple-authentication",
       [
         "expo-splash-screen",
         {
