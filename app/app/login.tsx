@@ -29,7 +29,9 @@ export default function LoginPage() {
     try {
       await signInWithGoogle()
     } catch (error) {
-      Alert.alert('구글 로그인 실패', error as string)
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
+      Alert.alert('구글 로그인 실패', errorMessage)
     }
   }
 
@@ -37,7 +39,9 @@ export default function LoginPage() {
     try {
       await signInWithApple()
     } catch (error) {
-      Alert.alert('Apple 로그인 실패', error as string)
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
+      Alert.alert('Apple 로그인 실패', errorMessage)
     }
   }
 
