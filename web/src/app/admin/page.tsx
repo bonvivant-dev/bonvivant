@@ -124,6 +124,42 @@ export default function Home() {
                       </div>
                     </div>
                   </Link>
+
+                  <Link href="/admin/users">
+                    <div className="bg-orange-50 overflow-hidden shadow rounded-lg cursor-pointer hover:bg-orange-100 transition-colors">
+                      <div className="p-5">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0">
+                            <div className="w-8 h-8 bg-orange-600 rounded-md flex items-center justify-center">
+                              <svg
+                                className="w-5 h-5 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                                />
+                              </svg>
+                            </div>
+                          </div>
+                          <div className="ml-5 w-0 flex-1">
+                            <dl>
+                              <dt className="text-sm font-medium text-gray-500 truncate">
+                                회원 관리
+                              </dt>
+                              <dd className="text-lg font-medium text-gray-900">
+                                클릭하여 이동
+                              </dd>
+                            </dl>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
                 </div>
               </div>
             </div>
