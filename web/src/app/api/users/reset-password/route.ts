@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server'
 
 import { supabaseServerClient } from '@/shared/utils/supabase/server'
 
-const DEFAULT_PASSWORD = 'bonvivant2026'
-
 export async function POST(request: Request) {
   try {
     const supabase = await supabaseServerClient()
@@ -36,17 +34,14 @@ export async function POST(request: Request) {
     const { userId } = await request.json()
 
     if (!userId) {
-      return NextResponse.json(
-        { error: 'userId is required' },
-        { status: 400 },
-      )
+      return NextResponse.json({ error: 'userId is required' }, { status: 400 })
     }
 
     // Service Role로 비밀번호 업데이트
     const supabaseAdmin = await supabaseServerClient(true)
     const { data: updatedUser, error: updateError } =
       await supabaseAdmin.auth.admin.updateUserById(userId, {
-        password: DEFAULT_PASSWORD,
+        password: process.env.BONVIVANT_DEFAULT_PASSWORD!,
       })
 
     if (updateError) {
@@ -59,7 +54,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `비밀번호가 '${DEFAULT_PASSWORD}'로 초기화되었습니다.`,
+      message: `비밀번호가 '${process.env.BONVIVANT_DEFAULT_PASSWORD!}'로 초기화되었습니다.`,
       user: updatedUser,
     })
   } catch (error) {
