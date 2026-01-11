@@ -218,6 +218,75 @@ export default function PrivacyPolicyPage() {
           </div>
         </div>
 
+        {/* Account Deletion */}
+        <div className="bg-white rounded-lg shadow-md p-8 mb-8">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
+            계정 삭제 방법
+          </h2>
+
+          <div className="space-y-4 text-gray-700 leading-relaxed">
+            <p className="font-medium text-lg">
+              봉비방 앱 내에서 직접 계정을 삭제할 수 있습니다.
+            </p>
+
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 my-6">
+              <h3 className="font-semibold text-gray-900 mb-3">
+                계정 삭제 단계
+              </h3>
+              <ol className="list-decimal list-inside space-y-2 ml-2">
+                <li>봉비방 앱에 로그인합니다</li>
+                <li>화면 상단의 프로필 아이콘을 클릭합니다</li>
+                <li>&quot;회원 탈퇴&quot; 버튼을 누릅니다</li>
+                <li>확인 창에서 &quot;탈퇴&quot;를 선택하여 계정 삭제를 완료합니다</li>
+              </ol>
+            </div>
+
+            <h3 className="text-lg font-semibold text-gray-900 mt-6">
+              삭제되는 데이터
+            </h3>
+            <p>계정 삭제 시 다음 데이터가 즉시 삭제됩니다:</p>
+            <ul className="list-disc list-inside space-y-2 ml-4">
+              <li>이메일 주소</li>
+              <li>비밀번호</li>
+              <li>닉네임(이름)</li>
+              <li>찜한 매거진 목록</li>
+              <li>구독 정보</li>
+              <li>푸시 알림 토큰</li>
+            </ul>
+
+            <h3 className="text-lg font-semibold text-gray-900 mt-6">
+              보관되는 데이터
+            </h3>
+            <p>
+              다음 데이터는 법령에 따라 일정 기간 보관됩니다:
+            </p>
+            <ul className="list-disc list-inside space-y-2 ml-4">
+              <li>
+                <strong>구매 및 결제 기록:</strong> 전자상거래 등에서의
+                소비자보호에 관한 법률에 따라 5년간 보관
+              </li>
+            </ul>
+
+            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 my-6">
+              <p className="font-medium text-yellow-900">
+                ⚠️ 중요: 계정 삭제 시 구매한 매거진을 포함한 모든 데이터가
+                삭제되며 복구할 수 없습니다.
+              </p>
+            </div>
+
+            <p className="mt-4">
+              계정 삭제와 관련하여 문의사항이 있으시면{' '}
+              <a
+                href="mailto:bonvivant09.2023@gmail.com"
+                className="text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                bonvivant09.2023@gmail.com
+              </a>
+              으로 연락해 주시기 바랍니다.
+            </p>
+          </div>
+        </div>
+
         {/* Security */}
         <div className="bg-white rounded-lg shadow-md p-8 mb-8">
           <h2 className="text-2xl font-semibold text-gray-900 mb-6 pb-3 border-b border-gray-200">
