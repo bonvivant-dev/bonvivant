@@ -64,7 +64,7 @@ export function usePurchase({
           .single()
 
         if (magazineError || !magazine) {
-          throw new Error('매거진을 찾을 수 없습니다.')
+          throw new Error('글을 찾을 수 없습니다.')
         }
 
         const {
@@ -188,7 +188,7 @@ export function usePurchase({
         .single()
       if (magazineError || !magazine) {
         setIsLoading(false)
-        Alert.alert('구매 실패', '매거진을 찾을 수 없습니다.')
+        Alert.alert('구매 실패', '글을 찾을 수 없습니다.')
         return
       }
 

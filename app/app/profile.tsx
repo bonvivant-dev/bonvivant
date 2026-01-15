@@ -85,7 +85,7 @@ export default function ProfileScreen() {
   const handleDeleteAccount = async () => {
     Alert.alert(
       '회원 탈퇴',
-      '정말로 탈퇴하시겠습니까?\n구매한 매거진을 포함한 모든 데이터가 삭제되며 복구할 수 없습니다.',
+      '정말로 탈퇴하시겠습니까?\n구매한 글을 포함한 모든 데이터가 삭제되며 복구할 수 없습니다.',
       [
         {
           text: '취소',

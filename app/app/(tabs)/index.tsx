@@ -28,7 +28,7 @@ export default function MainPage() {
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>매거진을 불러오는 중...</Text>
+          <Text style={styles.loadingText}>글을 불러오는 중...</Text>
         </View>
       </SafeAreaView>
     )

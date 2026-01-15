@@ -165,7 +165,7 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
       <SafeAreaView style={styles.container}>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>매거진을 불러오는 중...</Text>
+          <Text style={styles.loadingText}>글을 불러오는 중...</Text>
         </View>
       </SafeAreaView>
     )
@@ -175,7 +175,7 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centered}>
-          <Text style={styles.errorText}>매거진을 불러올 수 없습니다</Text>
+          <Text style={styles.errorText}>글을 불러올 수 없어요</Text>
           <TouchableOpacity style={styles.backButton} onPress={handleClose}>
             <Text style={styles.backButtonText}>돌아가기</Text>
           </TouchableOpacity>
@@ -419,7 +419,7 @@ export function MagazineFullViewer({ magazineId }: { magazineId: string }) {
             {!pdfLoaded && (
               <View style={styles.loadingOverlay}>
                 <ActivityIndicator size="large" color="#007AFF" />
-                <Text style={styles.loadingText}>매거진을 불러오는 중...</Text>
+                <Text style={styles.loadingText}>글을 불러오는 중...</Text>
               </View>
             )}
           </>
