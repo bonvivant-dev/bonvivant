@@ -87,26 +87,25 @@ export default function LibraryPage() {
           >
             <Ionicons name="refresh" size={20} color="#007AFF" />
           </TouchableOpacity>
-        </View>
+        </View>                   
 
         {magazinesLoading ? (
-          <View style={styles.centered}>
+          <View style={styles.centered}>        
             <ActivityIndicator size="large" color="#007AFF" />
             <Text style={styles.loadingText}>글을 불러오는 중...</Text>
           </View>
-        ) : magazinesError ? (
+        ) : magazinesError ? (              
           <View style={styles.centered}>
             <Text style={styles.errorText}>글을 불러올 수 없어요</Text>
             <Text style={styles.errorSubText}>{magazinesError}</Text>
           </View>
-        ) : magazines.length === 0 ? (
+        ) : magazines.length === 0 ? (        
           <View style={styles.emptyState}>
             <Ionicons name="book-outline" size={64} color="#CCC" />
             <Text style={styles.emptyText}>
-              마음에 드는 글을 구매하고
-              <br />내 서재에서 확인해보세요
+              마음에 드는 글을 구매하고{"\n"}내 서재에서 확인해보세요
             </Text>
-          </View>
+          </View>                                       
         ) : (
           <FlatList
             data={magazines}
