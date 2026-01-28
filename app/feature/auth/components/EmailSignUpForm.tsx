@@ -71,7 +71,7 @@ export function EmailSignUpForm() {
       if (result.success) {
         Alert.alert(
           '회원가입 완료 🇫🇷',
-          '회원가입이 완료되었어요. 이제 봉비방의 다양한 매거진을 둘러보세요.',
+          '회원가입이 완료되었어요. 이제 봉비방의 다양한 글을 둘러보세요.',
           [
             {
               text: '확인',

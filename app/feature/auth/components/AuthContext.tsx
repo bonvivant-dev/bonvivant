@@ -122,7 +122,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (res.type === 'success') {
         const { url } = res
-        await createSessionFromUrl(url)
+        const session = await createSessionFromUrl(url)
+
+        // 세션과 사용자 정보를 명시적으로 설정
+        if (session) {
+          setSession(session)
+          setUser(session.user)
+        }
       } else {
         console.log('사용자가 로그인을 취소하거나 오류 발생')
       }

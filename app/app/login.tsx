@@ -75,23 +75,24 @@ export default function LoginPage() {
           <Text style={styles.dividerText}>또는</Text>
           <View style={styles.dividerLine} />
         </View>
-        <View
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: 20,
-          }}
-        >
-          <Pressable onPress={handleGoogleSignIn} style={styles.socialButton}>
-            <IconGoogle width={32} height={32} />
-          </Pressable>
+        <View style={styles.socialButtonContainer}>
           {Platform.OS === 'ios' && (
-            <Pressable onPress={handleAppleSignIn} style={styles.socialButton}>
-              <Ionicons name="logo-apple" size={32} color="#000" />
+            <Pressable
+              onPress={handleAppleSignIn}
+              style={styles.appleButton}
+            >
+              <Ionicons name="logo-apple" size={20} color="#FFFFFF" />
+              <Text style={styles.appleButtonText}>Apple로 로그인</Text>
             </Pressable>
           )}
+          <Pressable
+            onPress={handleGoogleSignIn}
+            style={styles.googleButton}
+            android_ripple={{ color: '#E8E8E8' }}
+          >
+            <IconGoogle width={20} height={20} />
+            <Text style={styles.googleButtonText}>Google로 로그인</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -128,7 +129,41 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 14,
   },
-  socialButton: {
-    padding: 8,
+  socialButtonContainer: {
+    gap: 12,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    gap: 12,
+    minHeight: 50,
+  },
+  googleButtonText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  appleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000000',
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    gap: 12,
+    minHeight: 50,
+  },
+  appleButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 })

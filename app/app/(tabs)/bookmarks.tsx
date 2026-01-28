@@ -34,7 +34,7 @@ function LoginRequired() {
     <View style={styles.loginContainer}>
       <View style={styles.loginSection}>
         <Text style={styles.loginMessage}>
-          찜한 매거진을 보려면 로그인이 필요해요
+          찜한 글을 보려면 로그인이 필요해요
         </Text>
 
         <Button onPress={() => router.push('/login')}>
@@ -82,27 +82,24 @@ export default function BookmarksPage() {
       <View style={styles.bookmarksSection}>
         <View style={styles.bookmarksHeader}>
           <Text fontWeight="bold" style={styles.bookmarksTitle}>
-            찜한 매거진
+            찜한 글
           </Text>
         </View>
 
         {bookmarksLoading ? (
           <View style={styles.centered}>
             <ActivityIndicator size="large" color="#007AFF" />
-            <Text style={styles.loadingText}>매거진을 불러오는 중...</Text>
+            <Text style={styles.loadingText}>글을 불러오는 중...</Text>
           </View>
         ) : bookmarksError ? (
           <View style={styles.centered}>
-            <Text style={styles.errorText}>매거진을 불러올 수 없습니다</Text>
+            <Text style={styles.errorText}>글을 불러올 수 없어요</Text>
             <Text style={styles.errorSubText}>{bookmarksError}</Text>
           </View>
         ) : bookmarks.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="heart-outline" size={64} color="#CCC" />
-            <Text style={styles.emptyText}>아직 찜한 매거진이 없습니다</Text>
-            <Text style={styles.emptySubText}>
-              마음에 드는 매거진을 찜해보세요
-            </Text>
+            <Text style={styles.emptyText}>마음에 드는 글을 찜해보세요</Text>
           </View>
         ) : (
           <FlatList
@@ -195,11 +192,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 16,
     marginBottom: 8,
-  },
-  emptySubText: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
   },
   gridContainer: {
     paddingBottom: 20,
