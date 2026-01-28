@@ -91,18 +91,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 중복 구매 확인
+    // 중복 구매 확인 (transaction_id + user_id 조합으로 체크)
+    // 비소모성 상품의 경우, 같은 Apple ID로 다른 앱 계정에서 "구매 복원"이 가능해야 함
     const { data: existingPurchase } = await supabaseAdmin
       .from('purchases')
-      .select('id')
+      .select('id, user_id')
       .eq('transaction_id', actualTransactionId)
+      .eq('user_id', user.id)
       .maybeSingle()
 
     if (existingPurchase) {
-      return NextResponse.json(
-        { error: 'Purchase already exists', purchaseId: existingPurchase.id },
-        { status: 409 },
-      )
+      // 같은 user_id + 같은 transaction_id → 이미 이 계정에서 구매함
+      console.log('✅ Purchase already exists for this user, returning success')
+      return NextResponse.json({
+        success: true,
+        purchase: existingPurchase,
+        note: 'Purchase already exists for this user',
+      })
     }
 
     // 매거진 정보 조회
@@ -212,7 +217,8 @@ export async function POST(request: NextRequest) {
           .from('purchases')
           .select()
           .eq('transaction_id', actualTransactionId)
-          .single()
+          .eq('user_id', user.id)
+          .maybeSingle()
 
         if (existingPurchase) {
           console.log('Race condition detected: returning existing purchase')
