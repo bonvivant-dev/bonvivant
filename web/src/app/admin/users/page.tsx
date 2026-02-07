@@ -1,9 +1,12 @@
 'use client'
 
 import dayjs from 'dayjs'
+import Pagination from 'rc-pagination'
 import { useState, useEffect, useCallback } from 'react'
 
 import { Header } from '@/shared/components'
+
+import 'rc-pagination/assets/index.css'
 
 interface User {
   id: string
@@ -26,7 +29,6 @@ export default function UsersPage() {
 
   // 페이지네이션 상태
   const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
   const [totalAll, setTotalAll] = useState(0)
   const limit = 10
@@ -70,7 +72,6 @@ export default function UsersPage() {
       setUsers(data.users)
       setTotal(data.total)
       setTotalAll(data.totalAll)
-      setTotalPages(data.totalPages)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -130,23 +131,6 @@ export default function UsersPage() {
     }
   }
 
-  // 페이지 번호 생성 (최대 5개)
-  const getPageNumbers = () => {
-    const pages: number[] = []
-    let startPage = Math.max(1, page - 2)
-    const endPage = Math.min(totalPages, startPage + 4)
-
-    if (endPage - startPage < 4) {
-      startPage = Math.max(1, endPage - 4)
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i)
-    }
-
-    return pages
-  }
-
   if (isInitialLoad) {
     return (
       <>
@@ -181,7 +165,9 @@ export default function UsersPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">회원 관리</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                회원 관리
+              </h2>
 
               {/* 안내 메시지 */}
               <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
@@ -274,7 +260,9 @@ export default function UsersPage() {
                             {user.providers}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {dayjs(user.createdAt).format('YYYY-MM-DD HH:mm:ss')}
+                            {dayjs(user.createdAt).format(
+                              'YYYY-MM-DD HH:mm:ss',
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {user.providers.includes('email') && (
@@ -299,40 +287,16 @@ export default function UsersPage() {
               </div>
 
               {/* 페이지네이션 */}
-              {totalPages > 1 && (
-                <div className="mt-6 flex items-center justify-center gap-2">
-                  <button
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page === 1 || loading}
-                    className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                  >
-                    이전
-                  </button>
-                  <div className="flex gap-1">
-                    {getPageNumbers().map(pageNum => (
-                      <button
-                        key={pageNum}
-                        onClick={() => setPage(pageNum)}
-                        disabled={loading}
-                        className={`px-3 py-1 rounded-md text-sm ${
-                          pageNum === page
-                            ? 'bg-blue-600 text-white'
-                            : 'border border-gray-300 hover:bg-gray-50'
-                        } disabled:cursor-not-allowed`}
-                      >
-                        {pageNum}
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                    disabled={page === totalPages || loading}
-                    className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                  >
-                    다음
-                  </button>
-                </div>
-              )}
+              <div className="mt-6 flex justify-center">
+                <Pagination
+                  current={page}
+                  total={total}
+                  pageSize={limit}
+                  onChange={newPage => setPage(newPage)}
+                  disabled={loading}
+                  showTitle={false}
+                />
+              </div>
             </div>
           </div>
         </div>
