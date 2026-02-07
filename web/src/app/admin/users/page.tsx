@@ -1,4 +1,5 @@
 'use client'
+
 import dayjs from 'dayjs'
 import Pagination from 'rc-pagination'
 import { useState, useEffect, useCallback } from 'react'
@@ -21,7 +22,7 @@ export default function UsersPage() {
   const [isInitialLoad, setIsInitialLoad] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [resettingUserId, setResettingUserId] = useState<string | null>(null)
-  const [message, setMessage] = useState<{
+  const [hint, setHint] = useState<{
     type: 'success' | 'error'
     text: string
   } | null>(null)
@@ -94,7 +95,7 @@ export default function UsersPage() {
 
     try {
       setResettingUserId(userId)
-      setMessage(null)
+      setHint(null)
 
       const response = await fetch('/api/users/reset-password', {
         method: 'POST',
@@ -110,15 +111,15 @@ export default function UsersPage() {
         throw new Error(data.error || 'Failed to reset password')
       }
 
-      setMessage({
+      setHint({
         type: 'success',
         text: data.message || '비밀번호가 초기화되었습니다.',
       })
 
       // 3초 후 메시지 자동 제거
-      setTimeout(() => setMessage(null), 3000)
+      setTimeout(() => setHint(null), 3000)
     } catch (err) {
-      setMessage({
+      setHint({
         type: 'error',
         text:
           err instanceof Error
@@ -191,15 +192,15 @@ export default function UsersPage() {
                 </span>
               </div>
 
-              {message && (
+              {hint && (
                 <div
                   className={`mb-4 p-4 rounded-md ${
-                    message.type === 'success'
+                    hint.type === 'success'
                       ? 'bg-green-50 text-green-800'
                       : 'bg-red-50 text-red-800'
                   }`}
                 >
-                  {message.text}
+                  {hint.text}
                 </div>
               )}
 
