@@ -28,6 +28,7 @@ export default function UsersPage() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [total, setTotal] = useState(0)
+  const [totalAll, setTotalAll] = useState(0)
   const limit = 10
 
   // 검색 상태
@@ -68,6 +69,7 @@ export default function UsersPage() {
 
       setUsers(data.users)
       setTotal(data.total)
+      setTotalAll(data.totalAll)
       setTotalPages(data.totalPages)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
@@ -145,10 +147,6 @@ export default function UsersPage() {
     return pages
   }
 
-  // 현재 표시 범위 계산
-  const startItem = (page - 1) * limit + 1
-  const endItem = Math.min(page * limit, total)
-
   if (isInitialLoad) {
     return (
       <>
@@ -183,10 +181,7 @@ export default function UsersPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">회원 관리</h2>
-                <span className="text-sm text-gray-500">총 {total}명</span>
-              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">회원 관리</h2>
 
               {/* 안내 메시지 */}
               <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
@@ -195,8 +190,8 @@ export default function UsersPage() {
                 </p>
               </div>
 
-              {/* 검색 입력 */}
-              <div className="mb-4">
+              {/* 검색 입력 및 회원 수 */}
+              <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <input
                   type="text"
                   placeholder="이메일 또는 이름으로 검색..."
@@ -204,6 +199,11 @@ export default function UsersPage() {
                   onChange={e => setSearchQuery(e.target.value)}
                   className="w-full sm:w-80 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+                <span className="text-sm text-gray-500">
+                  {debouncedSearch
+                    ? `총 ${totalAll}명 / 검색 결과 ${total}명`
+                    : `총 ${totalAll}명`}
+                </span>
               </div>
 
               {message && (
@@ -300,42 +300,37 @@ export default function UsersPage() {
 
               {/* 페이지네이션 */}
               {totalPages > 1 && (
-                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="text-sm text-gray-500">
-                    총 {total}명 중 {startItem}-{endItem}명
+                <div className="mt-6 flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1 || loading}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    이전
+                  </button>
+                  <div className="flex gap-1">
+                    {getPageNumbers().map(pageNum => (
+                      <button
+                        key={pageNum}
+                        onClick={() => setPage(pageNum)}
+                        disabled={loading}
+                        className={`px-3 py-1 rounded-md text-sm ${
+                          pageNum === page
+                            ? 'bg-blue-600 text-white'
+                            : 'border border-gray-300 hover:bg-gray-50'
+                        } disabled:cursor-not-allowed`}
+                      >
+                        {pageNum}
+                      </button>
+                    ))}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setPage(p => Math.max(1, p - 1))}
-                      disabled={page === 1 || loading}
-                      className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                    >
-                      이전
-                    </button>
-                    <div className="flex gap-1">
-                      {getPageNumbers().map(pageNum => (
-                        <button
-                          key={pageNum}
-                          onClick={() => setPage(pageNum)}
-                          disabled={loading}
-                          className={`px-3 py-1 rounded-md text-sm ${
-                            pageNum === page
-                              ? 'bg-blue-600 text-white'
-                              : 'border border-gray-300 hover:bg-gray-50'
-                          } disabled:cursor-not-allowed`}
-                        >
-                          {pageNum}
-                        </button>
-                      ))}
-                    </div>
-                    <button
-                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                      disabled={page === totalPages || loading}
-                      className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                    >
-                      다음
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages || loading}
+                    className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    다음
+                  </button>
                 </div>
               )}
             </div>

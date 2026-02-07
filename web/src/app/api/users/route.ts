@@ -39,6 +39,11 @@ export async function GET(request: NextRequest) {
     // profiles 테이블에서 조회 (Service Role 사용)
     const supabaseAdmin = await supabaseServerClient(true)
 
+    // 전체 회원 수 조회
+    const { count: totalAll } = await supabaseAdmin
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+
     // 검색 쿼리 구성
     let query = supabaseAdmin
       .from('profiles')
@@ -54,7 +59,6 @@ export async function GET(request: NextRequest) {
       (page - 1) * limit,
       page * limit - 1,
     )
-    console.log(users)
 
     if (usersError) {
       console.error('Failed to fetch users:', usersError)
@@ -74,13 +78,13 @@ export async function GET(request: NextRequest) {
     }))
 
     const total = count || 0
-    console.log(total)
     const totalPages = Math.ceil(total / limit)
 
     return NextResponse.json({
       success: true,
       users: formattedUsers,
       total,
+      totalAll: totalAll || 0,
       page,
       limit,
       totalPages,
