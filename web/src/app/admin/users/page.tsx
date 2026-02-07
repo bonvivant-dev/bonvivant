@@ -16,6 +16,7 @@ interface User {
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [resettingUserId, setResettingUserId] = useState<string | null>(null)
   const [message, setMessage] = useState<{
@@ -72,6 +73,7 @@ export default function UsersPage() {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
       setLoading(false)
+      setIsInitialLoad(false)
     }
   }, [page, debouncedSearch])
 
@@ -147,7 +149,7 @@ export default function UsersPage() {
   const startItem = (page - 1) * limit + 1
   const endItem = Math.min(page * limit, total)
 
-  if (loading) {
+  if (isInitialLoad) {
     return (
       <>
         <Header title="회원 관리" />
@@ -238,49 +240,62 @@ export default function UsersPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {users.map(user => (
-                      <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {user.email}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {user.name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.providers}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {dayjs(user.createdAt).format('YYYY-MM-DD HH:mm:ss')}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {user.providers.includes('email') && (
-                            <button
-                              onClick={() =>
-                                handleResetPassword(user.id, user.email)
-                              }
-                              disabled={resettingUserId === user.id}
-                              className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {resettingUserId === user.id
-                                ? '초기화 중...'
-                                : '비밀번호 초기화'}
-                            </button>
-                          )}
+                    {loading ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-12 text-center">
+                          <div className="flex flex-col items-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            <p className="mt-2 text-sm text-gray-500">
+                              로딩 중...
+                            </p>
+                          </div>
                         </td>
                       </tr>
-                    ))}
+                    ) : users.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-12 text-center">
+                          <p className="text-gray-500">
+                            {debouncedSearch
+                              ? '검색 결과가 없습니다.'
+                              : '등록된 회원이 없습니다.'}
+                          </p>
+                        </td>
+                      </tr>
+                    ) : (
+                      users.map(user => (
+                        <tr key={user.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {user.email}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {user.name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {user.providers}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {dayjs(user.createdAt).format('YYYY-MM-DD HH:mm:ss')}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {user.providers.includes('email') && (
+                              <button
+                                onClick={() =>
+                                  handleResetPassword(user.id, user.email)
+                                }
+                                disabled={resettingUserId === user.id}
+                                className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {resettingUserId === user.id
+                                  ? '초기화 중...'
+                                  : '비밀번호 초기화'}
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
-
-                {users.length === 0 && (
-                  <div className="text-center py-12">
-                    <p className="text-gray-500">
-                      {debouncedSearch
-                        ? '검색 결과가 없습니다.'
-                        : '등록된 회원이 없습니다.'}
-                    </p>
-                  </div>
-                )}
               </div>
 
               {/* 페이지네이션 */}
