@@ -1,7 +1,7 @@
 'use client'
 
 import dayjs from 'dayjs'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 import { Header } from '@/shared/components'
 
@@ -23,14 +23,42 @@ export default function UsersPage() {
     text: string
   } | null>(null)
 
-  useEffect(() => {
-    fetchUsers()
-  }, [])
+  // 페이지네이션 상태
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
+  const limit = 10
 
-  const fetchUsers = async () => {
+  // 검색 상태
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+
+  // 검색 디바운스 (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // 검색어 변경 시 페이지 리셋
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch])
+
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/users')
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      })
+      if (debouncedSearch) {
+        params.append('search', debouncedSearch)
+      }
+
+      const response = await fetch(`/api/users?${params.toString()}`)
       const data = await response.json()
 
       if (!response.ok) {
@@ -38,12 +66,18 @@ export default function UsersPage() {
       }
 
       setUsers(data.users)
+      setTotal(data.total)
+      setTotalPages(data.totalPages)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, debouncedSearch])
+
+  useEffect(() => {
+    fetchUsers()
+  }, [fetchUsers])
 
   const handleResetPassword = async (userId: string, userEmail: string) => {
     if (
@@ -92,6 +126,27 @@ export default function UsersPage() {
     }
   }
 
+  // 페이지 번호 생성 (최대 5개)
+  const getPageNumbers = () => {
+    const pages: number[] = []
+    let startPage = Math.max(1, page - 2)
+    const endPage = Math.min(totalPages, startPage + 4)
+
+    if (endPage - startPage < 4) {
+      startPage = Math.max(1, endPage - 4)
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i)
+    }
+
+    return pages
+  }
+
+  // 현재 표시 범위 계산
+  const startItem = (page - 1) * limit + 1
+  const endItem = Math.min(page * limit, total)
+
   if (loading) {
     return (
       <>
@@ -128,9 +183,25 @@ export default function UsersPage() {
             <div className="px-4 py-5 sm:p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">회원 관리</h2>
-                <span className="text-sm text-gray-500">
-                  총 {users.length}명
-                </span>
+                <span className="text-sm text-gray-500">총 {total}명</span>
+              </div>
+
+              {/* 안내 메시지 */}
+              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-800">
+                  비밀번호 초기화는 이메일로 가입한 사용자만 가능합니다.
+                </p>
+              </div>
+
+              {/* 검색 입력 */}
+              <div className="mb-4">
+                <input
+                  type="text"
+                  placeholder="이메일 또는 이름으로 검색..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full sm:w-80 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
               </div>
 
               {message && (
@@ -203,10 +274,55 @@ export default function UsersPage() {
 
                 {users.length === 0 && (
                   <div className="text-center py-12">
-                    <p className="text-gray-500">등록된 회원이 없습니다.</p>
+                    <p className="text-gray-500">
+                      {debouncedSearch
+                        ? '검색 결과가 없습니다.'
+                        : '등록된 회원이 없습니다.'}
+                    </p>
                   </div>
                 )}
               </div>
+
+              {/* 페이지네이션 */}
+              {totalPages > 1 && (
+                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="text-sm text-gray-500">
+                    총 {total}명 중 {startItem}-{endItem}명
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1 || loading}
+                      className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      이전
+                    </button>
+                    <div className="flex gap-1">
+                      {getPageNumbers().map(pageNum => (
+                        <button
+                          key={pageNum}
+                          onClick={() => setPage(pageNum)}
+                          disabled={loading}
+                          className={`px-3 py-1 rounded-md text-sm ${
+                            pageNum === page
+                              ? 'bg-blue-600 text-white'
+                              : 'border border-gray-300 hover:bg-gray-50'
+                          } disabled:cursor-not-allowed`}
+                        >
+                          {pageNum}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      disabled={page === totalPages || loading}
+                      className="px-3 py-1 border border-gray-300 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      다음
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

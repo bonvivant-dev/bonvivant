@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 import { supabaseServerClient } from '@/shared/utils/supabase/server'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await supabaseServerClient()
 
@@ -30,10 +30,31 @@ export async function GET() {
       )
     }
 
-    // 전체 사용자 목록 조회 (Service Role 필요)
+    // 쿼리 파라미터 파싱
+    const { searchParams } = new URL(request.url)
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '10')
+    const search = searchParams.get('search') || ''
+
+    // profiles 테이블에서 조회 (Service Role 사용)
     const supabaseAdmin = await supabaseServerClient(true)
-    const { data: usersData, error: usersError } =
-      await supabaseAdmin.auth.admin.listUsers()
+
+    // 검색 쿼리 구성
+    let query = supabaseAdmin
+      .from('profiles')
+      .select('id, email, name, providers, created_at', { count: 'exact' })
+      .order('created_at', { ascending: false })
+
+    if (search) {
+      query = query.or(`email.ilike.%${search}%,name.ilike.%${search}%`)
+    }
+
+    // 페이지네이션 적용
+    const { data: users, error: usersError, count } = await query.range(
+      (page - 1) * limit,
+      page * limit - 1,
+    )
+    console.log(users)
 
     if (usersError) {
       console.error('Failed to fetch users:', usersError)
@@ -43,33 +64,26 @@ export async function GET() {
       )
     }
 
-    // 데이터 포맷 변환 (이메일, 이름, provider 추출)
-    const formattedUsers = usersData.users.map(user => ({
+    // 데이터 포맷 변환
+    const formattedUsers = (users || []).map(user => ({
       id: user.id,
       email: user.email || 'N/A',
-      name:
-        user.user_metadata?.name ||
-        user.user_metadata?.full_name ||
-        user.user_metadata?.display_name ||
-        'N/A',
-      providers:
-        user.app_metadata?.providers
-          ?.map((provider: string) => provider)
-          .filter(Boolean)
-          .join(', ') || 'N/A',
+      name: user.name || 'N/A',
+      providers: user.providers || 'N/A',
       createdAt: user.created_at,
     }))
 
-    // 가입일 기준 최신순 정렬
-    formattedUsers.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    )
+    const total = count || 0
+    console.log(total)
+    const totalPages = Math.ceil(total / limit)
 
     return NextResponse.json({
       success: true,
       users: formattedUsers,
-      total: formattedUsers.length,
+      total,
+      page,
+      limit,
+      totalPages,
     })
   } catch (error) {
     console.error('Get users error:', error)
