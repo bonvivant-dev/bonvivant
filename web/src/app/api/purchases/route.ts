@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 import { supabaseServerClient } from '@/shared/utils/supabase/server'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await supabaseServerClient()
 
@@ -30,9 +30,14 @@ export async function GET() {
       )
     }
 
+    // 쿼리 파라미터 파싱
+    const { searchParams } = new URL(request.url)
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '10')
+
     // 구매 내역 조회 (magazine 정보만 join)
     // RLS policy로 admin은 모든 구매 내역 조회 가능
-    const { data: purchases, error } = await supabase
+    const { data: purchases, error, count } = await supabase
       .from('purchases')
       .select(
         `
@@ -49,8 +54,10 @@ export async function GET() {
         magazine_id,
         magazines(title)
       `,
+        { count: 'exact' },
       )
       .order('created_at', { ascending: false })
+      .range((page - 1) * limit, page * limit - 1)
 
     if (error) {
       console.error('Failed to fetch purchases:', error)
@@ -84,10 +91,15 @@ export async function GET() {
       magazineTitle: (purchase.magazines as any)?.title || 'N/A',
     }))
 
+    const total = count || 0
+
     return NextResponse.json({
       success: true,
       purchases: formattedPurchases,
-      total: formattedPurchases.length,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     })
   } catch (error) {
     console.error('Get purchases error:', error)
