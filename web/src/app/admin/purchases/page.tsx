@@ -31,7 +31,26 @@ export default function PurchasesPage() {
   // 페이지네이션 상태
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
+  const [totalAll, setTotalAll] = useState(0)
   const limit = 10
+
+  // 검색 상태
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+
+  // 검색 디바운스 (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  // 검색어 변경 시 페이지 리셋
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch])
 
   const fetchPurchases = useCallback(async () => {
     try {
@@ -40,6 +59,9 @@ export default function PurchasesPage() {
         page: page.toString(),
         limit: limit.toString(),
       })
+      if (debouncedSearch) {
+        params.append('search', debouncedSearch)
+      }
 
       const response = await fetch(`/api/purchases?${params.toString()}`)
       const data = await response.json()
@@ -50,13 +72,14 @@ export default function PurchasesPage() {
 
       setPurchases(data.purchases)
       setTotal(data.total)
+      setTotalAll(data.totalAll)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
       setLoading(false)
       setIsInitialLoad(false)
     }
-  }, [page])
+  }, [page, debouncedSearch])
 
   useEffect(() => {
     fetchPurchases()
@@ -96,10 +119,23 @@ export default function PurchasesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">구매 내역</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                구매 내역
+              </h2>
+
+              {/* 검색 입력 및 건수 */}
+              <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <input
+                  type="text"
+                  placeholder="사용자 이메일 또는 매거진 이름으로 검색..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full sm:w-80 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
                 <span className="text-sm text-gray-500">
-                  총 {total}건
+                  {debouncedSearch
+                    ? `총 ${totalAll}건 / 검색 결과 ${total}건`
+                    : `총 ${totalAll}건`}
                 </span>
               </div>
 
@@ -143,7 +179,9 @@ export default function PurchasesPage() {
                       <tr>
                         <td colSpan={6} className="px-6 py-12 text-center">
                           <p className="text-gray-500">
-                            구매 내역이 없습니다.
+                            {debouncedSearch
+                              ? '검색 결과가 없습니다.'
+                              : '구매 내역이 없습니다.'}
                           </p>
                         </td>
                       </tr>
