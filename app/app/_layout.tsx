@@ -15,12 +15,15 @@ import {
   BookmarksProvider,
   useBookmarks,
 } from '../feature/magazines'
+import { usePushNotifications } from '../feature/notifications'
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync()
 
 function RootLayoutNav() {
   const { supabase } = useAuth()
+
+  usePushNotifications()
 
   useEffect(() => {
     // Handle deep links for email confirmation
