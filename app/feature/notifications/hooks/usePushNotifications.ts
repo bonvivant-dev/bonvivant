@@ -2,7 +2,7 @@ import * as Device from 'expo-device'
 import * as Notifications from 'expo-notifications'
 import { useRouter } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
-import { Alert, Platform } from 'react-native'
+import { Platform } from 'react-native'
 
 import { useAuth } from '@/feature/auth'
 import { supabase } from '@/feature/shared/lib'
@@ -31,19 +31,11 @@ export function usePushNotifications() {
   )
 
   useEffect(() => {
-    registerForPushNotificationsAsync()
-      .then(token => {
-        Alert.alert(
-          '[D1]',
-          `토큰: ${token ? `${token.substring(0, 30)}...` : 'null'}`
-        )
-        if (token) {
-          setExpoPushToken(token)
-        }
-      })
-      .catch(err => {
-        Alert.alert('[D1 ERR]', String(err))
-      })
+    registerForPushNotificationsAsync().then(token => {
+      if (token) {
+        setExpoPushToken(token)
+      }
+    })
 
     // 알림이 수신되었을 때 (앱이 포그라운드일 때)
     notificationListener.current =
@@ -77,10 +69,6 @@ export function usePushNotifications() {
 
   // 토큰 DB 저장 (세션이 준비된 후에 실행)
   useEffect(() => {
-    Alert.alert(
-      '[D2]',
-      `토큰: ${expoPushToken ? 'O' : 'X'}, 세션: ${session ? 'O' : 'X'}`
-    )
     if (expoPushToken && session) {
       savePushToken(expoPushToken)
     }
@@ -132,7 +120,6 @@ async function savePushToken(token: string) {
   try {
     const { data: userData } = await supabase.auth.getUser()
     const userId = userData.user?.id || null
-    Alert.alert('[D3]', `userId: ${userId || 'null'}`)
 
     // DB에 이미 존재하는 토큰인지 확인
     const { data: existing } = await supabase
@@ -142,23 +129,16 @@ async function savePushToken(token: string) {
       .maybeSingle()
 
     if (existing) {
-      Alert.alert('[D4]', 'DB에 이미 존재')
       return
     }
 
     // 새 토큰 저장
-    const { error } = await supabase.from('push_tokens').insert({
+    await supabase.from('push_tokens').insert({
       user_id: userId,
       expo_push_token: token,
       device_type: Platform.OS as 'ios' | 'android',
     })
-
-    if (error) {
-      Alert.alert('[D5 ERR]', error.message)
-    } else {
-      Alert.alert('[D5]', '저장 성공!')
-    }
   } catch (error) {
-    Alert.alert('[D ERR]', String(error))
+    console.error('푸시 토큰 저장 에러:', error)
   }
 }
