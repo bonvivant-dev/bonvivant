@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
 import { Platform } from 'react-native'
 
-import { useAuth } from '@/feature/auth'
 import { supabase } from '@/feature/shared/lib'
 
 // 알림이 포그라운드에서 왔을 때 어떻게 처리할지 설정
@@ -20,7 +19,6 @@ Notifications.setNotificationHandler({
 
 export function usePushNotifications() {
   const router = useRouter()
-  const { session } = useAuth()
   const [expoPushToken, setExpoPushToken] = useState<string>('')
   const [notification, setNotification] = useState<Notifications.Notification>()
   const notificationListener = useRef<
@@ -34,6 +32,7 @@ export function usePushNotifications() {
     registerForPushNotificationsAsync().then(token => {
       if (token) {
         setExpoPushToken(token)
+        savePushToken(token)
       }
     })
 
@@ -66,13 +65,6 @@ export function usePushNotifications() {
       }
     }
   }, [router])
-
-  // 토큰 DB 저장 (세션이 준비된 후에 실행)
-  useEffect(() => {
-    if (expoPushToken && session) {
-      savePushToken(expoPushToken)
-    }
-  }, [expoPushToken, session])
 
   return {
     expoPushToken,
