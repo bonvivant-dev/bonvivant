@@ -46,10 +46,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 모든 푸시 토큰 가져오기
+    // 알림 수신 허용된 푸시 토큰 가져오기
     const { data: tokens, error: tokensError } = await supabase
       .from('push_tokens')
       .select('expo_push_token')
+      .eq('notifications_enabled', true)
 
     if (tokensError) {
       throw tokensError

@@ -18,12 +18,20 @@ export function LogoHeader({ showUserIcon = true }: LogoHeaderProps) {
         resizeMode="contain"
       />
       {showUserIcon && (
-        <TouchableOpacity
-          style={styles.userIconButton}
-          onPress={() => router.push('/profile')}
-        >
-          <Ionicons name="person-circle-outline" size={32} color="#333" />
-        </TouchableOpacity>
+        <View style={styles.iconRow}>
+          <TouchableOpacity
+            style={styles.userIconButton}
+            onPress={() => router.push('/settings')}
+          >
+            <Ionicons name="settings-outline" size={26} color="#333" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.userIconButton}
+            onPress={() => router.push('/profile')}
+          >
+            <Ionicons name="person-circle-outline" size={32} color="#333" />
+          </TouchableOpacity>
+        </View>
       )}
     </View>
   )
@@ -41,6 +49,11 @@ const styles = StyleSheet.create({
   headerLogo: {
     width: LOGO_SIZE,
     height: LOGO_SIZE,
+  },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   userIconButton: {
     padding: 4,

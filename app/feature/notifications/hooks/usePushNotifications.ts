@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as Device from 'expo-device'
 import * as Notifications from 'expo-notifications'
 import { useRouter } from 'expo-router'
@@ -6,8 +5,6 @@ import { useEffect, useRef, useState } from 'react'
 import { Platform } from 'react-native'
 
 import { supabase } from '@/feature/shared/lib'
-
-const PUSH_TOKEN_STORAGE_KEY = '@push_token'
 
 // 알림이 포그라운드에서 왔을 때 어떻게 처리할지 설정
 Notifications.setNotificationHandler({
@@ -31,11 +28,23 @@ export function usePushNotifications() {
     undefined
   )
 
+  // 로그인 시 기존 토큰에 user_id 연결
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user && expoPushToken) {
+        savePushToken(expoPushToken)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [expoPushToken])
+
   useEffect(() => {
     registerForPushNotificationsAsync().then(token => {
       if (token) {
         setExpoPushToken(token)
-        // 토큰을 DB에 저장
         savePushToken(token)
       }
     })
@@ -98,7 +107,6 @@ async function registerForPushNotificationsAsync() {
     }
 
     if (finalStatus !== 'granted') {
-      alert('푸시 알림 권한이 필요합니다!')
       return
     }
 
@@ -108,8 +116,6 @@ async function registerForPushNotificationsAsync() {
         projectId: 'f8aa4906-9f3f-4185-ba7d-05fad9da9fad',
       })
     ).data
-  } else {
-    alert('실제 기기에서만 푸시 알림을 사용할 수 있습니다.')
   }
 
   return token
@@ -117,41 +123,33 @@ async function registerForPushNotificationsAsync() {
 
 async function savePushToken(token: string) {
   try {
-    // 로컬에 저장된 토큰 확인
-    const cachedToken = await AsyncStorage.getItem(PUSH_TOKEN_STORAGE_KEY)
-
-    // 토큰이 변경되지 않았으면 DB 업데이트 스킵
-    if (cachedToken === token) return
-
     const { data: userData } = await supabase.auth.getUser()
     const userId = userData.user?.id || null
 
     // DB에 이미 존재하는 토큰인지 확인
     const { data: existing } = await supabase
       .from('push_tokens')
-      .select('id')
+      .select('id, user_id')
       .eq('expo_push_token', token)
       .maybeSingle()
 
     if (existing) {
-      // 로컬 캐시 업데이트
-      await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token)
+      // 기존 토큰의 user_id가 null이고 현재 로그인 상태면 업데이트
+      if (userId && !existing.user_id) {
+        await supabase
+          .from('push_tokens')
+          .update({ user_id: userId })
+          .eq('id', existing.id)
+      }
       return
     }
 
     // 새 토큰 저장
-    const { error } = await supabase.from('push_tokens').insert({
+    await supabase.from('push_tokens').insert({
       user_id: userId,
       expo_push_token: token,
       device_type: Platform.OS as 'ios' | 'android',
     })
-
-    if (error) {
-      console.error('푸시 토큰 저장 실패:', error)
-    } else {
-      // 로컬 캐시에 저장
-      await AsyncStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token)
-    }
   } catch (error) {
     console.error('푸시 토큰 저장 에러:', error)
   }

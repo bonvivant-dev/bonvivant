@@ -15,6 +15,8 @@ import {
   BookmarksProvider,
   useBookmarks,
 } from '../feature/magazines'
+import { PushNotificationProvider } from '../feature/notifications'
+import { ToastProvider } from '../feature/shared/components'
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync()
@@ -84,6 +86,7 @@ function RootLayoutNav() {
           headerShown: false,
         }}
       />
+      <Stack.Screen name="settings" options={{ headerShown: false }} />
     </Stack>
   )
 }
@@ -146,7 +149,11 @@ export default function RootLayout() {
         <AppProviders>
           <BottomSheetModalProvider>
             <OverlayProvider>
-              <RootLayoutNav />
+              <PushNotificationProvider>
+                <ToastProvider>
+                  <RootLayoutNav />
+                </ToastProvider>
+              </PushNotificationProvider>
             </OverlayProvider>
           </BottomSheetModalProvider>
         </AppProviders>
