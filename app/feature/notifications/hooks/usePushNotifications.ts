@@ -28,6 +28,19 @@ export function usePushNotifications() {
     undefined
   )
 
+  // 로그인 시 기존 토큰에 user_id 연결
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user && expoPushToken) {
+        savePushToken(expoPushToken)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [expoPushToken])
+
   useEffect(() => {
     registerForPushNotificationsAsync().then(token => {
       if (token) {
@@ -116,11 +129,18 @@ async function savePushToken(token: string) {
     // DB에 이미 존재하는 토큰인지 확인
     const { data: existing } = await supabase
       .from('push_tokens')
-      .select('id')
+      .select('id, user_id')
       .eq('expo_push_token', token)
       .maybeSingle()
 
     if (existing) {
+      // 기존 토큰의 user_id가 null이고 현재 로그인 상태면 업데이트
+      if (userId && !existing.user_id) {
+        await supabase
+          .from('push_tokens')
+          .update({ user_id: userId })
+          .eq('id', existing.id)
+      }
       return
     }
 
