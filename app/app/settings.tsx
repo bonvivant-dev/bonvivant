@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
+import dayjs from 'dayjs'
 import * as Linking from 'expo-linking'
 import { Stack } from 'expo-router'
 import React, { useEffect, useState } from 'react'
@@ -13,12 +14,13 @@ import {
 
 import { useAuth } from '@/feature/auth/components/AuthContext'
 import { usePushNotificationContext } from '@/feature/notifications'
-import { Text, PageHeader } from '@/feature/shared/components'
+import { Text, PageHeader, useToast } from '@/feature/shared/components'
 import { supabase } from '@/feature/shared/lib'
 
 export default function SettingsScreen() {
   const { user } = useAuth()
   const { expoPushToken } = usePushNotificationContext()
+  const { show: showToast } = useToast()
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
   const [loading, setLoading] = useState(true)
@@ -65,7 +67,6 @@ export default function SettingsScreen() {
 
     try {
       if (user) {
-        console.log(value, new Date().toISOString())
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
@@ -73,7 +74,6 @@ export default function SettingsScreen() {
             notifications_updated_at: new Date().toISOString(),
           })
           .eq('id', user.id)
-        console.log('profileError', profileError)
 
         if (profileError) throw profileError
 
@@ -91,6 +91,10 @@ export default function SettingsScreen() {
 
         if (error) throw error
       }
+
+      showToast(
+        `${dayjs().format('YY.MM.DD HH:mm')}에 알림을 ${value ? '허용' : '거부'}했어요`
+      )
     } catch (error) {
       console.error('알림 설정 변경 에러:', error)
       setNotificationsEnabled(!value)
