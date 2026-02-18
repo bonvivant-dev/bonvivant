@@ -16,6 +16,7 @@ import {
   useBookmarks,
 } from '../feature/magazines'
 import { PushNotificationProvider } from '../feature/notifications'
+import { ToastProvider } from '../feature/shared/components'
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync()
@@ -149,7 +150,9 @@ export default function RootLayout() {
           <BottomSheetModalProvider>
             <OverlayProvider>
               <PushNotificationProvider>
-                <RootLayoutNav />
+                <ToastProvider>
+                  <RootLayoutNav />
+                </ToastProvider>
               </PushNotificationProvider>
             </OverlayProvider>
           </BottomSheetModalProvider>
