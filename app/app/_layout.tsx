@@ -15,15 +15,13 @@ import {
   BookmarksProvider,
   useBookmarks,
 } from '../feature/magazines'
-import { usePushNotifications } from '../feature/notifications'
+import { PushNotificationProvider } from '../feature/notifications'
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync()
 
 function RootLayoutNav() {
   const { supabase } = useAuth()
-
-  usePushNotifications()
 
   useEffect(() => {
     // Handle deep links for email confirmation
@@ -87,6 +85,7 @@ function RootLayoutNav() {
           headerShown: false,
         }}
       />
+      <Stack.Screen name="settings" options={{ headerShown: false }} />
     </Stack>
   )
 }
@@ -149,7 +148,9 @@ export default function RootLayout() {
         <AppProviders>
           <BottomSheetModalProvider>
             <OverlayProvider>
-              <RootLayoutNav />
+              <PushNotificationProvider>
+                <RootLayoutNav />
+              </PushNotificationProvider>
             </OverlayProvider>
           </BottomSheetModalProvider>
         </AppProviders>
