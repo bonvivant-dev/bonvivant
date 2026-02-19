@@ -45,11 +45,24 @@ export default function NotificationsPage() {
   } | null>(null)
   const [history, setHistory] = useState<NotificationHistory[]>([])
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
+  const [recipientCount, setRecipientCount] = useState<number | null>(null)
 
   const title = watch('title')
   const body = watch('body')
 
-  const isDisabled = isSending || !isValid || !title?.trim() || !body?.trim()
+  const isDisabled = isSending || !isValid || !title?.trim() || !body?.trim() || recipientCount === 0
+
+  const loadRecipientCount = async () => {
+    try {
+      const response = await fetch('/api/notifications/count')
+      const data = await response.json()
+      if (response.ok) {
+        setRecipientCount(data.count)
+      }
+    } catch (error) {
+      console.error('수신 인원 조회 오류:', error)
+    }
+  }
 
   // 히스토리 불러오기
   const loadHistory = async () => {
@@ -69,6 +82,7 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     loadHistory()
+    loadRecipientCount()
   }, [])
 
   const sendNotification = async (data: NotificationFormData) => {
@@ -95,8 +109,9 @@ export default function NotificationsPage() {
         text: `${responseData.sentCount}명에게 알림을 전송했습니다.`,
       })
       reset()
-      // 히스토리 새로고침
+      // 히스토리 및 수신 인원 새로고침
       loadHistory()
+      loadRecipientCount()
     } catch (error) {
       setMessage({
         type: 'error',
@@ -193,6 +208,11 @@ export default function NotificationsPage() {
                   </div>
 
                   <div className="pt-4">
+                    <p className="text-sm text-gray-500 mb-3">
+                      {recipientCount === null
+                        ? '수신 인원 조회 중...'
+                        : `총 ${recipientCount}명에게 알림이 전송됩니다.`}
+                    </p>
                     <button
                       type="submit"
                       disabled={isDisabled}
