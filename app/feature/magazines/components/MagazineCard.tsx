@@ -40,7 +40,10 @@ export function MagazineCard({ magazine, onPress, width }: MagazineCardProps) {
             <View style={styles.newBadgeBody}>
               <Text style={styles.newBadgeText}>NEW</Text>
             </View>
-            <View style={styles.newBadgeNotch} />
+            <View style={styles.newBadgeNotchRow}>
+              <View style={styles.newBadgeNotchLeft} />
+              <View style={styles.newBadgeNotchRight} />
+            </View>
           </View>
         )}
       </View>
@@ -104,18 +107,27 @@ const styles = StyleSheet.create({
   },
   newBadgeText: {
     color: '#FFFFFF',
-    fontSize: 7,
+    fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  newBadgeNotch: {
+  newBadgeNotchRow: {
+    flexDirection: 'row',
+  },
+  newBadgeNotchLeft: {
     width: 0,
     height: 0,
-    borderLeftWidth: 14,
-    borderRightWidth: 14,
     borderTopWidth: 7,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
+    borderRightWidth: 14,
     borderTopColor: '#FF3B30',
+    borderRightColor: 'transparent',
+  },
+  newBadgeNotchRight: {
+    width: 0,
+    height: 0,
+    borderTopWidth: 7,
+    borderLeftWidth: 14,
+    borderTopColor: '#FF3B30',
+    borderLeftColor: 'transparent',
   },
 })

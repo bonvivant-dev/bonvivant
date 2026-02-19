@@ -171,9 +171,18 @@ function DraggableMagazineCard({
             height={200}
           />
           {magazine.is_new && (
-            <span className="absolute top-0 left-0 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-br">
+            <div
+              className="absolute top-0 left-0 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold"
+              style={{
+                width: 28,
+                height: 41,
+                paddingBottom: 7,
+                clipPath:
+                  'polygon(0% 0%, 100% 0%, 100% 100%, 50% 83%, 0% 100%)',
+              }}
+            >
               NEW
-            </span>
+            </div>
           )}
           {/* Drag indicator */}
           <div className="absolute bottom-2 right-2 bg-black/60 text-white rounded px-2 py-1">
@@ -1061,9 +1070,18 @@ export default function MagazinesPage() {
                                           height={200}
                                         />
                                         {magazine.is_new && (
-                                          <span className="absolute top-0 left-0 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-br">
+                                          <div
+                                            className="absolute top-0 left-2 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold"
+                                            style={{
+                                              width: 28,
+                                              height: 41,
+                                              paddingBottom: 7,
+                                              clipPath:
+                                                'polygon(0% 0%, 100% 0%, 100% 100%, 50% 83%, 0% 100%)',
+                                            }}
+                                          >
                                             NEW
-                                          </span>
+                                          </div>
                                         )}
                                       </div>
                                     )}
