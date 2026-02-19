@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
       cover_image_url,
       price,
       is_purchasable,
+      is_new,
       product_id,
     } = body
 
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest) {
           preview_images: preview_images || [],
           price: price !== null && price !== undefined ? price : null,
           is_purchasable: is_purchasable || false,
+          is_new: is_new || false,
           product_id: product_id || null,
         })
         .select()

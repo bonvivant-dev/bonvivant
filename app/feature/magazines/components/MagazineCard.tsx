@@ -35,6 +35,14 @@ export function MagazineCard({ magazine, onPress, width }: MagazineCardProps) {
             <Text style={styles.placeholderText}>No Cover</Text>
           </View>
         )}
+        {magazine.is_new && (
+          <View style={styles.newBadgeContainer}>
+            <View style={styles.newBadgeBody}>
+              <Text style={styles.newBadgeText}>NEW</Text>
+            </View>
+            <View style={styles.newBadgeNotch} />
+          </View>
+        )}
       </View>
       {/* show magazine title */}
       <Text fontWeight="semibold" style={styles.title} numberOfLines={2}>
@@ -55,6 +63,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
     aspectRatio: 320 / 470,
+    overflow: 'visible',
   },
   coverImage: {
     width: '100%',
@@ -78,5 +87,35 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     lineHeight: 18,
     height: 36,
+  },
+  newBadgeContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 8,
+    width: 28,
+    alignItems: 'center',
+  },
+  newBadgeBody: {
+    width: 28,
+    height: 34,
+    backgroundColor: '#FF3B30',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  newBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 7,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  newBadgeNotch: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 14,
+    borderRightWidth: 14,
+    borderTopWidth: 7,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#FF3B30',
   },
 })

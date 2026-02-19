@@ -76,6 +76,7 @@ export async function PUT(
     const category_ids = body.category_ids
     const price = body.price
     const is_purchasable = body.is_purchasable
+    const is_new = body.is_new
     const product_id = body.product_id
     const preview_images = body.preview_images
     const cover_image_url = body.cover_image_url
@@ -92,6 +93,7 @@ export async function PUT(
     }
     if (price !== undefined) updateData.price = price
     if (is_purchasable !== undefined) updateData.is_purchasable = is_purchasable
+    if (is_new !== undefined) updateData.is_new = is_new
     if (product_id !== undefined) updateData.product_id = product_id || null
     if (preview_images !== undefined) updateData.preview_images = preview_images
     if (cover_image_url !== undefined)

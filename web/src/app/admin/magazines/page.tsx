@@ -170,6 +170,11 @@ function DraggableMagazineCard({
             width={150}
             height={200}
           />
+          {magazine.is_new && (
+            <span className="absolute top-0 left-0 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-br">
+              NEW
+            </span>
+          )}
           {/* Drag indicator */}
           <div className="absolute bottom-2 right-2 bg-black/60 text-white rounded px-2 py-1">
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -334,6 +339,7 @@ export default function MagazinesPage() {
                   ? magazineFormData.price
                   : null,
               is_purchasable: magazineFormData?.is_purchasable || false,
+              is_new: magazineFormData?.is_new || false,
               product_id: magazineFormData?.product_id || null,
             }),
           })
@@ -413,6 +419,7 @@ export default function MagazinesPage() {
                   ? magazineFormData.price
                   : null,
               is_purchasable: magazineFormData?.is_purchasable || false,
+              is_new: magazineFormData?.is_new || false,
               product_id: magazineFormData?.product_id || null,
             }),
           })
@@ -519,6 +526,7 @@ export default function MagazinesPage() {
             cover_image: magazine.cover_image || null,
             price: magazine.price ?? null,
             is_purchasable: magazine.is_purchasable || false,
+            is_new: magazine.is_new || false,
             product_id: magazine.product_id ?? null,
           }}
           onConfirm={async (selectedPages, formData) => {
@@ -1044,7 +1052,7 @@ export default function MagazinesPage() {
                                     onClick={() => handleEdit(magazine)}
                                   >
                                     {magazine.cover_image && (
-                                      <div className="aspect-[3/4] mb-3 ">
+                                      <div className="aspect-[3/4] mb-3 relative">
                                         <Image
                                           src={thumbnail(magazine.cover_image)}
                                           alt={magazine.title || 'Cover'}
@@ -1052,6 +1060,11 @@ export default function MagazinesPage() {
                                           width={150}
                                           height={200}
                                         />
+                                        {magazine.is_new && (
+                                          <span className="absolute top-0 left-0 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-br">
+                                            NEW
+                                          </span>
+                                        )}
                                       </div>
                                     )}
                                     <div className="mb-2">
@@ -1122,7 +1135,7 @@ export default function MagazinesPage() {
                                 onClick={() => handleEdit(magazine)}
                               >
                                 {magazine.cover_image && (
-                                  <div className="aspect-[3/4] mb-3">
+                                  <div className="aspect-[3/4] mb-3 relative">
                                     <Image
                                       src={thumbnail(magazine.cover_image)}
                                       alt={magazine.title || 'Cover'}
@@ -1130,6 +1143,11 @@ export default function MagazinesPage() {
                                       width={150}
                                       height={200}
                                     />
+                                    {magazine.is_new && (
+                                      <span className="absolute top-0 left-0 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-br">
+                                        NEW
+                                      </span>
+                                    )}
                                   </div>
                                 )}
                                 <div className="mb-2">

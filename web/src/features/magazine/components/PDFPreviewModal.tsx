@@ -143,6 +143,7 @@ interface MagazineFormData {
   cover_image_url?: string | null
   price: number | null
   is_purchasable: boolean
+  is_new: boolean
   product_id: string | null
 }
 
@@ -169,6 +170,7 @@ interface PDFEditPreviewModalProps extends BasePDFPreviewModalProps {
     cover_image?: string | null
     price: number | null
     is_purchasable?: boolean
+    is_new?: boolean
     product_id?: string | null
   }
   onDelete?: (id: string, title: string) => Promise<void>
@@ -184,6 +186,7 @@ const initialFormData: MagazineFormData = {
   cover_image_url: null,
   price: null,
   is_purchasable: false,
+  is_new: false,
   product_id: null,
 }
 
@@ -218,6 +221,7 @@ export function PDFPreviewModal({
   const seasonId = watch('season_id')
   const categoryIds = watch('category_ids')
   const isPurchasable = watch('is_purchasable')
+  const isNew = watch('is_new')
 
   const previewImages = selectedPageOrder
     .map(pageNumber => pages.find(page => page.pageNumber === pageNumber))
@@ -251,6 +255,7 @@ export function PDFPreviewModal({
           cover_image_url: magazine.cover_image || null,
           price: magazine.price ?? null,
           is_purchasable: magazine.is_purchasable || false,
+          is_new: magazine.is_new || false,
           product_id: magazine.product_id ?? null,
         })
         setSelectedPageOrder(magazine.previewPageNumbers || [])
@@ -527,6 +532,17 @@ export function PDFPreviewModal({
                       {errors.introduction.message}
                     </p>
                   )}
+                </div>
+
+                {/* Is New Toggle */}
+                <div>
+                  <Toggle
+                    enabled={isNew}
+                    onChange={value =>
+                      setValue('is_new', value, { shouldValidate: true })
+                    }
+                    label={isNew ? 'NEW 표시 ON' : 'NEW 표시 OFF'}
+                  />
                 </div>
               </div>
             </div>

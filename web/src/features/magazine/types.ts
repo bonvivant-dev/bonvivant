@@ -13,6 +13,7 @@ export interface Magazine {
   categories?: Category[]
   category_orders?: { [categoryId: string]: number }
   is_purchasable: boolean
+  is_new: boolean
   price: number | null
   product_id: string | null
   created_at: string

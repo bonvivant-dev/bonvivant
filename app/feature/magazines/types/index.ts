@@ -21,6 +21,7 @@ export interface Magazine {
   category_orders?: { [categoryId: string]: number }
   created_at: string
   updated_at: string | null
+  is_new: boolean
   // IAP 관련
   product_id: string | null
   price: number | null
