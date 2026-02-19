@@ -143,6 +143,7 @@ interface MagazineFormData {
   cover_image_url?: string | null
   price: number | null
   is_purchasable: boolean
+  is_new: boolean
   product_id: string | null
 }
 
@@ -169,6 +170,7 @@ interface PDFEditPreviewModalProps extends BasePDFPreviewModalProps {
     cover_image?: string | null
     price: number | null
     is_purchasable?: boolean
+    is_new?: boolean
     product_id?: string | null
   }
   onDelete?: (id: string, title: string) => Promise<void>
@@ -184,6 +186,7 @@ const initialFormData: MagazineFormData = {
   cover_image_url: null,
   price: null,
   is_purchasable: false,
+  is_new: false,
   product_id: null,
 }
 
@@ -218,6 +221,7 @@ export function PDFPreviewModal({
   const seasonId = watch('season_id')
   const categoryIds = watch('category_ids')
   const isPurchasable = watch('is_purchasable')
+  const isNew = watch('is_new')
 
   const previewImages = selectedPageOrder
     .map(pageNumber => pages.find(page => page.pageNumber === pageNumber))
@@ -251,6 +255,7 @@ export function PDFPreviewModal({
           cover_image_url: magazine.cover_image || null,
           price: magazine.price ?? null,
           is_purchasable: magazine.is_purchasable || false,
+          is_new: magazine.is_new || false,
           product_id: magazine.product_id ?? null,
         })
         setSelectedPageOrder(magazine.previewPageNumbers || [])
@@ -527,6 +532,37 @@ export function PDFPreviewModal({
                       {errors.introduction.message}
                     </p>
                   )}
+                </div>
+
+                {/* Is New Badge */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    NEW 배지 (클릭하여 표시 여부를 변경할 수 있습니다)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setValue('is_new', !isNew, { shouldValidate: true })
+                    }
+                    className="flex items-center gap-3 cursor-pointer"
+                  >
+                    <div
+                      className="flex items-center justify-center text-white text-[9px] font-bold transition-colors"
+                      style={{
+                        width: 28,
+                        height: 41,
+                        paddingBottom: 7,
+                        backgroundColor: isNew ? '#EF4444' : '#9CA3AF',
+                        clipPath:
+                          'polygon(0% 0%, 100% 0%, 100% 100%, 50% 83%, 0% 100%)',
+                      }}
+                    >
+                      NEW
+                    </div>
+                    <span className="text-sm text-gray-500">
+                      {isNew ? 'NEW 표시 중' : 'NEW 표시 안 함'}
+                    </span>
+                  </button>
                 </div>
               </div>
             </div>
