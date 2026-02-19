@@ -534,15 +534,35 @@ export function PDFPreviewModal({
                   )}
                 </div>
 
-                {/* Is New Toggle */}
+                {/* Is New Badge */}
                 <div>
-                  <Toggle
-                    enabled={isNew}
-                    onChange={value =>
-                      setValue('is_new', value, { shouldValidate: true })
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    NEW 배지 (클릭하여 표시 여부를 변경할 수 있습니다)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setValue('is_new', !isNew, { shouldValidate: true })
                     }
-                    label={isNew ? 'NEW 표시 ON' : 'NEW 표시 OFF'}
-                  />
+                    className="flex items-center gap-3 cursor-pointer"
+                  >
+                    <div
+                      className="flex items-center justify-center text-white text-[9px] font-bold transition-colors"
+                      style={{
+                        width: 28,
+                        height: 41,
+                        paddingBottom: 7,
+                        backgroundColor: isNew ? '#EF4444' : '#9CA3AF',
+                        clipPath:
+                          'polygon(0% 0%, 100% 0%, 100% 100%, 50% 83%, 0% 100%)',
+                      }}
+                    >
+                      NEW
+                    </div>
+                    <span className="text-sm text-gray-500">
+                      {isNew ? 'NEW 표시 중' : 'NEW 표시 안 함'}
+                    </span>
+                  </button>
                 </div>
               </div>
             </div>
