@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1061683704723",
+    "project_id": "bonvivant-cb894",
+    "storage_bucket": "bonvivant-cb894.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1061683704723:android:8055cc49a24f4d762c2e66",
+        "android_client_info": {
+          "package_name": "com.bonvivant.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARdx-KAM7E9ugF_ZtngRcAXo2b8PHmktI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

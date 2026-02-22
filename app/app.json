@@ -2,7 +2,7 @@
   "expo": {
     "name": "bonvivant",
     "slug": "bonvivant",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "bonvivant",
@@ -11,7 +11,7 @@
     "ios": {
       "bundleIdentifier": "com.bonvivant.app",
       "supportsTablet": false,
-      "buildNumber": "40",
+      "buildNumber": "50",
       "usesAppleSignIn": true,
       "infoPlist": {
         "UIBackgroundModes": [
@@ -22,7 +22,8 @@
     },
     "android": {
       "package": "com.bonvivant.app",
-      "versionCode": 19,
+      "googleServicesFile": "./android/app/google-services.json",
+      "versionCode": 24,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -40,7 +41,12 @@
     },
     "plugins": [
       "expo-router",
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "mode": "production"
+        }
+      ],
       "expo-apple-authentication",
       [
         "expo-splash-screen",
