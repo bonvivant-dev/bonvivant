@@ -23,7 +23,7 @@
     "android": {
       "package": "com.bonvivant.app",
       "googleServicesFile": "./android/app/google-services.json",
-      "versionCode": 24,
+      "versionCode": 25,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
