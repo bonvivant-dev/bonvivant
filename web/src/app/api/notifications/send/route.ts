@@ -74,37 +74,64 @@ export async function POST(request: NextRequest) {
       },
     }))
 
-    // Expo Push Notification API 호출
-    const response = await fetch('https://exp.host/--/api/v2/push/send', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(messages),
-    })
+    // Expo Push API는 한 요청당 최대 100개 메시지만 허용하므로 100개씩 분할 전송
+    const CHUNK_SIZE = 100
+    let sentCount = 0
+    let failedCount = 0
 
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(
-        `Expo Push API 오류: ${errorData.errors?.[0]?.message || '알 수 없는 오류'}`,
+    for (let i = 0; i < messages.length; i += CHUNK_SIZE) {
+      const chunk = messages.slice(i, i + CHUNK_SIZE)
+
+      try {
+        const response = await fetch('https://exp.host/--/api/v2/push/send', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(chunk),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(
+            errorData.errors?.[0]?.message || '알 수 없는 오류',
+          )
+        }
+
+        sentCount += chunk.length
+      } catch (chunkError) {
+        failedCount += chunk.length
+        console.error(
+          `Expo Push 청크 전송 실패 (${i}~${i + chunk.length}):`,
+          chunkError instanceof Error ? chunkError.message : chunkError,
+        )
+      }
+    }
+
+    // 모든 청크가 실패한 경우 에러 응답
+    if (sentCount === 0) {
+      return NextResponse.json(
+        { error: 'Expo Push API 오류: 알림 전송에 모두 실패했습니다.' },
+        { status: 500 },
       )
     }
 
-    const result = await response.json()
-
-    // 히스토리에 저장
+    // 히스토리에 저장 (실제 성공 건수 기준)
     await supabase.from('notification_history').insert({
       title,
       body,
       sent_by: user.id,
-      sent_count: tokens.length,
+      sent_count: sentCount,
     })
 
     return NextResponse.json({
-      message: '알림이 성공적으로 전송되었습니다.',
-      sentCount: tokens.length,
-      result,
+      message:
+        failedCount > 0
+          ? `${sentCount}명에게 알림을 전송했습니다. (${failedCount}명 전송 실패)`
+          : '알림이 성공적으로 전송되었습니다.',
+      sentCount,
+      failedCount,
     })
   } catch (error) {
     return NextResponse.json(
